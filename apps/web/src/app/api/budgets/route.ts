@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
+import { resolveBudgetPeriod } from "@/lib/budget/budget-period";
 import { OrganizationRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
@@ -63,12 +64,14 @@ export async function GET(request: NextRequest) {
     const budgetsArray = Array.isArray(budgets) ? budgets : [];
     const budgetsWithUsage = await Promise.all(
       budgetsArray.map(async (budget: any) => {
-        const [year, month] = budget.yearMonth.split("-").map(Number);
-        // 기본 기간: yearMonth 기반 월 경계
-        let periodStart = new Date(year, month - 1, 1);
-        let periodEnd = new Date(year, month, 0, 23, 59, 59);
+        // 🛑 §budget-period-axis — 기간 해석의 **마지막 인라인 복사본**이 여기 있었다(2026-09-21 실측).
+        //   [id] · orders · user-budgets 는 이미 resolveBudgetPeriod 를 쓰는데 이 목록만 자기 정규식을
+        //   들고 있었고, 대시보드 summary 는 아예 안 읽어서 **같은 예산에 두 기간**이 떴다.
+        //   차이 하나: 인라인본은 역전 기간(start > end)을 검사하지 않았다.
+        //   모듈은 그때 월 창으로 낙하한다 — 깨진 명시가 창을 오염시키지 않는 쪽이 맞다.
+        const { periodStart, periodEnd } = resolveBudgetPeriod(budget);
 
-        // description에서 name, projectName, 정확한 period 날짜 추출
+        // description 에서 name · projectName 추출(기간과 달리 이쪽은 표시 전용)
         let name = `${budget.yearMonth} Budget`;
         let projectName = null;
         if (budget.description) {
@@ -76,12 +79,6 @@ export async function GET(request: NextRequest) {
           if (nameMatch) name = nameMatch[1];
           const projectMatch = budget.description.match(/프로젝트: ([^|]+)/);
           if (projectMatch) projectName = projectMatch[1].trim().replace(/\|.*$/, "").trim();
-          // 저장된 정확한 날짜가 있으면 우선 사용
-          const periodMatch = budget.description.match(/period:(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/);
-          if (periodMatch) {
-            periodStart = new Date(periodMatch[1]);
-            periodEnd = new Date(periodMatch[2] + "T23:59:59");
-          }
         }
 
         // 모든 예산 유형(개인/조직)에 대해 PurchaseRecord 사용액 계산

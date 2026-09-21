@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { withDbRetry } from "@/lib/db-retry";
+import { resolveBudgetPeriod } from "@/lib/budget/budget-period";
+import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 import {
   deriveDashboardSummary,
+  canonicalBudgetQuery,
   type DashboardSummaryInput,
 } from "@/lib/dashboard/summary-derive";
 
@@ -43,7 +46,13 @@ export async function GET(request: NextRequest) {
 
     // ── scope 해결 (stats route 와 동일 규칙) ──────────────────────────
     const [activeBudget, memberships, orgMemberships] = await Promise.all([
-      db.userBudget.findFirst({ where: { userId, isActive: true } }),
+      // 🛑 §budget-canonical-pick (P1-9 · 호영님 권고 2026-09-21) — 대시보드 정본 예산은
+      //   **오늘이 기간 안에 드는 것 중 가장 최근 시작분** 이다.
+      //   (구) `isActive` 만 보고 정렬 없이 findFirst — 어느 것이 뜰지 미정이었다.
+      //        prod 실측 2026-09-21: 활성 예산 2건 중 집행 0% 인 검증용이 뽑히고,
+      //        실제 운영 예산(17% 집행)은 화면에서 사라졌다. 도넛의 지출액만 그 예산 것이었다.
+      //   규칙은 summary-derive 의 canonicalBudgetQuery 한 곳에 있다 — sentinel 이 값으로 잰다.
+      db.userBudget.findFirst(canonicalBudgetQuery(userId, now)),
       db.workspaceMember.findMany({ where: { userId }, select: { workspaceId: true } }),
       db.organizationMember.findMany({ where: { userId }, select: { organizationId: true } }),
     ]);
@@ -117,11 +126,16 @@ export async function GET(request: NextRequest) {
         // 활성 UserBudget 부재 시에만 Budget 폴백
         activeBudget
           ? Promise.resolve(null)
-          : db.budget.findFirst({
+          : // §budget-canonical-pick — 폴백 경로에도 같은 규칙을 건다.
+            //   scopeKey 를 여러 개(`user-…` · userId · 조직들) 로 조회하므로 **여러 건이 나올 수 있다**.
+            //   정렬이 없으면 어느 것이 뜰지 미정이다 — UserBudget 쪽과 똑같은 결함이고,
+            //   2026-09-21 실측 기준 **실제로 쓰이는 것은 이쪽 경로**다.
+            db.budget.findFirst({
               where: {
                 scopeKey: { in: [`user-${userId}`, userId, ...orgIds] },
                 yearMonth: currentYearMonth,
               },
+              orderBy: [{ createdAt: "desc" }],
             }),
       ]),
     );
@@ -216,14 +230,42 @@ export async function GET(request: NextRequest) {
         periodEnd: toKstCalendarDate(activeBudget.endDate as Date | null),
       };
     } else if (fallbackBudget && fallbackBudget.amount > 0) {
-      // 폴백 예산: 이번 달 구매액 합으로 spent derive(위 thisMonthSpend 재사용)
+      //
+      // 🛑 §budget-period-axis 정정 (2026-09-21 실측) — 여기에 `periodEnd: null` 을 두고
+      //   "yearMonth 로 질의했으니 기간 끝 = 이번 달 말일" 이라고 적었던 것은 **거짓이었다.**
+      //   legacy Budget 도 `description` 에 실제 기간을 들고 있다
+      //   (예: "[… ] | period:2026-09-20~2026-12-30" — yearMonth 는 2026-09 인데 12.30 까지다).
+      //   예산 관리 화면은 그 기간을 파싱해 쓰고 여기만 안 읽어서, 같은 예산에 두 기간이 떴다.
+      //   → 기간 해석은 resolveBudgetPeriod 하나로 통일한다(화면·합산·대시보드 같은 창).
+      //   Date 가 아니라 `endCalendarDate` 를 쓰는 이유는 그 필드 주석에 있다(시간대 왕복 0).
+      //
+      // 🛑 지출 산식도 같이 옮긴다. 기간만 고치면 **카드 안에서 축이 갈린다** —
+      //   기간은 9.20~12.30 인데 소진액은 이번 달치만 세는 카드가 된다(고치기 전보다 더 나쁘다).
+      //   (구) spent = thisMonthSpend · scopeKey = [userId, ...workspaceIds]
+      //   (신) 예산 관리 화면과 **같은 창 · 같은 키**로 센다:
+      //        resolveBudgetPeriod 창 + resolveBudgetPurchaseScopeKeys
+      //        (§budget-scope-key-mismatch — org 키와 workspace 키의 공간이 다르다).
+      //   `spend.thisMonth` 는 그대로 둔다 — 그건 예산과 무관한 "이번 달 실지출" 이라는 다른 물음이다.
+      const fbPeriod = resolveBudgetPeriod(fallbackBudget);
+      const fbScopeKeys = await resolveBudgetPurchaseScopeKeys(fallbackBudget);
+      const fbSpent = await db.purchaseRecord
+        .findMany({
+          where: {
+            scopeKey: { in: fbScopeKeys },
+            purchasedAt: { gte: fbPeriod.periodStart, lte: fbPeriod.periodEnd },
+          },
+          select: { amount: true },
+        })
+        .then((rows: { amount: number | null }[]) =>
+          rows.reduce((sum, r) => sum + (r.amount || 0), 0),
+        )
+        .catch(() => 0);
+
       budgetInput = {
         limit: fallbackBudget.amount,
-        spent: thisMonthSpend,
-        remaining: fallbackBudget.amount - thisMonthSpend,
-        // 이 예산은 `yearMonth: currentYearMonth` 로 질의된 **이번 달** 예산이다.
-        //   기간 끝 = 이번 달 말일 = 폴백 규칙의 답. 둘이 같으므로 null 로 둔다.
-        periodEnd: null,
+        spent: fbSpent,
+        remaining: fallbackBudget.amount - fbSpent,
+        periodEnd: fbPeriod.endCalendarDate,
       };
     }
 

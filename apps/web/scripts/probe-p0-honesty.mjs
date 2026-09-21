@@ -28,6 +28,9 @@ const PIPELINE = "src/components/dashboard/pipeline.tsx";
 const PAGE = "src/app/dashboard/page.tsx";
 const MOBILE = "src/components/dashboard/mobile-dashboard-view.tsx";
 const SUMMARY_ROUTE = "src/app/api/dashboard/summary/route.ts";
+const DERIVE = "src/lib/dashboard/summary-derive.ts";
+const PERIOD_LIB = "src/lib/budget/budget-period.ts";
+const BUDGETS_LIST = "src/app/api/budgets/route.ts";
 const SURFACES = [STAT_LINE, BUDGET_CARD, PIPELINE, PAGE, MOBILE];
 
 /** 대상 파일의 EOL 을 읽어 앵커를 만든다. */
@@ -197,6 +200,73 @@ const PROBES = {
   "G5-fallback-period": {
     desc: "월 폴백 예산에 기간을 임의로 채움 -> (G)② RED",
     edits: [[SUMMARY_ROUTE, "periodEnd: null,", 'periodEnd: "2026-12-31",']],
+  },
+
+  // ── 그룹 H: §budget-canonical-pick (P1-9) ────────────────────────────
+  "H1-order-drop": {
+    desc: "정렬 제거 -> (H)①② RED (어느 예산이 뜰지 다시 미정이 된다 — 실측 결함 재현)",
+    edits: [[DERIVE, "      { startDate: { sort: \"desc\", nulls: \"last\" } },", ""]],
+  },
+  "H2-tiebreak-drop": {
+    desc: "2차 정렬(createdAt) 제거 -> (H)①② RED (동점에서 미정이 남는다)",
+    edits: [[DERIVE, "      { createdAt: \"desc\" },", ""]],
+  },
+  "H3-null-date-excluded": {
+    desc: "날짜 미선언 통과를 제거 -> (H)①③ RED (날짜 없이 만든 기존 예산이 사라진다)",
+    edits: [[DERIVE, "{ OR: [{ startDate: null }, { startDate: { lte: now } }] },", "{ startDate: { lte: now } },"]],
+  },
+  "H4-period-filter-off": {
+    desc: "기간 필터 제거 -> (H)①③ RED (기간 지난 예산이 다시 정본이 될 수 있다 — ③도 같이 깨진다, 실측)",
+    edits: [[DERIVE, "{ OR: [{ endDate: null }, { endDate: { gte: now } }] },", ""]],
+  },
+  // ── 그룹 I: §budget-period-axis 정본화 (P1-10) ──────────────────────
+  "I1-fallback-null": {
+    desc: "폴백 periodEnd 를 null 로 되돌림 -> (G)②⑤ RED (실측 결함 재현 — 화면과 대시보드가 다른 기간)",
+    edits: [[SUMMARY_ROUTE, "        periodEnd: fbPeriod.endCalendarDate,", "        periodEnd: null,"]],
+  },
+  "I2-yearmonth-guess": {
+    desc: "달력 날짜를 yearMonth 로 추측 -> budget-period 「원문 그대로」 RED (9.30 이 된다)",
+    edits: [[PERIOD_LIB, "endCalendarDate: m[2] };", "endCalendarDate: input.yearMonth + \"-30\" };"]],
+  },
+  "I3-lastday-fixed": {
+    desc: "말일을 30 으로 고정 -> budget-period 월 창 케이스 RED (2월이 2-30 이 된다)",
+    edits: [[PERIOD_LIB, "endCalendarDate: `${year}-${pad2(month)}-${pad2(lastDay)}`,", "endCalendarDate: `${year}-${pad2(month)}-30`,"]],
+  },
+  "I3b-date-roundtrip": {
+    desc: "달력 날짜를 Date 왕복으로 만든다 -> (G)⑦ 구조 단언 RED. 🛑 값 단언으로는 못 잡는다(러너 TZ 의존) — 그래서 형태로 막는다",
+    edits: [[PERIOD_LIB, "endCalendarDate: `${year}-${pad2(month)}-${pad2(lastDay)}`,", "endCalendarDate: new Date(year, month, 0, 23, 59, 59).toISOString().slice(0, 10),"]],
+  },
+  "I4-list-inline-revive": {
+    desc: "예산 목록이 다시 자기 정규식을 들게 한다 -> (G)⑤ RED",
+    edits: [[BUDGETS_LIST, "const { periodStart, periodEnd } = resolveBudgetPeriod(budget);", "const periodStart = new Date(); const periodEnd = budget.description.match(/period:(x)~(y)/) ? new Date() : new Date();"]],
+  },
+  "I5-fallback-order-drop": {
+    desc: "폴백 질의 정렬 제거 -> (G)⑥ RED (실제로 쓰이는 경로에 미정이 남는다)",
+    edits: [[SUMMARY_ROUTE, "              orderBy: [{ createdAt: \"desc\" }],\n", ""]],
+  },
+
+  "I6-spend-axis-split": {
+    desc: "폴백 소진액을 이번 달치로 되돌림 -> (G)⑧ RED (기간은 분기인데 소진은 한 달 — 카드 내부 모순)",
+    edits: [[SUMMARY_ROUTE, "        spent: fbSpent,", "        spent: thisMonthSpend,"]],
+  },
+  "I7-scopekey-drift": {
+    desc: "폴백 소진액의 키를 화면과 다르게 -> (G)⑧ RED (§budget-scope-key-mismatch 재발)",
+    edits: [[SUMMARY_ROUTE, "await resolveBudgetPurchaseScopeKeys(fallbackBudget);", "[userId, ...workspaceIds];"]],
+  },
+
+  "C1-comment-only": {
+    desc: "코드는 인라인으로 되돌리고 **주석에만** 토큰을 남긴다 -> (H)④ RED (§comment-axis 준수 증명)",
+    edits: [
+      [
+        SUMMARY_ROUTE,
+        "db.userBudget.findFirst(canonicalBudgetQuery(userId, now)),",
+        "db.userBudget.findFirst({ where: { userId, isActive: true } }), // db.userBudget.findFirst(canonicalBudgetQuery(userId, now))",
+      ],
+    ],
+  },
+  "H5-route-inline": {
+    desc: "route 가 규칙을 직접 짜도록 되돌림 -> (H)④ RED",
+    edits: [[SUMMARY_ROUTE, "db.userBudget.findFirst(canonicalBudgetQuery(userId, now)),", "db.userBudget.findFirst({ where: { userId, isActive: true } }),"]],
   },
 
   "F4-pipeline-approved-leak": {

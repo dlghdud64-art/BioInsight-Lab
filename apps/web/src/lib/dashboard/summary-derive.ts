@@ -185,3 +185,41 @@ export function deriveDashboardSummary(
     },
   };
 }
+
+// ───────────────────────────────────────────────────────────────
+// §budget-canonical-pick (P1-9 · 호영님 권고 2026-09-21)
+// ───────────────────────────────────────────────────────────────
+
+/**
+ * 대시보드 정본 예산을 고르는 **질의 인자**. route 가 그대로 `findFirst` 에 넘긴다.
+ *
+ * 규칙: 활성 예산 중 **오늘이 기간 안에 드는 것**, 그 중 **가장 최근 시작분**.
+ *
+ * ★ 왜 함수로 빼는가 — 규칙을 **값으로 잴 수 있게** 하기 위해서다.
+ *   route 안에 인라인으로 두면 sentinel 이 정규식으로 문자열을 더듬는 수밖에 없고,
+ *   그건 리팩토링 한 번에 깨지면서 정작 규칙이 바뀐 것은 못 잡는다.
+ *   여기서는 `toEqual` 로 질의 인자 자체를 단언한다.
+ *
+ * ★ 규칙을 JS 로 한 번 더 구현하지 않는다(고르는 주체는 DB 다).
+ *   같은 규칙을 두 곳에 적으면 한쪽만 바뀌어도 통과한다 — §receive-canonical 에서 이미 본 형태다.
+ *
+ * 날짜 미선언(null)은 "제한 없음" 으로 읽어 통과시킨다 — 날짜 없이 만들어진 기존 예산 호환.
+ * 정렬 `startDate desc nulls last`: 날짜를 선언한 예산이 선언 안 한 것보다 구체적이다.
+ * 동점이면 `createdAt desc` — **미정을 남기지 않는다**(이번 결함의 본체가 그것이었다).
+ */
+export function canonicalBudgetQuery(userId: string, now: Date) {
+  return {
+    where: {
+      userId,
+      isActive: true,
+      AND: [
+        { OR: [{ startDate: null }, { startDate: { lte: now } }] },
+        { OR: [{ endDate: null }, { endDate: { gte: now } }] },
+      ],
+    },
+    orderBy: [
+      { startDate: { sort: "desc", nulls: "last" } },
+      { createdAt: "desc" },
+    ],
+  } as const;
+}

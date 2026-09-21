@@ -593,6 +593,8 @@ git merge-base --is-ancestor e52846a3 93e25ef5  → REACHED
 | P1-6 | `blockFrom` 류 블록 창 헬퍼 **4벌 중복**(신규 파일 · p3b · p4 · won-glyph) → `_helpers/` 통합 | 없음 · **완료** → 7-D |
 | P1-7 | `recommendedActions` 배열이 JSX 소비 0 인데 `302d6a4g:64` 가 핀해 살아 있다 | 그 sentinel 트랙 |
 | P1-8 | 원장 stale 해소 7건(§11.257 6 + 258sweep 1) `--update` | 별도 커밋 |
+| P1-9 | **활성 예산 다중 시 선택 미정** — `userBudget.findFirst` 에 정렬·기간 필터 0 | 호영님 권고 승인(2026-09-21) · **구현 완료, 게이트 대기** → 7-H |
+| P1-10 | **예산 기간 정본 불일치** — 화면은 `description` 의 `period:` 를 파싱해 쓰고 대시보드는 `yearMonth` 만 본다. 지출 산식도 다르다 | 권고: 파서 공용화 → 7-I |
 
 
 ---
@@ -760,6 +762,9 @@ git add apps/web/src/app/api/dashboard/summary/route.ts \
 `UserBudget.endDate` 가 이미 스키마에 있다. 월 단위 폴백 예산(`Budget.yearMonth`)은 애초에
 **이번 달로 질의**되므로 두 규칙의 답이 같다 → `periodEnd: null` 로 두고 폴백에 맡긴다.
 
+🛑 **위 문단의 마지막 문장은 2026-09-21 실측으로 반증됐다 → 7-I.**
+   폴백 예산도 `description` 에 기간을 들고 있고, 그 기간은 이번 달을 넘어간다.
+
 ### 고친 것
 
 | 파일 | 내용 |
@@ -826,6 +831,308 @@ git add apps/web/src/app/api/dashboard/summary/route.ts \
 **배포 후 화면 확인**: 예산 카드 머리와 `남은 일수`.
 현재 prod 의 활성 예산에 `endDate` 가 없으면 **아무것도 안 바뀐 것이 정상**이다(폴백 경로).
 `endDate` 가 있으면 머리가 `· 12.31까지` 류로 바뀌고 `남은 일수` 가 그 날짜까지로 늘어난다.
+
+
+---
+
+## 7-G. prod 화면 실측 (2026-09-21 · Chrome · www.labaxis.co.kr)
+
+로그인 세션으로 직접 봤다. **화면이 곧 판정**이다 — 정적 단언이 못 보는 축이다.
+
+### ① P1-4 입고 정본 — 통과
+
+| 본 것 | 값 |
+| :--- | :--- |
+| 대시보드 입고 카드 | `0건` · `데이터 없음` (칩 없음) |
+| 착지 화면 `/dashboard/receiving` | "처리 중인 입고가 없습니다" = 0건 |
+
+불변식 **칩이 말하는 수 == 착지 화면의 건수** 성립. `데이터 없음` 은 칩이 아니라
+0건 스테이지의 비활성 문구(`pipeline.tsx:205`)이고 누를 수 없다 — dead button 0.
+
+함께 확인된 것: FAB 0 · 파이프라인 3카드에 게이지 0 · `열기 ›` + 상태 칩 ·
+2열 그리드가 높이 맞춰 서고 우측이 지출 트렌드 + 최근 활동 세로 2장 ·
+상단 ₩0 반복 해소(2장) · 도넛에 `· 최근 6개월` 병기.
+
+### 🛑 ② P1-5 가 고치는 결함이 **지금 prod 에 살아 있다** — 실측
+
+`/dashboard/budget` 에서 활성 예산의 실제 기간을 읽었다.
+
+| 예산 | 기간 | 금액 |
+| :--- | :--- | :--- |
+| `Smoke 검증용 예산 2026-09` (대시보드가 고른 것) | **9월 20일 ~ 12월 31일** | ₩0 / ₩10,000,000 |
+| `2026 하반기 실측 예산` | 8월 18일 ~ 12월 31일 | ₩850,000 / ₩5,000,000 |
+
+대시보드 예산 카드는 이렇게 떠 있다:
+
+| 항목 | 화면 | 참값 | |
+| :--- | :--- | :--- | :--- |
+| 기간 라벨 | `· 9월` | `· 12.31까지` | ✗ |
+| 남은 일수 | `10일` | **102일** (9/21→12/31) | ✗ |
+| 일평균 가능 | `₩1,000,000` | **₩98,039** | ✗ |
+
+**쓸 수 있는 돈을 10배로 부풀려 보여주고 있다.** 표시 오류가 아니라 운영 판단을 오도하는 수치다.
+이름이 `2026-09` 라서 월 예산처럼 보이지만 endDate 는 12.31 이다 — 이름을 믿고 축을 고정한 것이 결함의 본체다.
+P1-5 배포 후 이 세 칸이 위 참값으로 바뀐다. **P1-5 우선순위를 올린다.**
+
+### 🛑 ③ 신규 결함 — 활성 예산이 여럿일 때 무엇이 뜰지 미정
+
+`summary/route.ts` 의 `db.userBudget.findFirst({ where: { userId, isActive: true } })` 에 **정렬이 없다.**
+실측: 활성 예산 2건 중 대시보드가 고른 것은 `검증용`(0% 소진)이고,
+실제 운영 예산(`2026 하반기 실측 예산` · 17% 소진 · ₩850,000 집행)은 화면에 없다.
+
+- 도넛의 `6개월 지출 ₩850,000` 은 그 **다른 예산**의 집행액이다.
+  카드 상단 `₩0 / ₩10,000,000` 과 나란히 서 있는 것이 기간 차이만이 아니라 **예산 선택 차이**이기도 하다.
+- 검증용 예산을 지우면 증상은 가려지지만 원인은 남는다. 예산을 두 개 쓰는 순간 다시 나온다.
+- ⚠️ **호영님 판정 필요** — 활성 예산이 여럿일 때 대시보드의 정본은 무엇인가.
+  권고: **오늘이 기간 안에 드는 것 중 가장 최근 시작분**. 기간 밖인 예산은 애초에 대시보드 정본이 될 수 없고,
+  `isActive` 만으로는 그것을 거르지 못한다. 구현은 정렬 + 기간 필터 한 줄이라 작다.
+  → **P1-9** 로 백로그에 올린다.
+
+
+---
+
+## 7-H. P1-9 구현 — §budget-canonical-pick (2026-09-21)
+
+**호영님 권고 승인**: 대시보드 정본 예산 = **오늘이 기간 안에 드는 것 중 가장 최근 시작분.**
+
+### 고친 것
+
+| 파일 | 내용 |
+| :--- | :--- |
+| `summary-derive.ts` | `canonicalBudgetQuery(userId, now)` 신설 — 기간 필터 + 결정적 정렬을 **질의 인자 값**으로 돌려준다 |
+| `api/dashboard/summary/route.ts` | `db.userBudget.findFirst(canonicalBudgetQuery(userId, now))` — 규칙을 직접 짓지 않는다 |
+
+규칙 상세:
+- 기간: `startDate <= now` **또는 미선언**, `endDate >= now` **또는 미선언**.
+  날짜 없이 만든 기존 예산이 사라지면 안 되므로 null 은 "제한 없음" 으로 읽는다.
+- 정렬: `startDate desc nulls last` → `createdAt desc`.
+  **2차 정렬이 본체다** — 동점에서 미정이 남으면 이번 결함이 그대로 되풀이된다.
+
+### 왜 함수로 뺐는가
+
+route 안에 인라인으로 두면 sentinel 이 정규식으로 문자열을 더듬는 수밖에 없다.
+그건 리팩토링 한 번에 깨지면서 정작 **규칙이 바뀐 것은 못 잡는다**(4원칙이 말하는 그 형태다).
+빼두면 `toEqual` 로 질의 인자 자체를 잰다.
+
+🛑 규칙을 JS 로 한 번 더 구현하지 않았다. 고르는 주체는 DB 이고, 같은 규칙을 두 곳에 적으면
+한쪽만 바뀌어도 통과한다 — §receive-canonical 에서 이미 본 형태다. 대신 **질의 인자를 값으로 잰다**.
+
+### Sentinel · 검출력 (격리 러너)
+
+`summary-contract-p1.test.ts` → `(H)` 4건.
+
+| 프로브 | 주입 | RED |
+| :--- | :--- | :--- |
+| `H1-order-drop` | 1차 정렬 제거 | (H)①② |
+| `H2-tiebreak-drop` | 2차 정렬 제거 | (H)①② |
+| `H3-null-date-excluded` | 날짜 미선언 통과 제거 | (H)①③ |
+| `H4-period-filter-off` | 기간 필터 제거 | (H)①③ |
+| `H5-route-inline` | route 가 규칙을 직접 짜도록 되돌림 | (H)④ |
+
+### 🛑 이 변경만으로 prod 화면은 **바뀌지 않는다**
+
+실측 두 예산 모두 오늘을 포함하고, 시작일은 검증용(9/20)이 하반기 실측(8/18)보다 나중이다.
+→ 규칙을 적용해도 여전히 **검증용 예산**이 뽑힌다.
+
+**그게 맞다.** 이번 커밋이 닫는 것은 "어느 것이 뜰지 모른다" 는 **미정**이지 증상이 아니다.
+증상(운영 예산이 안 보임)은 검증용 예산을 지우면 사라지고, 그것은 비가역이라 호영님 몫이다.
+같은 규칙이 없으면 예산을 둘 이상 쓰는 순간 다시 나온다.
+
+### 자체 측정
+
+- 핵심 2파일 **93/93**, 영향권 15파일 **134/134**, `guest-scope-leak` **7/7** GREEN(격리 러너 · 비권위).
+- 사각지대 1건: **DB 가 실제로 그 한 건을 고르는지**는 정적으로 못 잰다.
+  `orderBy` 의 `nulls: "last"` 는 PostgreSQL 에서만 유효하다 — **빌드와 prod 화면이 마지막 판정**이다.
+
+### operator-shell 게이트 지시 (P1-5 + P1-9 합본)
+
+7-F 의 명령과 같다. 커밋 경로에 변동 없음(두 트랙 모두 같은 4개 소스 + 2개 테스트 + 프로브 + 계획서).
+빌드 필수 — Prisma 질의 인자가 바뀌었고 `nulls` 옵션은 타입 검사를 받아야 한다.
+
+**배포 후 확인**: 예산 카드 머리가 `· 12.31까지`, `남은 일수 102일`(9/21 기준), `일평균 가능 ₩98,039`.
+현재 `· 9월` / `10일` / `₩1,000,000` 이 그 세 칸의 결함 값이다.
+
+
+---
+
+## 7-I. 🛑 실측이 내 전제를 반증했다 — P1-5 · P1-9 정정 (2026-09-21 · prod API 직독)
+
+배포된 P1-5 를 화면으로 확인하러 갔다가 **안 바뀐 것**을 보고 API 를 직접 읽었다.
+
+```
+GET /api/dashboard/summary
+  "budget":{"isSet":true,"limit":10000000,"spent":0,"usageRate":0,"periodEnd":null}
+
+GET /api/budgets            ← 예산 관리 화면이 쓰는 것
+  {"yearMonth":"2026-09","amount":10000000,"scopeKey":"cmqp6...",
+   "description":"[Smoke 검증용 예산 2026-09] | period:2026-09-20~2026-12-30",
+   "periodStart":"2026-09-20...","periodEnd":"2026-12-30T23:59:59.000Z",
+   "usage":{"totalSpent":0,"usageRate":0}}
+```
+
+### 밝혀진 사실 3가지
+
+1. **prod 의 예산 정본은 `UserBudget` 이 아니라 legacy `Budget` 이다.**
+   응답 필드가 `yearMonth` · `scopeKey` · `amount` — 전부 `Budget` 모델이다.
+   `activeBudget` 이 null 이라 summary 는 **폴백 경로**를 탄다.
+2. **기간은 DB 열이 아니라 `description` 문자열에 인코딩돼 있다.**
+   `| period:2026-09-20~2026-12-30`. `/api/budgets` 가 정규식으로 파싱해
+   `periodStart`/`periodEnd` 를 만들고(route.ts:80–84), 화면은 그 값을 보여준다.
+   `Budget` 스키마에 그런 열은 없다 — 스키마만 읽으면 보이지 않는다.
+3. **summary 는 그 문자열을 안 읽는다.** `yearMonth` 만 보고 월 예산으로 취급한다.
+
+### 그래서 틀린 것
+
+| 내가 쓴 것 (7-F) | 실측 |
+| :--- | :--- |
+| "월 단위 폴백 예산은 애초에 이번 달로 질의되므로 두 규칙의 답이 같다 → `periodEnd: null`" | **거짓.** 이 예산의 실제 기간은 **12.30 까지**다. 두 규칙의 답이 다르다 |
+| P1-5 가 `남은 일수` 결함을 고친다 | **안 고친다.** `UserBudget.endDate` 를 읽는데 prod 는 그 테이블을 안 쓴다 |
+| (7-G ③) 정렬이 없어서 검증용이 뽑혔다 | **부정확.** 폴백 질의의 `yearMonth: 2026-09` 필터 때문이다. `2026 하반기 실측 예산` 은 `yearMonth: 2026-08` 이라 **애초에 후보가 아니었다** |
+
+P1-5 · P1-9 의 코드가 **틀린 것은 아니다** — `UserBudget` 을 쓰게 되면 그대로 맞다.
+다만 **지금 쓰이는 경로가 아니다.** 커밋 메시지·문서에서 "실측 결함을 고친다" 는 문장을 뺀다.
+
+### 내가 놓친 절차
+
+P1-4 에서는 "화면이 거는 집합" 을 실측해 맞췄다. P1-5 에서는 **같은 확인을 하지 않았다** —
+스키마에 `UserBudget.endDate` 가 있는 것을 보고 그것이 쓰이는 줄 알았다.
+🛑 **스키마에 열이 있다는 것은 그 열이 쓰인다는 뜻이 아니다.** 축을 바꾸기 전에
+그 축의 값을 **prod 응답에서 직접** 확인한다. 한 번의 API 직독이 두 트랙의 전제를 갈랐다.
+
+### 진짜 결함 (신규 · P1-10)
+
+**같은 예산인데 두 화면이 다른 기간 위에 선다.**
+
+| | 기간 | 지출 산식 |
+| :--- | :--- | :--- |
+| `/dashboard/budget` | description 파싱 → 9.20~12.30 | 그 기간의 `PurchaseRecord` 합 (`2026 하반기 실측 예산` → 17%) |
+| `/dashboard` 예산 카드 | `yearMonth` → 9월 | `thisMonthSpend` (이번 달) |
+
+지금 뽑힌 예산은 양쪽 다 0 이라 드러나지 않을 뿐이다.
+`2026 하반기 실측 예산` 이 뽑혔다면 **화면 17% vs 대시보드 0%** 가 나란히 섰을 것이다.
+§0-2(₩0 vs 도넛)와 같은 계열이고, 이 트랙이 닫으려던 바로 그 형태다.
+
+**권고**: `description` 의 `period:` 파서를 **공용 모듈로 빼서 양쪽이 같은 함수를 쓰게 한다.**
+`/api/budgets/route.ts:80` 의 정규식이 유일한 정본이 되고, summary 폴백이 그것을 불러
+`periodEnd` 를 채운다. §receive-canonical 과 같은 처방 — 정본을 하나로.
+지출 산식 통일은 그 다음이다(기간이 맞아야 산식을 맞출 수 있다).
+
+🛑 `description` 에 구조화 데이터를 문자열로 넣는 것 자체는 별건이다 —
+열 신설은 마이그레이션이라 호영님 판정 사안이고, 그 전에도 **파서 공유만으로 거짓말은 닫힌다.**
+
+### 폴백 경로에도 같은 미정이 있다
+
+`db.budget.findFirst({ where: { scopeKey: { in: [...] }, yearMonth: currentYearMonth } })` — **정렬 없음.**
+같은 달 `Budget` 이 둘이면 어느 것이 뜰지 미정이다. 지금은 1건이라 안 드러난다.
+P1-9 를 폴백 경로에도 같은 규칙으로 적용해야 완결된다.
+
+
+---
+
+## 7-J. P1-10 구현 — 예산 기간·지출 정본화 (2026-09-21)
+
+7-I 의 실측을 받아 고쳤다. **호영님 승인 권고**: `description` 의 `period:` 파서를 공용화한다.
+
+### 이미 있던 것
+
+공용 모듈은 **이미 있었다** — `lib/budget/budget-period.ts` 의 `resolveBudgetPeriod`
+(§order-budget-reservation P2 가 같은 결함을 고치며 만든 것이다. 헤더에 그렇게 적혀 있다:
+"표시(기간)와 합산(창)이 서로 다른 truth 를 본다").
+`/api/budgets/[id]` · `/api/orders` · `/api/user-budgets` 는 이미 쓰고 있었고,
+**예산 목록(`/api/budgets`)과 대시보드 summary 두 곳만 빠져 있었다.**
+
+🛑 교훈: 결함을 만나면 **그 결함을 이미 고친 모듈이 있는지부터** 본다. 새로 만들 뻔했다.
+
+### 고친 것
+
+| 파일 | 내용 |
+| :--- | :--- |
+| `lib/budget/budget-period.ts` | `endCalendarDate` 추가 — `periodEnd` 의 달력 날짜 `YYYY-MM-DD` |
+| `api/budgets/route.ts` | 인라인 정규식 은퇴 → `resolveBudgetPeriod`. **마지막 복사본**이었다 |
+| `api/dashboard/summary/route.ts` | 폴백 예산의 **기간·소진액·scopeKey 를 전부 화면과 같은 것으로** |
+| 〃 | 폴백 질의에 `orderBy: createdAt desc` — P1-9 를 실제로 쓰이는 경로에도 |
+
+**왜 `endCalendarDate` 인가**: `periodEnd` 는 `new Date("2026-12-30T23:59:59")` = **로컬** 시각이다.
+서버가 UTC 면 그 값을 KST 달력으로 다시 읽을 때 **12-31** 이 된다. 하루가 어긋난다.
+그래서 Date 를 거치지 않고 매치된 **원문 문자열**(월 창이면 숫자 조립)을 쓴다.
+
+**지출 산식도 같이 옮긴 이유**: 기간만 고치면 카드 안에서 축이 갈린다 —
+기간은 9.20~12.30 인데 소진액은 이번 달치만 세는 카드가 된다. **고치기 전보다 나쁘다.**
+그래서 창(`resolveBudgetPeriod`)과 키(`resolveBudgetPurchaseScopeKeys` · §budget-scope-key-mismatch)를
+화면과 같은 것으로 맞췄다. `spend.thisMonth` 는 그대로 둔다 — 예산과 무관한 다른 물음이다.
+
+### 이관하지 않은 것 (의도)
+
+`/api/budgets/[id]` 의 period 정규식 **2곳은 남겼다.**
+GET:152 는 "저장된 값이 있는가"(없으면 null), PATCH:280 은 수정 시 **원문 문자열 보존**을 묻는다.
+`resolveBudgetPeriod` 는 항상 월 창으로 낙하하므로 그 물음에 답할 수 없다 — **다른 명제다.**
+sentinel ⑤ 는 "**창**을 만드는 곳" 으로 범위를 좁혔고, ⑤-b 가 그 파일의 창은 모듈에서 온다는 것을 잰다.
+
+### Sentinel · 검출력
+
+`summary-contract-p1.test.ts` (G)②⑤⑤-b⑥⑦⑧⑨ · `budget-period.test.ts` 4건 추가.
+
+| 프로브 | RED |
+| :--- | :--- |
+| `I1-fallback-null` | (G)② |
+| `I2-yearmonth-guess` | budget-period 2건 |
+| `I3-lastday-fixed` | budget-period 2건 |
+| `I3b-date-roundtrip` | (G)⑦ |
+| `I4-list-inline-revive` | (G)⑤ |
+| `I5-fallback-order-drop` | (G)⑥ |
+| `I6-spend-axis-split` | (G)⑧ |
+| `I7-scopekey-drift` | (G)⑧ |
+
+🛑 **검출력 0 을 하나 잡았다.** 첫 `I3` 는 "Date 왕복으로 바꾼다" 였는데 **통과**했다 —
+왕복이 값을 바꾸는지가 **러너 시간대에 달려 있다**(UTC·KST 에서는 같은 값이 나온다).
+그래서 둘로 쪼갰다: 값으로 잴 수 있는 것(`I3-lastday-fixed`)과,
+값으로는 못 재니 **형태**로 막는 것((G)⑦ + `I3b`). 사각지대를 단언 옆에 적어 뒀다.
+
+🛑 **프로브 앵커가 또 끊겼다**(3번째). `I1` 이 구현 변경(`fbPeriod` 지역 변수 도입)으로 ANCHOR MISS.
+스크립트가 즉사해서 조용한 통과는 막혔다. **구현을 바꾸면 프로브를 다시 앵커한다** — 이제 기록 3회다.
+
+### 자체 측정
+
+11파일 **164/164 GREEN** (격리 러너 · 비권위). `guest-scope-leak` 별도 7/7.
+
+### 배포 후 기대값 (prod 실측 기준)
+
+폴백 예산 = `Smoke 검증용 예산 2026-09`, 실제 기간 `2026-09-20~2026-12-30`.
+
+| 칸 | 지금(결함) | 배포 후 |
+| :--- | :--- | :--- |
+| 기간 라벨 | `· 9월` | `· 12.30까지` |
+| 남은 일수 | `10일` | `101일` (9/21 기준) |
+| 일평균 가능 | `₩1,000,000` | `₩99,009` |
+| 소진액 | 이번 달치 | 기간 전체 · 화면과 같은 키 |
+
+검증용 예산은 지출이 0 이라 소진액 변화는 안 보인다.
+**소진액 축이 맞는지는 `2026 하반기 실측 예산`(17%)이 뽑혀야 보인다** — 검증용을 지우면 그것이 올라온다.
+→ 호영님이 검증용 예산을 지우신 뒤 예산 카드의 소진율이 **예산 관리 화면의 17% 와 같은지** 보는 것이
+이 트랙 전체의 마지막 확인이다.
+
+### operator-shell 게이트 지시 (P1-9 + P1-10 합본)
+
+```
+npm run -w apps/web test -- src/__tests__/dashboard/ src/__tests__/budget/ src/__tests__/regression/ src/__tests__/inventory/ src/__tests__/meta/
+npm run -w apps/web build
+npm run red-ledger
+```
+
+```
+git add apps/web/src/lib/budget/budget-period.ts \
+        apps/web/src/lib/dashboard/summary-derive.ts \
+        apps/web/src/app/api/budgets/route.ts \
+        apps/web/src/app/api/dashboard/summary/route.ts \
+        apps/web/src/__tests__/budget/budget-period.test.ts \
+        apps/web/src/__tests__/dashboard/summary-contract-p1.test.ts \
+        apps/web/scripts/probe-p0-honesty.mjs \
+        apps/web/docs/plans/PLAN_main-dashboard-p0-honesty.md
+```
+
+⚠️ 경로 명시 필수 — 다른 세션이 지금 `csrf-*` · `inventory` · `dashboard/budget/page.tsx` 를 동시에 고치고 있다.
+⚠️ 커밋 메시지에서 **P1-9 를 "실측 결함 수정" 으로 쓰지 말 것** — 7-I 참조.
+   P1-9 가 실제로 닫은 것은 `UserBudget` 경로(현재 미사용)와 **폴백 경로**의 미정이다.
 
 ---
 
