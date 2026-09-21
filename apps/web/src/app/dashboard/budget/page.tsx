@@ -435,7 +435,7 @@ export default function BudgetPage() {
               되살릴 때의 조건: 월별은 PurchaseRecord 실적으로, 부서별은 부서 열이 생긴 뒤.
               계약: __tests__/regression/budget-fabricated-figures.test.ts */}
         {budgets.length > 0 && (
-          <div className="hidden md:block rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <div className="hidden md:block rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3">
             <p className="text-[13px] font-bold text-gray-500">지출 추이·부서별 소진 데이터 없음</p>
             <p className="mt-0.5 text-xs text-gray-500">
               월별 추이와 부서별 소진은 아직 실제 지출 기록과 연결되지 않았습니다. 예산별 소진은 아래 목록에서 확인하세요.

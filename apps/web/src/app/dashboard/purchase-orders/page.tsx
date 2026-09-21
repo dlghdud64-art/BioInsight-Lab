@@ -461,7 +461,7 @@ function PurchaseOrderLandingPageInner() {
                       ? "text-red-700"
                       : "text-slate-900";
               const toneCard = isZero
-                ? "bg-gray-50 border-gray-200"
+                ? "bg-white border-dashed border-slate-200"
                 : kpi.tone === "rose"
                   ? "bg-red-50 border-red-200"
                   : "bg-white border-slate-300 shadow-sm";

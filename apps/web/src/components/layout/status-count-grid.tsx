@@ -91,7 +91,7 @@ export function StatusCountGrid({
               item.active
                 ? "border-slate-300 bg-slate-50 ring-1 ring-slate-300"
                 : isZero
-                  ? "border-slate-200 bg-gray-50"
+                  ? "border-dashed border-slate-200 bg-white"
                   : "border-slate-300 bg-white shadow-sm",
               interactive && "hover:bg-slate-50 active:scale-[0.98] cursor-pointer",
               item.disabled && "cursor-not-allowed opacity-60",

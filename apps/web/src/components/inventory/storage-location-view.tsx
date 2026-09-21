@@ -16,7 +16,7 @@ export function StorageLocationView() {
   return (
     <div
       data-testid="storage-location-unwired"
-      className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+      className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3"
     >
       <p className="text-[13px] font-bold text-gray-500">보관 위치 데이터 없음</p>
       <p className="mt-0.5 text-xs text-gray-500">

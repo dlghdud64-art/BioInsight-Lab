@@ -1863,7 +1863,7 @@ function InventoryPageContent() {
               {/* 1. 전체 품목 (중립·baseline) */}
               <div
                 data-testid="dashboard-inventory-header-kpi-total-items"
-                className={`rounded-lg border px-3 py-2 ${headerKpiTotalItems > 0 ? "border-slate-300 bg-white" : "border-slate-200 bg-gray-50"}`}
+                className={`rounded-lg border px-3 py-2 ${headerKpiTotalItems > 0 ? "border-slate-300 bg-white" : "border-dashed border-slate-200 bg-white"}`}
               >
                 <span className="block text-[10px] font-semibold text-slate-500">전체 품목</span>
                 {kpiPending ? (
