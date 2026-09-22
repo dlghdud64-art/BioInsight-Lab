@@ -46,7 +46,7 @@ const LEGACY = [
   "app/_workbench/search/page.tsx",
   "app/app/step-nav.tsx",
   // 제거됨: "app/dashboard/analytics/_components/team-analytics-view.tsx" — §team-view-no-fabrication(2026-09-22) · TEAM_DATA 삭제(2건 ↓)
-  "app/dashboard/analytics/monthly/page.tsx",
+  // 제거됨: "app/dashboard/analytics/monthly/page.tsx" — §monthly-analytics-no-fabrication(2026-09-22) · 가상 12개월 삭제(1건 ↓)
   "app/dashboard/analytics/page.tsx",
   "app/dashboard/audit/page.tsx",
   "app/dashboard/budget/[id]/page.tsx",
@@ -68,8 +68,8 @@ const LEGACY = [
   "lib/vendor-portal/vendor-portal-store.ts",
 ];
 
-/** 기준선 총계. 올리지 않는다. 37(2026-09-21) → 36(2026-09-22 · 알림 센터) → 34(2026-09-22 · 팀별 보기 TEAM_DATA). */
-const CEILING = 34;
+/** 기준선 총계. 올리지 않는다. 37(2026-09-21) → 36(09-22 알림 센터) → 34(09-22 팀별 보기) → 33(09-22 월별 상세). */
+const CEILING = 33;
 
 const reachable = renderReachableSources(SRC);
 const perFile = [...reachable]
