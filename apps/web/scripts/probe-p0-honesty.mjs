@@ -282,6 +282,11 @@ const PROBES = {
     edits: [[BUDGET_ID_API, "        periodEndDate: endCalendarDate,", ""]],
   },
 
+  "J7-modal-emdash": {
+    desc: "모달 문구에 em dash 재주입 -> (J)⑧ RED (게이트·빌드를 통과하던 형태 · 실측 재현)",
+    edits: [[BUDGET_DETAIL, "${formatAmt(ctrl.total)} · 삭제하면", "${formatAmt(ctrl.total)} \u2014 삭제하면"]],
+  },
+
   "C1-comment-only": {
     desc: "코드는 인라인으로 되돌리고 **주석에만** 토큰을 남긴다 -> (H)④ RED (§comment-axis 준수 증명)",
     edits: [

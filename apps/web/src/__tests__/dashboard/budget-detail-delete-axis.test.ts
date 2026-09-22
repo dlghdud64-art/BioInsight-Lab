@@ -57,6 +57,20 @@ describe("§budget-delete-ui · 지울 수 있는 화면", () => {
     expect(fn.slice(catchIdx), "실패 경로에서 목록으로 보낸다").not.toContain('router.push(');
   });
 
+  it("⑧ 삭제 모달 문구는 화면에 나가는 UI 문자열이다 · em dash 0", () => {
+    // 🛑 실측 2026-09-22: 이 문구에 `—` 를 넣은 채 게이트·빌드·원장을 전부 통과했다.
+    //    pre-commit 의 em dash 검사는 **신규 추가 파일만** 본다(.husky/pre-commit:39).
+    //    이 파일은 수정(M) 이라 검사를 안 받았다 — 화면을 눌러 보고서야 나왔다.
+    const src = code(PAGE);
+    const i = src.indexOf("<ConfirmDialog");
+    expect(i, "ConfirmDialog 를 찾지 못했다").toBeGreaterThan(-1);
+    const modal = src.slice(i, src.indexOf("/>", i) + 2);
+    expect(modal, "모달 문구에 em dash 가 있다 · 구분자는 · 다").not.toContain("\u2014");
+    // 무엇을 지우는지 눈으로 보이게 — 이름과 금액이 문구에 있다.
+    expect(modal).toContain("budget.name");
+    expect(modal).toContain("formatAmt");
+  });
+
   it("④ 권한 판정은 서버가 한다 · 화면이 버튼을 숨겨 이유를 감추지 않는다", () => {
     const api = code(API);
     expect(api).toMatch(/export async function DELETE/);

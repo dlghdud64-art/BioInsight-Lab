@@ -46,6 +46,17 @@ if [ -n "$added" ]; then
   echo "$added" | xargs npx tsx scripts/check-em-dash-new-files.ts || exit 1
 fi
 
+# ── 1-B. §em-dash-added-lines (호영님 권고 승인 2026-09-22) — **수정 파일의 추가된 줄** ──
+#   1번은 신규 추가 파일(A)만 본다. 기존 파일을 고치며 넣은 em dash 는 아무도 보지 않았다.
+#   실측: 예산 상세의 삭제 모달 문구가 게이트·빌드·원장을 전부 통과해 prod 까지 갔다.
+#   레거시 6,926건은 건드리지 않는다 — **이번 커밋이 추가한 줄만** 본다.
+modified=$(git diff --cached --name-only --diff-filter=M -- apps/web/src \
+             | grep -E '\.(ts|tsx)$' || true)
+if [ -n "$modified" ]; then
+  echo "── 수정 파일 $(echo "$modified" | grep -c .)개 · 추가된 줄 em dash 검사 (pre-commit)"
+  npx tsx scripts/check-em-dash-added-lines.ts || exit 1
+fi
+
 # ── 2. dashboard 표면 inline hex 배경 (§11.49) ──
 DASHBOARD_STAGED=$(git diff --cached --name-only --diff-filter=ACMRTUXB \
   | grep -E '^apps/web/src/app/dashboard/.*\.(ts|tsx)$' || true)

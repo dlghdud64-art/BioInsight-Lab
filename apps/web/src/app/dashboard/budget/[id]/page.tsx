@@ -545,7 +545,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="예산을 삭제할까요?"
-        description={`${budget.name} · ${formatAmt(ctrl.total)} — 삭제하면 되돌릴 수 없습니다. 집행 이력이 있는 예산은 삭제 대신 기간 종료를 권합니다.`}
+        description={`${budget.name} · ${formatAmt(ctrl.total)} · 삭제하면 되돌릴 수 없습니다. 집행 이력이 있는 예산은 삭제 대신 기간 종료를 권합니다.`}
         confirmText={deleting ? "삭제 중…" : "삭제"}
         cancelText="취소"
         variant="destructive"

@@ -83,3 +83,37 @@ export function scanEmDash(src: string): { total: number; comments: number; hits
 
 /** 조항 위반분 = 구분자 용법만. placeholder 는 제외. */
 export const violations = (src: string) => scanEmDash(src).hits.filter((h) => h.kind === "separator");
+
+/**
+ * §em-dash-added-lines (2026-09-22) — `git diff -U0` 출력 → 파일별 "추가된 줄 번호".
+ *
+ * 왜 여기 있나: 판별(무엇이 위반인가)과 범위(어느 줄을 보는가)가 이 게이트의 두 축이고,
+ *   둘이 갈라지면 또 어긋난다. 정본을 한 파일에 둔다.
+ *
+ * 왜 줄 단위인가: 레거시 6,926건(1,599파일)이 있다. 파일 전체를 걸면 그 파일을 건드리는
+ *   순간 전부 RED 가 된다. **이번 커밋이 새로 들여오는 것만** 막는다.
+ */
+export function parseAddedLines(diffText: string): Map<string, Set<number>> {
+  const map = new Map<string, Set<number>>();
+  let file = "";
+  let next = 0;
+  for (const line of diffText.split("\n")) {
+    if (line.startsWith("+++ b/")) {
+      const p = line.slice(6).trim();
+      file = /\.(ts|tsx)$/.test(p) ? p : "";
+      continue;
+    }
+    if (!file) continue;
+    const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
+    if (hunk) {
+      next = Number(hunk[1]);
+      continue;
+    }
+    if (line.startsWith("+") && !line.startsWith("+++")) {
+      if (!map.has(file)) map.set(file, new Set());
+      map.get(file)!.add(next);
+      next += 1;
+    }
+  }
+  return map;
+}
