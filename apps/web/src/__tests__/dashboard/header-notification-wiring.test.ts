@@ -38,21 +38,31 @@ describe("§11.209d-notification-inapp-web-bell-ui — Header mock 제거", () =
   });
 });
 
+/* 🔁 창 확장 (§notifications-single-source · 2026-09-22 · 호영님 P0)
+ *   목록 쿼리가 Header 인라인에서 공용 훅 `useInAppNotifications`(lib/notifications/use-in-app-notifications.ts)
+ *   로 옮겨졌다 — 알림 센터 화면이 **같은 함수**를 쓰게 하려고(화면 수 = 종 뱃지 수).
+ *   명제는 그대로다: "종의 목록은 /api/notifications IN_APP 를 queryKey ['notifications'] 로 읽는다(mock 0)".
+ *   창만 Header + 훅으로 넓혔고, Header 가 그 훅을 **실제로 부른다**는 단언을 더했다(배선 끊김 차단). */
+const HOOK = "src/lib/notifications/use-in-app-notifications.ts";
+
 describe("§11.209d-notification-inapp-web-bell-ui — Header useQuery wiring", () => {
-  it("useQuery import (react-query)", () => {
+  it("Header 가 공용 훅을 부른다 (useInAppNotifications)", () => {
     const src = read(HEADER);
-    expect(src).toMatch(/useQuery/);
+    expect(src).toMatch(/\buseInAppNotifications\(\)/);
+    expect(src).toMatch(/from\s+["']@\/lib\/notifications\/use-in-app-notifications["']/);
   });
 
   it("/api/notifications fetch 호출 (actionType=IN_APP filter)", () => {
-    const src = read(HEADER);
-    expect(src).toMatch(/\/api\/notifications/);
-    expect(src).toMatch(/actionType[=:][^,)]*IN_APP/);
+    const hook = read(HOOK);
+    expect(hook).toMatch(/\buseQuery\(/);
+    expect(hook).toMatch(/\/api\/notifications/);
+    expect(hook).toMatch(/actionType[=:][^,)]*IN_APP/);
   });
 
   it("queryKey ['notifications'] 또는 ['notifications', ...] 정의", () => {
-    const src = read(HEADER);
-    expect(src).toMatch(/queryKey:\s*\[\s*["']notifications["']/);
+    const hook = read(HOOK);
+    expect(hook).toMatch(/\[\s*["']notifications["']\s*\]/);
+    expect(hook).toMatch(/queryKey:\s*IN_APP_NOTIFICATIONS_QUERY_KEY/);
   });
 });
 

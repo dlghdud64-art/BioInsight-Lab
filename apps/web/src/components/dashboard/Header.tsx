@@ -16,6 +16,7 @@ import {
   type NotificationCategory as MappedCategory,
 } from "@/lib/notifications/event-category-map";
 import type { NotificationItem } from "@/lib/notifications/notification-query";
+import { useInAppNotifications } from "@/lib/notifications/use-in-app-notifications";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -72,20 +73,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   // §11.209d-notification-inapp-web-bell-ui — /api/notifications 실시간
   // 데이터. actionType=IN_APP 만 필터 (EMAIL_DRAFT / QUEUE_ITEM 별도). 1분
   // 폴링 (refetchInterval) — 향후 SSE/WebSocket 별도 batch.
-  const { data: notificationData } = useQuery({
-    queryKey: ["notifications"],
-    queryFn: async () => {
-      const res = await fetch("/api/notifications?actionType=IN_APP&limit=20");
-      if (!res.ok) throw new Error("알림 조회 실패");
-      return (await res.json()) as {
-        notifications: NotificationItem[];
-        unreadCount: number;
-        limit: number;
-        offset: number;
-      };
-    },
-    refetchInterval: 60_000,
-  });
+  // §notifications-single-source (2026-09-22) — 알림 센터 화면과 **같은 함수**를 부른다(단일 출처).
+  const { data: notificationData } = useInAppNotifications();
   const notifications: NotificationItem[] = notificationData?.notifications ?? [];
 
   // §11.209d-notification-inapp-web-bell-ui — 개별 read mutation

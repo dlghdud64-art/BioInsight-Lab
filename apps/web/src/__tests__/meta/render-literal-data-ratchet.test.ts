@@ -27,7 +27,10 @@
  *
  * ── 자기 한계 ──
  *   1. API route.ts 가 지어낸 값을 내려주는 형태(렌더 뿌리 아님). 2. 함수 **안**의 리터럴 배열(모듈 스코프만 본다).
- *   3. 숫자가 없는 지어낸 문장 배열(예: 고정 AI 인사이트 문구) — ⓐ 표지가 없으면 못 잡는다.
+ *   3. 🛑 **문자열만으로 된 가짜 데이터**(팀명·공급사명 배열 · 고정 AI 인사이트 문구 등)는 ⓑ-data 축에 안 걸린다.
+ *      ⓐ 표지 주석이 있으면 일부 덮지만 **주석 없는 것은 뚫린다.** ⓑ 를 숫자 배열로 좁힌 대가다(호영님 승인 ·
+ *      2026-09-22 — 전체 레코드 배열로 걸면 정상 설정 배열마다 목록 추가밖에 길이 없어 래칫이 죽는다).
+ *      → 다음 전수 때는 **렌더 도달 여부**를 축으로 문자열 레코드 배열까지 재측정한다(래칫 밖 전수).
  *   4. 여러 줄에 걸친 선언 머리(`const X =\n [`) — 선언과 `[` 가 같은 줄일 때만 본다.
  */
 import { describe, it, expect } from "vitest";
@@ -47,7 +50,7 @@ const LEGACY = [
   "app/dashboard/analytics/page.tsx",
   "app/dashboard/audit/page.tsx",
   "app/dashboard/budget/[id]/page.tsx",
-  "app/dashboard/notifications/page.tsx",
+  // 제거됨: "app/dashboard/notifications/page.tsx" — §notifications-single-source(2026-09-22) · 가짜 알림 20건 삭제(1건 ↓)
   "app/dashboard/page.tsx",
   "app/dashboard/safety/page.tsx",
   "components/approval/quote-chain-progress-strip.tsx",
@@ -65,8 +68,8 @@ const LEGACY = [
   "lib/vendor-portal/vendor-portal-store.ts",
 ];
 
-/** 기준선 총계(2026-09-21). 올리지 않는다. */
-const CEILING = 37;
+/** 기준선 총계. 올리지 않는다. 37(2026-09-21) → 36(2026-09-22 · 알림 센터 가짜 알림 삭제). */
+const CEILING = 36;
 
 const reachable = renderReachableSources(SRC);
 const perFile = [...reachable]
