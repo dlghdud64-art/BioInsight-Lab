@@ -17,6 +17,7 @@
  *   ② 비중으로 예산 위험 판정 0 — cat.pct > 30 · 카테고리 표에 「예산 초과 위험」 0 (역계약)
  *   ③ TrendBadge 에 들어가는 값의 **집합** = [monthChange] — 시간축 값 하나뿐이다(개수가 아니라 집합)
  *   ④ 비교값이 없으면 비교 문구도 없다 — monthChange 가 null 이면 「전월 데이터 없음」
+ *   ⑦ 「이번 달」 = 달력의 이번 달 · 비교 = 바로 앞 달 (0 인 달을 건너뛰지 않는다 · 2026-09-22 §analytics-month-axis)
  *   ⑤ 카테고리 표 열 **집합** = [카테고리 · 이번 달 지출 · 비중] (MOM·상태 은퇴)
  *
  * ── 은퇴한 것 · 되살릴 조건 ──
@@ -24,8 +25,9 @@
  *   상태 열 — 카테고리별 **예산**이 생기면 그때(비중이 아니라 예산 대비 소진으로).
  *
  * ── 이 파일이 안 보는 것 (자기 한계) ──
- *   1. monthChange 자체의 정합성. 지금 정의는 **0이 아닌 마지막 두 달**을 비교한다(analytics/page.tsx
- *      validMonths) — 연속한 달이 아닐 수 있고 「이번 달」 이 아닐 수 있다. 큐 등재(2026-09-21), 이 파일은 안 잡는다.
+ *   1. (닫힘 2026-09-22 · §analytics-month-axis → 아래 ⑦) monthChange 가 「0이 아닌 마지막 두 달」 을 비교해
+ *      「이번 달」 이 아닐 수 있었다. 지금은 달력 축(마지막 = 이번 달 · 그 앞 = 지난달)이고 문구도 「동기」 를 버렸다.
+ *      남은 한계: 진행 중인 달과 지난달 **전체**를 비교한다(같은 기간 비교가 아니다) · 문구로 밝힌다.
  *   2. 분석·보고서 화면 밖의 추세 뱃지. 2026-09-21 전역 sweep 에서 비시간축 뱃지는 analytics 2건뿐이었다.
  *      (reports/page.tsx trendDelta 의 0 뭉개기는 아래 ⑥ 으로 **닫았다** — 2026-09-21 별도 커밋.)
  *   3. 「팀별 보기」 탭(team-analytics-view.tsx) 은 TEAM_DATA **더미 데이터셋** 전체를 표기 없이 렌더한다 —
@@ -81,9 +83,23 @@ describe("§analytics-fake-trend · 추세 표시는 시간축에서만 나온�
   });
 
   it("④ 비교값이 없으면 비교 문구도 없다 (전월 데이터 없음)", () => {
-    expect(PAGE).toMatch(/monthChange === null \? "전월 데이터 없음" : "전월 동기 대비"/);
+    // 문구 진화 2026-09-22 §analytics-month-axis: 「전월 동기 대비」 → 「지난달 전체 대비 (이번 달 진행 중)」 (⑦ 참조)
+    expect(PAGE).toMatch(/monthChange === null \? "전월 데이터 없음" : "지난달 전체 대비 \(이번 달 진행 중\)"/);
     // 조건 없이 항상 렌더하던 옛 형태가 돌아오면 RED
-    expect(PAGE).not.toMatch(/<p className="[^"]*">전월 동기 대비<\/p>/);
+    expect(PAGE).not.toMatch(/<p className="[^"]*">(전월 동기 대비|지난달 전체 대비[^<]*)<\/p>/);
+  });
+
+  it("⑦ 「이번 달」 은 달력의 이번 달 · 비교는 바로 앞 달 (0 인 달을 건너뛰지 않는다)", () => {
+    // monthlySpending = 최근 6 달력월(0 포함 · 마지막 = 이번 달) — API 가 그 모양인지 함께 문다
+    const API = stripComments(readFileSync(join(SRC, "app/api/analytics/dashboard/route.ts"), "utf8"));
+    expect(API).toMatch(/for \(let i = 5; i >= 0; i--\) \{\s*const key = format\(subMonths\(now, i\), "yyyy-MM"\);\s*monthlyMap\[key\] = 0;/);
+    expect(PAGE).toMatch(/const currentMonth = monthlySpending\[monthlySpending\.length - 1\] \?\? null;/);
+    expect(PAGE).toMatch(/const prevMonth = monthlySpending\[monthlySpending\.length - 2\] \?\? null;/);
+    // 0 인 달을 거르고 고르던 옛 형태(역계약)
+    expect(PAGE).not.toMatch(/\bvalidMonths\b/);
+    expect(PAGE).not.toMatch(/monthlySpending\.filter\(\(m\) => m\.amount > 0\)/);
+    // 「동기」 는 같은 기간 비교를 말한다 · 이 값은 그렇지 않다
+    expect(PAGE).not.toMatch(/전월 동기 대비/);
   });
 
   it("⑤ 카테고리 표 열 집합 = [카테고리 · 이번 달 지출 · 비중]", () => {

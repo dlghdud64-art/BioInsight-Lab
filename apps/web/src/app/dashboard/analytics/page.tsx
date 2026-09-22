@@ -243,10 +243,12 @@ export default function AnalyticsPage() {
     { vendor: "기타", pct: 12 },
   ];
 
-  // 이번 달 / 전월 지출
-  const validMonths = monthlySpending.filter((m) => m.amount > 0);
-  const currentMonth = validMonths[validMonths.length - 1] ?? null;
-  const prevMonth = validMonths[validMonths.length - 2] ?? null;
+  // 이번 달 / 전월 지출 — §analytics-month-axis (2026-09-22 · 호영님 P1)
+  // monthlySpending 은 최근 6개 **달력월**(지출 0 인 달 포함 · 마지막 = 이번 달)이다(api/analytics/dashboard).
+  // 🛑 예전엔 0 인 달을 걸러 「0이 아닌 마지막 두 달」 을 골랐다 → 이번 달 지출이 0 이면 카드 제목
+  //    「이번 달 누적 지출」 아래 몇 달 전 금액이 떴고, 뱃지는 연속하지도 않은 두 달을 비교했다.
+  const currentMonth = monthlySpending[monthlySpending.length - 1] ?? null;
+  const prevMonth = monthlySpending[monthlySpending.length - 2] ?? null;
   const monthChange = currentMonth && prevMonth && prevMonth.amount > 0
     ? Math.round(((currentMonth.amount - prevMonth.amount) / prevMonth.amount) * 1000) / 10
     : null;
@@ -1064,7 +1066,8 @@ export default function AnalyticsPage() {
               </p>
               {/* §analytics-fake-trend ④ — 비교값이 없으면 비교 문구도 없다. 뱃지만 숨고 문구가 남으면
                   "전월 대비" 를 말하는데 숫자가 없는 화면이 된다. */}
-              <p className="text-xs text-slate-500 mt-2">{monthChange === null ? "전월 데이터 없음" : "전월 동기 대비"}</p>
+              {/* §analytics-month-axis — 「동기」 가 아니다. 진행 중인 이번 달 누적을 지난달 **전체**와 비교한다. */}
+              <p className="text-xs text-slate-500 mt-2">{monthChange === null ? "전월 데이터 없음" : "지난달 전체 대비 (이번 달 진행 중)"}</p>
             </div>
 
             {/* KPI 3: AI 식별 절감 기회 */}
