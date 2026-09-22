@@ -13,9 +13,8 @@ export const dynamic = "force-dynamic";
  *
  * 지금: 헤더 종과 **같은 함수**(`useInAppNotifications`)로 읽는다. 알림이 없으면 「새 알림 없음」 한 줄.
  *   알림은 없는 게 정상이라 「왜 · 어디서」 설명을 붙이지 않는다(호영님).
- * ⚠️ `/api/notifications` 는 2026-09-22 현재 라우트가 없다(404) — 헤더 종과 같은 이유로 0건이다.
- *    404 처리는 별건이다(이 변경과 분리 · 호영님 지시).
- * 계약: __tests__/regression/notifications-single-source.test.ts
+ * `/api/notifications` 는 같은 날 §notifications-route 로 되살렸다(그 전엔 404 라 헤더 종과 함께 0건이었다).
+ * 계약: __tests__/regression/notifications-single-source.test.ts · notifications-route.test.ts
  */
 import Link from "next/link";
 import { useInAppNotifications } from "@/lib/notifications/use-in-app-notifications";

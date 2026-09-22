@@ -9,8 +9,8 @@
  *   §11.209d 가 헤더의 mock 을 걷어낼 때 알림 센터는 형제 슬롯으로 남았다.
  *   → 두 화면이 이 훅 하나를 부른다. 화면이 보여주는 수와 종의 뱃지가 **같은 함수**에서 나온다.
  *
- * ⚠️ 이 엔드포인트(`/api/notifications`)는 2026-09-22 현재 **라우트가 없다(404)**. 그래서 두 화면 모두
- *    지금은 0건이다. 404 처리는 별건(호영님 지시: 이 변경과 분리)이다.
+ * 이 엔드포인트(`/api/notifications`)는 같은 날 §notifications-route 로 되살렸다(그 전엔 404 라 두 화면 모두 0건).
+ *   출처 = NotificationAction(IN_APP · 수신자 본인). 계약: __tests__/regression/notifications-route.test.ts
  */
 import { useQuery } from "@tanstack/react-query";
 import type { NotificationItem } from "@/lib/notifications/notification-query";

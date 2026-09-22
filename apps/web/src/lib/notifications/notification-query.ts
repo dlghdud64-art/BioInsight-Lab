@@ -99,56 +99,62 @@ export async function getUserNotifications(
 }
 
 /**
- * 알림을 읽음 처리한다.
+ * 미읽음으로 세는 IN_APP 상태 — §notifications-route (2026-09-22)
  *
- * SENT → READ 전이 + readAt 타임스탬프 기록.
- * 이미 READ 상태이면 무시.
+ * IN_APP 액션은 PENDING 으로 생성되고(event-action-map), PENDING → SENT 를 옮기는
+ * `executeNotificationAction` 은 호출자가 0 이다. 그래서 SENT 만 세면 미읽음이 **항상 0** 이고
+ * 읽음 처리도 **항상 무시**됐다(prod 2026-09-22: IN_APP 6행 전량 PENDING).
+ * IN_APP 은 행이 생기는 순간 수신자가 볼 수 있으므로(이 라우트가 곧 전달) PENDING 도 도착한 것이다.
  */
-export async function markNotificationRead(actionId: string): Promise<void> {
-  const action = await db.notificationAction.findUnique({
-    where: { id: actionId },
-    select: { id: true, status: true },
-  });
+export const IN_APP_UNREAD_STATUSES = ["PENDING", "SENT"] as const;
 
-  if (!action) {
-    throw new Error(
-      `[NotificationQuery] 알림을 찾을 수 없음: ${actionId}`
-    );
-  }
+export type MarkReadResult = "read" | "already_read" | "not_found";
 
-  // 이미 읽음 상태이면 무시
-  if (action.status === "READ") {
-    return;
-  }
-
-  // SENT 상태만 READ로 전이 가능
-  if (action.status !== "SENT") {
-    console.warn(
-      `[NotificationQuery] READ 전이 불가 — 현재 상태: ${action.status} (actionId=${actionId})`
-    );
-    return;
-  }
-
-  await db.notificationAction.update({
-    where: { id: actionId },
+/**
+ * 알림을 읽음 처리한다 — **수신자 본인 것만.**
+ *
+ * 소유 확인을 이 함수 안에 둔다(id 만으로 갱신하던 이전 판본은 호출자가 확인을 빠뜨리면
+ * 남의 알림을 읽음 처리할 수 있었다). 조건부 updateMany 한 번이라 확인과 갱신 사이 틈이 없다.
+ * 남의 알림과 없는 알림을 구분하지 않는다(둘 다 not_found · 존재 여부를 흘리지 않는다).
+ */
+export async function markNotificationRead(
+  actionId: string,
+  userId: string
+): Promise<MarkReadResult> {
+  const updated = await db.notificationAction.updateMany({
+    where: {
+      id: actionId,
+      recipientId: userId,
+      actionType: "IN_APP",
+      status: { in: [...IN_APP_UNREAD_STATUSES] },
+      readAt: null,
+    },
     data: {
       status: "READ",
       readAt: new Date(),
     },
   });
+  if (updated.count > 0) return "read";
+
+  const own = await db.notificationAction.findFirst({
+    where: { id: actionId, recipientId: userId, actionType: "IN_APP" },
+    select: { id: true },
+  });
+  return own ? "already_read" : "not_found";
 }
 
 /**
  * 사용자의 미읽음 알림 수를 조회한다.
  *
- * IN_APP 타입 + SENT 상태(아직 읽지 않은) 기준.
+ * IN_APP 타입 + 미읽음 상태(PENDING·SENT) + readAt 없음.
  */
 export async function getUnreadCount(userId: string): Promise<number> {
   return db.notificationAction.count({
     where: {
       recipientId: userId,
       actionType: "IN_APP",
-      status: "SENT",
+      status: { in: [...IN_APP_UNREAD_STATUSES] },
+      readAt: null,
     },
   });
 }

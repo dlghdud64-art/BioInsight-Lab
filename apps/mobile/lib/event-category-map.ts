@@ -1,4 +1,14 @@
 /**
+ * 재고 알림의 품목명 — 생산자(inventory/[id]/use · smart-receiving · restock-detector)는 전부
+ * `productName` 에 쓴다. `itemName` 을 쓰는 생산자는 0 이다(§notifications-route 2026-09-22 실측 ·
+ * 그 전에는 prod 재고 알림 전량이 「… 재고」 로만 보였다).
+ */
+function productNameOf(meta: Record<string, unknown>): string | null {
+  const v = meta.productName ?? meta.itemName;
+  return typeof v === "string" && v.trim().length > 0 ? v : null;
+}
+
+/**
  * §11.209d-notification-inapp-mobile-screen — eventType → UI 카테고리 매핑.
  *
  * canonical truth (§11.209d-notification-inapp-web-bell-ui):
@@ -81,20 +91,20 @@ export function buildNotificationText(item: NotificationItem): string {
 
   if (eventType === "PURCHASE_APPROVAL_REQUESTED") {
     const title = (meta.quoteTitle as string | undefined) ?? "견적";
-    return `결재 요청 도착 — ${title}`;
+    return `결재 요청 도착 · ${title}`;
   }
   if (eventType === "PURCHASE_APPROVED") {
     const title = (meta.quoteTitle as string | undefined) ?? "견적";
-    return `결재 승인 완료 — ${title}`;
+    return `결재 승인 완료 · ${title}`;
   }
   if (eventType === "PURCHASE_REJECTED") {
     const reason = (meta.rejectionReason as string | undefined) ?? "사유 미명시";
-    return `결재 반려 — ${reason}`;
+    return `결재 반려 · ${reason}`;
   }
 
   if (eventType === "QUOTE_RECEIVED") {
     const vendor = (meta.vendorName as string | undefined) ?? "공급사";
-    return `견적서 수신 — ${vendor}`;
+    return `견적서 수신 · ${vendor}`;
   }
   if (eventType === "QUOTE_REQUESTED") return "견적 요청 접수";
   if (eventType === "QUOTE_EXPIRED") return "견적 만료";
@@ -102,16 +112,18 @@ export function buildNotificationText(item: NotificationItem): string {
   if (eventType === "FAST_TRACK_ELIGIBLE") return "즉시 승인 가능 권장";
 
   if (eventType === "INVENTORY_LOW") {
-    const name = (meta.itemName as string | undefined) ?? "재고";
-    return `재고 부족 — ${name}`;
+    const name = productNameOf(meta);
+    return name ? `재고 부족 · ${name}` : "재고 부족";
   }
   if (eventType === "INVENTORY_EXPIRING") {
-    const name = (meta.itemName as string | undefined) ?? "재고";
-    return `유효기한 임박 — ${name}`;
+    const name = productNameOf(meta);
+    return name ? `유효기한 임박 · ${name}` : "유효기한 임박";
   }
   if (eventType === "INVENTORY_RECEIVED") {
-    const name = (meta.itemName as string | undefined) ?? "재고";
-    return `입고 완료 — ${name}`;
+    const name = productNameOf(meta);
+    if (name) return `입고 완료 · ${name}`;
+    const lines = typeof meta.lineCount === "number" ? meta.lineCount : null;
+    return lines ? `입고 완료 · ${lines}개 품목` : "입고 완료";
   }
 
   if (eventType === "ORDER_PLACED") return "주문 생성";
@@ -123,14 +135,14 @@ export function buildNotificationText(item: NotificationItem): string {
   if (eventType === "ESCALATION_TRIGGERED") return "에스컬레이션 발생";
   if (eventType === "BUDGET_WARNING") {
     const cat = (meta.categoryDisplayName as string | undefined) ?? "예산";
-    return `예산 경고 — ${cat}`;
+    return `예산 경고 · ${cat}`;
   }
 
   const payload = (item.payload ?? {}) as Record<string, unknown>;
   const label = payload.label as string | undefined;
   if (label && label.length > 0) return label;
 
-  return `알림 — ${eventType}`;
+  return "새 알림";
 }
 
 // ── notification href 빌더 (mobile router path) ──
