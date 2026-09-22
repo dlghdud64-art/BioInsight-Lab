@@ -58,12 +58,14 @@ const CLS = /\b(?:amber|orange)-(?:50|100|200|300|400|500|600|700|800|900|950)\b
  *      lib/inventory/flow-insight-engine.ts 의 유일한 importer 가 사라졌다 → importer 0 = dead →
  *      census 에서 빠졌다(4건). 엔진 소스의 amber 4건은 그대로 남아 있다.
  *      엔진을 다시 import 하면 「신규유입」 으로 RED 가 난다 — 되살릴 때 amber 도 함께 정리할 것. */
-const BASELINE_TOTAL = 62;
+/** 🟢 2026-09-22 감축: 62 → 61. **실제 감축이다.** §team-view-no-fabrication 이 팀별 보기의
+ *      TEAM_DATA 렌더를 통째로 지우면서 그 안의 amber 1건도 함께 사라졌다(team-analytics-view.tsx 목록 제거). */
+const BASELINE_TOTAL = 61;
 const BASELINE_PER_FILE: Record<string, number> = {
   "app/api/analytics/dashboard/route.ts": 1,
   "app/dashboard/analytics/category/page.tsx": 2,
   "app/dashboard/analytics/page.tsx": 3,
-  "app/dashboard/analytics/_components/team-analytics-view.tsx": 1,
+  // 제거됨: "app/dashboard/analytics/_components/team-analytics-view.tsx": 1 — §team-view-no-fabrication(2026-09-22)
   "app/dashboard/safety/page.tsx": 1,
   "app/intro/page.tsx": 4,
   "app/products/[id]/page.tsx": 2,
