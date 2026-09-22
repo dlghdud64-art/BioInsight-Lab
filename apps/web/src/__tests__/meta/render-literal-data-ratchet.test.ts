@@ -65,11 +65,11 @@ const LEGACY = [
   "lib/ops-console/seed-data.ts",
   "lib/organization/default-name.ts",
   "lib/review-queue/operator-console-contract.ts",
-  "lib/vendor-portal/vendor-portal-store.ts",
+  // 제거됨: "lib/vendor-portal/vendor-portal-store.ts" — §vendor-portal-seed-retired(2026-09-22) · 포털 라우트·시드 삭제
 ];
 
-/** 기준선 총계. 올리지 않는다. 37(2026-09-21) → 36(09-22 알림 센터) → 34(09-22 팀별 보기) → 33(09-22 월별 상세). */
-const CEILING = 33;
+/** 기준선 총계. 올리지 않는다. 37(2026-09-21) → 36(09-22 알림 센터) → 34(09-22 팀별 보기) → 33(09-22 월별 상세) → 29(09-22 벤더 포털 시드 · 로컬 operator-shell 실측 · 도달 693파일). */
+const CEILING = 29;
 
 const reachable = renderReachableSources(SRC);
 const perFile = [...reachable]
