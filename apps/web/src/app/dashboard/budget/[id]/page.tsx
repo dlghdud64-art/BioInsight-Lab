@@ -21,8 +21,13 @@ import {
   Package,
   Send,
   FileCheck,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+// §budget-period-axis — 남은 일수는 대시보드와 **같은 함수**로 센다(축이 갈리지 않게).
+import { budgetPace } from "@/lib/dashboard/p0-display";
 
 type Budget = {
   id: string;
@@ -31,6 +36,13 @@ type Budget = {
   currency: string;
   periodStart: string;
   periodEnd: string;
+  /**
+   * §budget-period-axis — 기간 종료일의 **달력 날짜** "YYYY-MM-DD".
+   * `periodEnd`(ISO)를 `new Date(...).toLocaleDateString()` 하면 하루가 밀린다 —
+   * 로컬 23:59:59 로 만들어져 UTC 로 굳고 KST 에서 다음 날로 읽힌다.
+   * 실측 2026-09-22: 원문 12-30 예산이 이 화면에 `2026. 12. 31.` 로 떴다.
+   */
+  periodEndDate?: string | null;
   targetDepartment?: string | null;
   projectName?: string | null;
   description?: string | null;
@@ -64,7 +76,13 @@ function deriveBudgetControl(b: Budget) {
   // 기간 내 잔여일/소진 예측
   const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
   const elapsedDays = Math.max(0, Math.ceil((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-  const remainingDays = Math.max(0, totalDays - elapsedDays);
+  // §budget-period-axis — 남은 일수는 대시보드 예산 카드와 **같은 함수**에서 나온다.
+  //   (구) totalDays - elapsedDays — 오늘을 빼서 대시보드(오늘 포함)와 하루 어긋났다.
+  //        실측 2026-09-22: 상세 `잔여 100일` vs 대시보드 `남은 일수 101일`.
+  //   달력 날짜가 없으면(구 응답) 종전 계산으로 낙하한다.
+  const remainingDays = b.periodEndDate
+    ? budgetPace(available, now, b.periodEndDate).daysLeft
+    : Math.max(0, totalDays - elapsedDays);
   const dailyBurn = elapsedDays > 0 ? actual / elapsedDays : 0;
   const forecastExhaustDays = dailyBurn > 0 ? Math.ceil(available / dailyBurn) : null;
 
@@ -119,6 +137,11 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const [budget, setBudget] = useState<Budget | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  // §budget-delete-ui — 삭제 확인은 React 모달이다(window.confirm 금지: 브라우저 전역 대화상자는
+  //   자동 검증을 멈춰 세우고, same-canvas 원칙에도 어긋난다).
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   const fetchBudget = useCallback(async () => {
     if (!id) return;
@@ -164,7 +187,10 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const ctrl = deriveBudgetControl(budget);
   const riskCfg = RISK_CONFIG[ctrl.risk];
   const startStr = new Date(budget.periodStart).toLocaleDateString("ko-KR");
-  const endStr = new Date(budget.periodEnd).toLocaleDateString("ko-KR");
+  // §budget-period-axis — 달력 날짜가 오면 **문자열 그대로** 쓴다(Date 왕복 0).
+  const endStr = budget.periodEndDate
+    ? budget.periodEndDate.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$1. $2. $3.")
+    : new Date(budget.periodEnd).toLocaleDateString("ko-KR");
   const formatAmt = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
   const formatK = (n: number) => {
     if (n >= 1_000_000) return `₩${(n / 1_000_000).toFixed(1)}M`;
@@ -172,6 +198,30 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
     return `₩${n.toLocaleString("ko-KR")}`;
   };
   const policy = DEFAULT_POLICY;
+
+  // 🛑 §budget-delete-ui (2026-09-22) — DELETE /api/budgets/[id] 는 RBAC·감사로그까지 갖춰
+  //   있었는데 **누를 데가 없었다.** 만들 수는 있고 지울 수는 없는 화면은 그 자체로 결함이다.
+  //   서버가 권한을 판정한다(조직 예산은 OWNER/ADMIN). 화면은 버튼을 숨기지 않고
+  //   서버 거절을 그대로 보여준다 — 숨기면 왜 안 되는지 알 수 없다.
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/budgets/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || "삭제하지 못했습니다");
+      }
+      toast({ title: "예산 삭제됨", description: `${budget?.name ?? "예산"} 을(를) 삭제했습니다.` });
+      setDeleteOpen(false);
+      router.push("/dashboard/budget");
+      router.refresh();
+    } catch (err: any) {
+      // 실패를 성공처럼 보이지 않게 한다 — 모달은 열어 둔 채 사유를 띄운다.
+      toast({ title: "삭제 실패", description: err.message || "알 수 없는 오류", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleExcelDownload = async () => {
     try {
@@ -220,6 +270,14 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                 <ArrowLeft className="h-4 w-4 mr-1.5" />목록
               </Button>
             </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-red-200 bg-pn text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" />삭제
+            </Button>
           </div>
         </div>
       </div>
@@ -481,6 +539,18 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
           </div>
         </div>
       </div>
+
+      {/* §budget-delete-ui — 비가역 삭제. 이름을 문구에 박아 "무엇을" 지우는지 눈으로 확인시킨다. */}
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="예산을 삭제할까요?"
+        description={`${budget.name} · ${formatAmt(ctrl.total)} — 삭제하면 되돌릴 수 없습니다. 집행 이력이 있는 예산은 삭제 대신 기간 종료를 권합니다.`}
+        confirmText={deleting ? "삭제 중…" : "삭제"}
+        cancelText="취소"
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

@@ -117,7 +117,7 @@ export async function GET(
 
     // ⑤ 배선 (P3) — usage 합산 창을 표시 기간과 같은 truth 로: description 명시
     // period 우선, 없으면 yearMonth 월 창 (resolveBudgetPeriod 단일화).
-    const { periodStart, periodEnd } = resolveBudgetPeriod(budget);
+    const { periodStart, periodEnd, endCalendarDate } = resolveBudgetPeriod(budget);
 
     // 사용액 계산 (조직 예산인 경우)
     let totalSpent = 0;
@@ -163,6 +163,12 @@ export async function GET(
         projectName,
         periodStart: (parsedPeriodStart ?? periodStart).toISOString(),
         periodEnd: (parsedPeriodEnd ?? periodEnd).toISOString(),
+        // 🛑 §budget-period-axis — 화면이 표시에 쓸 **달력 날짜**(YYYY-MM-DD).
+        //   위 ISO 를 화면에서 `new Date(...).toLocaleDateString()` 하면 하루가 밀린다:
+        //   periodEnd 는 로컬 23:59:59 로 만들어져 UTC 로 굳고, KST 에서 다음 날로 읽힌다.
+        //   실측 2026-09-22: 원문 12-30 인 예산이 상세 화면에 `2026. 12. 31.` 로 떴다.
+        //   대시보드는 이미 이 값(endCalendarDate)을 쓴다 — 두 화면을 같은 축에 올린다.
+        periodEndDate: endCalendarDate,
         usage: { totalSpent, usageRate, remaining },
       },
     });

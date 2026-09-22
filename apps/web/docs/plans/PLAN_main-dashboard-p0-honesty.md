@@ -1134,6 +1134,114 @@ git add apps/web/src/lib/budget/budget-period.ts \
 ⚠️ 커밋 메시지에서 **P1-9 를 "실측 결함 수정" 으로 쓰지 말 것** — 7-I 참조.
    P1-9 가 실제로 닫은 것은 `UserBudget` 경로(현재 미사용)와 **폴백 경로**의 미정이다.
 
+
+---
+
+## 7-K. P1-11 구현 — 예산 상세: 삭제 UI + 날짜 축 정렬 (2026-09-22)
+
+prod 화면을 직접 보다 두 건이 나왔다. 하나는 **내 지시가 실행 불가능했다는 것**이다.
+
+### 🛑 ① 지울 수 없는 화면 — 내 잘못
+
+`DELETE /api/budgets/[id]` 는 RBAC(`isOrgAdminOrOwner`)·감사로그(`enforceAction`)까지 갖춰 있는데
+**화면 어디에도 진입점이 없었다.** 상세 화면 버튼은 `내보내기`·`목록`·`견적 보기`·`발주 보기` 뿐이고
+목록 화면에도 없다(`page.tsx` 에 "삭제"/"DELETE" 0건).
+
+나는 세션 내내 "비가역이라 호영님이 직접 하세요" 라고 넘겼다. **경로가 있는지 확인하지 않았다.**
+실행할 수 없는 지시를 반복해서 드린 것이다.
+
+🛑 교훈: **"사용자가 직접 하세요" 라고 넘기기 전에 그 경로가 화면에 있는지 먼저 확인한다.**
+비가역 작업을 사람에게 넘기는 것은 옳지만, 넘길 곳이 없으면 그건 넘김이 아니라 방치다.
+
+### ② 같은 예산이 두 화면에서 하루 어긋남
+
+| 출처 | 종료일 | 잔여 |
+| :--- | :--- | :--- |
+| description 원문 | `2026-12-30` | — |
+| 대시보드(P1-10) | `12.30까지` | `101일` |
+| **예산 상세** | **`2026. 12. 31.`** | **`100일`** |
+
+원인 둘 다 내가 `endCalendarDate` 주석에 예고한 형태였다.
+- 날짜: `new Date(budget.periodEnd).toLocaleDateString("ko-KR")` — API 가 ISO(UTC)로 내려준 것을
+  KST 로 읽어 하루가 밀린다. `periodEnd` 는 로컬 23:59:59 로 만들어져 UTC 로 굳는다.
+- 잔여: `totalDays - elapsedDays` — 오늘을 빼서, 오늘을 포함하는 대시보드와 하루 어긋난다.
+
+### 고친 것
+
+| 파일 | 내용 |
+| :--- | :--- |
+| `api/budgets/[id]/route.ts` | 응답에 `periodEndDate`(달력 날짜) 추가 — `resolveBudgetPeriod` 의 `endCalendarDate` |
+| `dashboard/budget/[id]/page.tsx` | 종료일은 그 문자열 그대로 · 잔여일은 **대시보드와 같은 `budgetPace`** · 삭제 버튼 + `ConfirmDialog` |
+
+삭제 UI 설계:
+- 확인은 **React 모달**(`ConfirmDialog`). `window.confirm` 은 쓰지 않는다 —
+  브라우저 전역 대화상자는 자동 검증을 멈춰 세우고 same-canvas 원칙에도 어긋난다.
+- 모달 문구에 **예산 이름과 금액**을 박는다. 무엇을 지우는지 눈으로 확인시킨다.
+- 권한은 **서버가 판정**한다. 화면이 역할로 버튼을 숨기지 않는다 — 숨기면 왜 안 되는지 알 수 없다.
+- 실패하면 모달을 연 채 사유를 destructive 로 띄운다. `router.push` 는 **성공 경로에만** 있다.
+
+### Sentinel · 검출력
+
+신규 `budget-detail-delete-axis.test.ts` 7건.
+
+| 프로브 | RED |
+| :--- | :--- |
+| `J1-delete-button-gone` | ① |
+| `J2-window-confirm` | ② |
+| `J3-fail-looks-ok` | ③ |
+| `J4-date-roundtrip-revive` | ⑤ |
+| `J5-local-daycount` | ⑥ |
+| `J6-api-drops-calendar` | ⑦ |
+
+🛑 **검출력 0 을 또 하나 잡았다.** ⑤의 첫 단언이
+`toMatch(/budget\.periodEndDate[\s\S]{0,200}?toLocaleDateString/)` 였는데,
+**두 토큰이 그 순서로 있다**는 것만 봐서 삼항의 조건을 뒤집어도 통과했다(J4 통과).
+삼항의 **어느 분기가 무엇을 쓰는지**로 바꾸자 RED. 순서는 명제가 아니다 — 4원칙에 한 줄 더 붙는다.
+
+또 하나: ③의 창을 `indexOf("catch")` 로 열었더니 `res.json().catch(...)` 가 먼저 걸렸다.
+구문상의 catch 절(`} catch (`)을 경계로 바꿨다(4원칙 ②).
+
+### 자체 측정
+
+12파일 **179/180**. 유일한 실패는 `tenant-scope-coverage` 의 `GET /api/invites/[token]` —
+**내가 건드린 파일이 아니다.** 같은 파일의 `budgets/[id] isOrgAdminOrOwner` 오분류 회귀 핀은 통과한다.
+전부 격리 러너(비권위).
+
+### operator-shell 게이트 지시 (P1-11)
+
+```
+npm run -w apps/web test -- src/__tests__/dashboard/ src/__tests__/budget/ src/__tests__/regression/ src/__tests__/security/ src/__tests__/meta/
+npm run -w apps/web build
+npm run red-ledger
+```
+
+```
+git add apps/web/src/app/api/budgets/\[id\]/route.ts \
+        apps/web/src/app/dashboard/budget/\[id\]/page.tsx \
+        apps/web/src/__tests__/dashboard/budget-detail-delete-axis.test.ts \
+        apps/web/scripts/probe-p0-honesty.mjs \
+        apps/web/docs/plans/PLAN_main-dashboard-p0-honesty.md
+```
+
+⚠️ `page.tsx` 는 **CRLF 파일**이다. 삽입분도 CRLF 로 맞췄다(CR 556 = LF 556).
+   `.gitattributes` 가 `*.tsx text eol=lf` 라 커밋은 LF 로 정규화된다 — diff 는 손댄 줄만 나온다.
+
+### 배포 전 실측 (2026-09-22 · prod · 로그인 세션)
+
+결함 상태를 눈으로 확정해 뒀다 — 배포 후 전후 비교의 기준값이다.
+
+| | 값 |
+| :--- | :--- |
+| `설명`(원문) | `period:2026-09-20~2026-12-30` |
+| 화면 기간 | **`2026. 9. 20. ~ 2026. 12. 31.`** ← 하루 밀림 |
+| 화면 잔여 | **`잔여 99일`** · `경과 3일 / 102일` |
+| summary API | `"periodEnd":"2026-12-30"` (P1-10 반영분) |
+| 상단 버튼 | `내보내기` · `목록` — **삭제 없음** |
+
+**배포 후 확인**: ① 상단에 `삭제` 버튼 ② 기간 끝이 `2026. 12. 30.`
+③ `잔여` 가 대시보드 `남은 일수` 와 **같은 수**(절대값은 날짜에 따라 움직인다 — 같은지만 본다).
+그리고 삭제 버튼으로 검증용 예산을 지울 수 있다.
+
 ---
 
 ## 8. Optional Addenda

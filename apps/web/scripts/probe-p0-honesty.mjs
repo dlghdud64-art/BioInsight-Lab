@@ -31,6 +31,8 @@ const SUMMARY_ROUTE = "src/app/api/dashboard/summary/route.ts";
 const DERIVE = "src/lib/dashboard/summary-derive.ts";
 const PERIOD_LIB = "src/lib/budget/budget-period.ts";
 const BUDGETS_LIST = "src/app/api/budgets/route.ts";
+const BUDGET_DETAIL = "src/app/dashboard/budget/[id]/page.tsx";
+const BUDGET_ID_API = "src/app/api/budgets/[id]/route.ts";
 const SURFACES = [STAT_LINE, BUDGET_CARD, PIPELINE, PAGE, MOBILE];
 
 /** 대상 파일의 EOL 을 읽어 앵커를 만든다. */
@@ -252,6 +254,32 @@ const PROBES = {
   "I7-scopekey-drift": {
     desc: "폴백 소진액의 키를 화면과 다르게 -> (G)⑧ RED (§budget-scope-key-mismatch 재발)",
     edits: [[SUMMARY_ROUTE, "await resolveBudgetPurchaseScopeKeys(fallbackBudget);", "[userId, ...workspaceIds];"]],
+  },
+
+  // ── 그룹 J: §budget-delete-ui + 상세 화면 날짜 축 (2026-09-22) ────────
+  "J1-delete-button-gone": {
+    desc: "삭제 버튼 제거 -> (J)① RED (다시 '지울 수 없는 화면' 이 된다)",
+    edits: [[BUDGET_DETAIL, "onClick={() => setDeleteOpen(true)}", "onClick={() => {}}"]],
+  },
+  "J2-window-confirm": {
+    desc: "확인을 window.confirm 으로 되돌림 -> (J)② RED (자동 검증이 멈춘다)",
+    edits: [[BUDGET_DETAIL, "  const handleDelete = async () => {", "  const handleDelete = async () => {\n    if (!window.confirm(\"삭제할까요?\")) return;"]],
+  },
+  "J3-fail-looks-ok": {
+    desc: "실패해도 목록으로 보냄 -> (J)③ RED (삭제된 것처럼 보인다)",
+    edits: [[BUDGET_DETAIL, "      toast({ title: \"삭제 실패\", description: err.message || \"알 수 없는 오류\", variant: \"destructive\" });", "      router.push(\"/dashboard/budget\");"]],
+  },
+  "J4-date-roundtrip-revive": {
+    desc: "종료일을 다시 Date 왕복으로 -> (J)⑤ RED (하루 밀린다 · 실측 결함 재현)",
+    edits: [[BUDGET_DETAIL, "  const endStr = budget.periodEndDate", "  const endStr = !budget.periodEndDate"]],
+  },
+  "J5-local-daycount": {
+    desc: "남은 일수를 상세 화면이 스스로 셈 -> (J)⑥ RED (대시보드와 축이 갈린다)",
+    edits: [[BUDGET_DETAIL, "    ? budgetPace(available, now, b.periodEndDate).daysLeft", "    ? Math.max(0, totalDays - elapsedDays)"]],
+  },
+  "J6-api-drops-calendar": {
+    desc: "API 가 달력 날짜를 안 내려줌 -> (J)⑦ RED",
+    edits: [[BUDGET_ID_API, "        periodEndDate: endCalendarDate,", ""]],
   },
 
   "C1-comment-only": {
