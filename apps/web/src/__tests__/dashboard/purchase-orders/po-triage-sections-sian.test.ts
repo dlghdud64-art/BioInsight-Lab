@@ -22,6 +22,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
 const PAGE = "src/app/dashboard/purchase-orders/page.tsx";
@@ -172,9 +173,13 @@ describe("§시안-PO-Phase1 회귀 0 — 기존 wiring / 렌더 보존", () => 
     expect(src).toMatch(/poStatusItems/);
   });
 
-  it("ops-store unifiedInboxItems wiring 보존", () => {
-    expect(src).toMatch(/useOpsStore/);
-    expect(src).toMatch(/unifiedInboxItems/);
+  // §po-seed-cutoff (2026-09-22 · 호영님 판정) 승계 — 보존해야 할 것은 「파생이 단일 입력에서 나온다」 이지
+  //   그 입력이 **시드 스토어**라는 사실이 아니었다. 시드를 끊었으므로 입력 배선만 바뀌고 명제는 그대로다.
+  it("단일 입력(unifiedInboxItems) 파생 wiring 보존 · 시드 스토어 0", () => {
+    expect(src).toMatch(/\bunifiedInboxItems\b/);
+    // 부정 단언은 주석 제거본에 — 시드를 끊은 사유를 적은 주석이 스스로 걸리면
+    // 다음 사람이 주석을 지워 통과시키게 된다(§부정 단언은 주석 제거본에).
+    expect(stripComments(src)).not.toMatch(/\buseOpsStore\b/);
   });
 
   it("preferences sync (updatePurchaseOrdersFilter) 보존", () => {

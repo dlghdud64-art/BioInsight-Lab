@@ -234,11 +234,10 @@ function CaseRowView({
           {/* 헤더: PO 링크 + 회신일 + 미니 스텝퍼 */}
           <div className="px-5 py-3 flex items-center gap-4 bg-slate-50/50">
             <p className="flex-1 min-w-0 text-[12.5px] text-slate-600 truncate">
-              {row.orderId ? (
-                <Link href={`/dashboard/purchase-orders/${row.orderId}`} onClick={(e) => e.stopPropagation()} className="text-blue-600 hover:underline font-mono">{row.displayNumber}</Link>
-              ) : (
-                <span className="font-mono">{row.displayNumber}</span>
-              )}
+              {/* §po-seed-cutoff (2026-09-22 · 호영님 판정) — 발주 상세로 가는 링크 제거.
+                  그 화면은 시드(po-001~003)에서만 발주를 찾았으므로 **실제 주문 id 로는 100% 「찾을 수 없음」** 이었다.
+                  정보(발주번호)는 남기고 거짓 약속(누르면 그 발주가 보인다)만 없앤다. */}
+              <span className="font-mono">{row.displayNumber}</span>
               {" · 회신 "}{fmtDate(row.submittedAt)}
             </p>
             <MiniStepper step={row.step} done={row.isDone} />

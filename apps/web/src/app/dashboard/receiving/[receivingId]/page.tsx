@@ -193,12 +193,12 @@ export default function ReceivingDetailPage() {
           </div>
           <p className="mt-1 text-[12.5px] text-[#64748b] flex items-center gap-1.5 flex-wrap">
             <span>{draft.vendorName ?? "공급사 미상"}</span>
+            {/* §po-seed-cutoff (2026-09-22 · 호영님 판정) — 발주 상세 링크 제거(그 화면은 실제 주문 id 를 못 찾는다).
+                발주번호는 남긴다 — 정보는 유지, 거짓 약속만 제거. */}
             {draft.order && (
               <>
                 <span>·</span>
-                <Link href={`/dashboard/purchase-orders/${draft.order.id}`} className="inline-flex items-center gap-1 text-[#2563eb] hover:underline">
-                  <span className="font-mono">{draft.order.orderNumber}</span><ExternalLink className="h-3 w-3" />
-                </Link>
+                <span className="font-mono">{draft.order.orderNumber}</span>
               </>
             )}
             <span>·</span>

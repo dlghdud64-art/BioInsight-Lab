@@ -10,7 +10,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
-import { useOpsStore } from "@/lib/ops-console/ops-store";
+import type { UnifiedInboxItem } from "@/lib/ops-console/inbox-adapter";
 import {
   buildModuleHeaderStats,
   buildModulePriorityQueue,
@@ -87,7 +87,12 @@ const STAT_TONE_MAP: Record<string, StatusCountTone> = {
 function PurchaseOrderLandingPageInner() {
   const router = useRouter();
   const openOverlay = useWorkbenchOverlayOpen();
-  const { unifiedInboxItems } = useOpsStore();
+  // §po-seed-cutoff (2026-09-22 · 호영님 판정) — 발주 목록의 시드 출처를 끊었다.
+  //   예전엔 ops-console 시드 그래프에서 파생해 가상 발주(PO-2026-0088 · 0087)를 모든 사용자에게 보였고,
+  //   시드가 2건 있으니 isEmpty 가 항상 거짓이라 **빈 상태 코드가 한 번도 실행되지 않았다.**
+  //   실제 발주를 읽는 배선은 이 커밋의 범위가 아니다(발주 기능 자체가 플래그로 꺼져 있다 · ENABLE_PURCHASING=false).
+  //   파생·렌더 구조는 그대로 두고 입력만 비운다 → 정직한 빈 상태가 살아난다.
+  const unifiedInboxItems: UnifiedInboxItem[] = [];
   const [activeTab, setActiveTab] = useState<ModuleBucketKey>("ready");
 
   // §11.230c (a)-6 #purchases-orders-filter-sync — server-first hydration.
@@ -346,22 +351,22 @@ function PurchaseOrderLandingPageInner() {
         </div>
       </div>
 
-      {/* ── Fallback: Empty ────────────────────────────────────────── */}
-      {/* §11.209 — 실무 담당자 흐름 정합. 직전 단계(구매 운영)에서
-          발주 전환을 완료해야 여기 항목이 생기므로 CTA 를 견적 관리가
-          아니라 구매 운영으로 직접 연결. surface 귀책 명확화. */}
+      {/* ── 빈 상태 — §po-seed-cutoff (2026-09-22 · 호영님 판정) ──────────
+          예전 문구는 「구매 운영에서 발주로 전환하면 여기서 추적합니다」 였다. 지금은 참이 아니다 —
+          이 화면에는 **실제 발주를 읽는 경로가 없다**(시드에서 끊었고, 실데이터 배선은 미구현).
+          없는 경로를 안내하면 화면이 또 거짓말한다. 현재 참인 것까지만 쓴다. */}
       {isEmpty && (
         <div className="bg-white border border-slate-200 rounded-lg">
           <EmptyState
             icon={Inbox}
-            title="아직 발주된 항목이 없습니다"
-            description="구매 운영에서 회신 받은 견적을 비교하고 발주로 전환하면 여기서 진행 상태를 추적합니다."
+            title="발주 목록 데이터 없음"
+            description="이 화면은 아직 실제 발주에 연결되지 않았습니다. 진행 중인 입고는 입고 관리에서 볼 수 있습니다."
             action={
               <Link
-                href="/dashboard/purchases"
+                href="/dashboard/receiving"
                 className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
               >
-                구매 운영으로 이동 <ArrowRight className="h-3 w-3" />
+                입고 관리로 이동 <ArrowRight className="h-3 w-3" />
               </Link>
             }
           />
