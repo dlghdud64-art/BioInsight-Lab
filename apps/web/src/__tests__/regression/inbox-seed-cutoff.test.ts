@@ -83,8 +83,10 @@ describe("§inbox-seed-cutoff · 운영 작업함은 실데이터를 읽는다",
 
   it("⑤ 작업함이 렌더하는 제목에 내부 키 0 (현재 렌더 미도달 경로 · 자기 한계 2 참조)", () => {
     const src = code(ADAPTER);
-    expect(src).toMatch(/export function stockItemLabel/);
-    expect(src).toMatch(/'품목명 미확인'/);
+    // 라벨 규칙은 §stock-item-label(2026-09-22 · 커밋 4)에서 공용 모듈로 옮겼다 — 정의가 둘이면 한쪽만 고쳐진다.
+    //   여기선 「작업함이 그 규칙을 쓴다」 만 본다. 규칙 자체의 계약은 regression/stock-item-label.test.ts.
+    expect(src).toMatch(/import \{ stockItemLabel \} from ["'][^"']*stock-item-label["']/);
+    expect(code("lib/ops-console/stock-item-label.ts")).toMatch(/품목명 미확인/);
     for (const v of ["rr", "ea", "sp"]) {
       expect(src, `${v} 제목`).not.toMatch(new RegExp("title: `\\$\\{" + v + "\\.inventoryItemId\\}"));
     }

@@ -8,6 +8,7 @@
  * @module ops-console/blocker-adapter
  */
 
+import { stockItemLabel } from './stock-item-label';
 import type { QuoteRequestContract, QuoteResponseContract, QuoteComparisonContract } from '../review-queue/quote-rfq-contract';
 import type {
   PurchaseOrderContract,
@@ -472,7 +473,7 @@ export function buildStockRiskBlockers(
         blockerType: isBudget ? 'budget_blocked' : isDuplicate ? 'duplicate_open_flow' : 'policy_locked',
         severity: 'hard_block',
         summaryKey: `rr-${rr.id}-${reason.slice(0, 15)}`,
-        whatIsBlocked: `${rr.inventoryItemId} 재주문 견적 생성`,
+        whatIsBlocked: `${stockItemLabel(rr)} 재주문 견적 생성`,
         whyBlocked: reason,
         whatCanResolveIt: isBudget
           ? '예산 검토 요청 또는 승인자 확인'
@@ -505,7 +506,7 @@ export function buildStockRiskBlockers(
       blockerType: 'external_followup_required',
       severity: 'hard_block',
       summaryKey: `sp-${sp.id}-critical`,
-      whatIsBlocked: `${sp.inventoryItemId} 가용 재고`,
+      whatIsBlocked: `${stockItemLabel(sp)} 가용 재고`,
       whyBlocked: `긴급 부족 — 가용 ${sp.availableQuantity}${sp.unit}`,
       whatCanResolveIt: '긴급 재주문 견적 요청 또는 대체품 확인',
       canPartiallyContinue: false,
@@ -526,7 +527,7 @@ export function buildStockRiskBlockers(
       blockerType: 'missing_lot_or_expiry',
       severity: isOverdue ? 'hard_block' : 'review_gate',
       summaryKey: `ea-${ea.id}`,
-      whatIsBlocked: `${ea.inventoryItemId} 만료 로트 조치`,
+      whatIsBlocked: `${stockItemLabel(ea)} 만료 로트 조치`,
       whyBlocked: `${ea.lotNumber} — ${ea.daysToExpiry ?? 0}일 후 만료`,
       whatCanResolveIt: ea.actionType === 'dispose' ? '폐기 처리' : '우선 사용 또는 이전 처리',
       resolutionOwnerRole: '재고 관리자',
@@ -545,7 +546,7 @@ export function buildStockRiskBlockers(
       blockerType: 'quarantine_active',
       severity: 'review_gate',
       summaryKey: `sp-${sp.id}-quarantine`,
-      whatIsBlocked: `${sp.inventoryItemId} 가용량 제한`,
+      whatIsBlocked: `${stockItemLabel(sp)} 가용량 제한`,
       whyBlocked: `보류 ${sp.quarantinedQuantity}${sp.unit} — 사용 불가`,
       whatCanResolveIt: '보류 검사 판정 후 해제 또는 폐기',
       resolutionOwnerRole: '품질 관리자',

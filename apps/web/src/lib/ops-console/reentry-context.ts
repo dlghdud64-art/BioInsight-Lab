@@ -12,6 +12,7 @@
  * @module ops-console/reentry-context
  */
 
+import { stockItemLabel } from './stock-item-label';
 import type { ReorderRecommendationContract, ExpiryActionContract, InventoryStockPositionContract } from '../review-queue/reorder-expiry-stock-risk-contract';
 import type { ReceivingBatchContract } from '../review-queue/receiving-inbound-contract';
 import type { QuoteRequestContract, QuoteResponseContract } from '../review-queue/quote-rfq-contract';
@@ -237,7 +238,7 @@ export function buildStockRiskReentryContext(
     sourceType: 'stock_risk_reorder',
     sourceEntityId: recommendation.id,
     sourceRoute: '/dashboard/stock-risk',
-    sourceSummary: `${recommendation.inventoryItemId} 재주문 — ${recommendation.recommendationType.replace(/_/g, ' ')} (${recommendation.urgency})`,
+    sourceSummary: `${stockItemLabel(recommendation)} 재주문 · ${recommendation.recommendationType.replace(/_/g, ' ')} (${recommendation.urgency})`,
     reasonCodes,
     requestedItemHints: [{
       itemName: recommendation.inventoryItemId,
@@ -275,7 +276,7 @@ export function buildExpiryReentryContext(
     sourceType: 'expiry_replacement',
     sourceEntityId: expiryAction.id,
     sourceRoute: '/dashboard/stock-risk',
-    sourceSummary: `${expiryAction.inventoryItemId} Lot ${expiryAction.lotNumber} — 만료 ${expiryAction.daysToExpiry}일 후, ${expiryAction.actionType === 'dispose' ? '폐기' : '우선 사용'} 필요`,
+    sourceSummary: `${stockItemLabel(expiryAction)} Lot ${expiryAction.lotNumber} · 만료 ${expiryAction.daysToExpiry}일 후, ${expiryAction.actionType === 'dispose' ? '폐기' : '우선 사용'} 필요`,
     reasonCodes,
     requestedItemHints: [{
       itemName: expiryAction.inventoryItemId,

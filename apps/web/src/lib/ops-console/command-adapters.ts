@@ -8,6 +8,7 @@
  * @module ops-console/command-adapters
  */
 
+import { stockItemLabel } from './stock-item-label';
 import type { QuoteRequestContract, QuoteResponseContract, QuoteComparisonContract } from '../review-queue/quote-rfq-contract';
 import type {
   PurchaseOrderContract,
@@ -434,7 +435,7 @@ export function buildStockRiskCommandSurface(ctx: StockRiskCommandContext): Comm
   const primaryCommand = primaryReorder
     ? createExecuteCommand(
         'stock-reorder-critical',
-        `긴급 재주문 견적 요청 (${primaryReorder.inventoryItemId})`,
+        `긴급 재주문 견적 요청 (${stockItemLabel(primaryReorder)})`,
         () => onCreateQuoteFromReorder(primaryReorder.id),
         {
           confirmRequired: true,
@@ -457,7 +458,7 @@ export function buildStockRiskCommandSurface(ctx: StockRiskCommandContext): Comm
     .map((r) =>
       createExecuteCommand(
         `stock-reorder-${r.id}`,
-        `${r.inventoryItemId} 견적 요청`,
+        `${stockItemLabel(r)} 견적 요청`,
         () => onCreateQuoteFromReorder(r.id),
         { priority: 'secondary', postActionSummary: '견적 요청 생성' },
       ),
@@ -469,7 +470,7 @@ export function buildStockRiskCommandSurface(ctx: StockRiskCommandContext): Comm
     triageCommands.push(
       createBlockerCommand(
         `stock-blocker-${br.id}`,
-        `${br.inventoryItemId} 차단 해소`,
+        `${stockItemLabel(br)} 차단 해소`,
         () => onResolveReorderBlocker(br.id),
         br.blockedReasons,
         { canExecute: true },
@@ -480,7 +481,7 @@ export function buildStockRiskCommandSurface(ctx: StockRiskCommandContext): Comm
     triageCommands.push(
       createExecuteCommand(
         `stock-expiry-${ea.id}`,
-        `${ea.inventoryItemId} ${ea.actionType === 'dispose' ? '폐기' : ea.actionType === 'consume_first' ? '우선 사용' : '만료 조치'}`,
+        `${stockItemLabel(ea)} ${ea.actionType === 'dispose' ? '폐기' : ea.actionType === 'consume_first' ? '우선 사용' : '만료 조치'}`,
         () => onCompleteExpiryAction(ea.id),
         { priority: 'triage', postActionSummary: '만료 조치 완료' },
       ),

@@ -8,6 +8,7 @@
  * @module ops-console/inbox-adapter
  */
 
+import { stockItemLabel } from './stock-item-label';
 import type {
   QuoteRequestContract,
   QuoteResponseContract,
@@ -108,15 +109,6 @@ function hoursSince(iso: string): number {
   return Math.max(0, (NOW_MS() - new Date(iso).getTime()) / (1000 * 60 * 60));
 }
 
-/**
- * 재고 계열 항목 제목의 품목 라벨 — §inbox-seed-cutoff (2026-09-22 · 호영님)
- * inventoryItemId 는 내부 키다(예: inv-item-fbs). 제목에 그대로 내면 사용자는 키를 읽게 된다.
- * 표시명이 없으면 없다고 말한다.
- */
-export function stockItemLabel(x: { itemDisplayName?: string }): string {
-  const name = x.itemDisplayName?.trim();
-  return name && name.length > 0 ? name : '품목명 미확인';
-}
 
 export function resolveDueState(
   dueAt: string | undefined,

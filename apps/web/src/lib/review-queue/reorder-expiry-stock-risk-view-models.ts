@@ -10,6 +10,7 @@
  * - 헬퍼는 순수 함수 — 외부 상태 의존 없음
  */
 
+import { stockItemLabel } from '../ops-console/stock-item-label';
 import type {
   InventoryStockRiskStatus,
   ReorderRecommendationContract,
@@ -551,6 +552,8 @@ export function detectDuplicateReorderRecommendations(
   recommendations: {
     id: string;
     inventoryItemId: string;
+    /** 화면 문구용 표시명 — §stock-item-label(2026-09-22). 없으면 「품목명 미확인」(내부 키를 내지 않는다) */
+    itemDisplayName?: string;
     locationId: string;
     status: ReorderRecommendationStatus;
   }[],
@@ -576,7 +579,7 @@ export function detectDuplicateReorderRecommendations(
         duplicates.push({
           recommendationA: a.id,
           recommendationB: b.id,
-          reason: `동일 품목(${a.inventoryItemId}) · 위치(${a.locationId})에 활성 추천 중복`,
+          reason: `동일 품목(${stockItemLabel(a)}) · 위치(${a.locationId})에 활성 추천 중복`,
         });
       }
     }
