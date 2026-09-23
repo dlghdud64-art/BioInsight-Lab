@@ -452,8 +452,11 @@ export default function AnalyticsPage() {
   // §analytics-tabs S9 · S16 — 비활성 사유 인라인 1줄(우측 정렬). title 툴팁 대체.
   const aiReportReason = (variant: "mobile" | "desktop") =>
     dataInsufficient ? (
+      // §analytics-signal-honesty (2026-09-22 · 호영님 P1) — 사유가 실제 조건과 달랐다.
+      //   옛 문구는 「완료된 발주 1건 이상 필요」 였는데 실제 조건은 dataInsufficient = !hasMonthlyData,
+      //   즉 **최근 6개월 지출이 0** 이다(발주 건수가 아니다). 조건을 그대로 쓴다.
       <p id={`ai-report-reason-${variant}`} className="text-[11px] leading-tight text-right text-[#94a3b8]">
-        AI 리포트 생성 · 완료된 발주 1건 이상 필요
+        AI 리포트 생성 · 최근 6개월 지출 기록 필요
       </p>
     ) : null;
 
@@ -928,7 +931,9 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* ── KPI 4 고도화 (언제 채워지는지 힌트 + ghost bar) ── */}
+            {/* ── KPI 4 고도화 — 「언제 채워지는지」 힌트만. §analytics-signal-honesty(2026-09-22 · 호영님 P1):
+                고정폭 회색 막대(30·20·25·40%)를 지웠다. 데이터가 0 인데 진행률처럼 읽혔고,
+                예산이 등록된 경우엔 숫자(실 소진율)와 막대(30%)가 서로 다른 말을 했다. ── */}
             <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               {/* KPI 1: Q 예산 소진율 */}
               <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
@@ -936,36 +941,24 @@ export default function AnalyticsPage() {
                 <p className="text-lg md:text-xl font-extrabold text-slate-900 mt-1.5 tracking-tight">
                   {budgetRegistered ? `${budget.usageRate}%` : "미등록"}
                 </p>
-                <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full rounded-full bg-slate-200" style={{ width: "30%" }} />
-                </div>
                 <p className="text-[11px] text-slate-400 mt-1.5 break-keep">예산 등록 시 채워집니다</p>
               </div>
               {/* KPI 2: 이번 달 누적 지출 */}
               <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
                 <p className="text-xs font-semibold text-slate-500">이번 달 누적 지출</p>
                 <p className="text-lg md:text-xl font-extrabold text-slate-900 mt-1.5 tracking-tight">₩0</p>
-                <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full rounded-full bg-slate-200" style={{ width: "20%" }} />
-                </div>
                 <p className="text-[11px] text-slate-400 mt-1.5 break-keep">발주 완료 시 채워집니다</p>
               </div>
               {/* KPI 3: AI 식별 절감 기회 */}
               <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
                 <p className="text-xs font-semibold text-slate-500">AI 식별 절감 기회</p>
                 <p className="text-lg md:text-xl font-extrabold text-slate-900 mt-1.5 tracking-tight">--</p>
-                <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full rounded-full bg-slate-200" style={{ width: "25%" }} />
-                </div>
                 <p className="text-[11px] text-slate-400 mt-1.5 break-keep">발주 데이터로 AI 자동 산출</p>
               </div>
               {/* KPI 4: 특정 공급사 의존도 */}
               <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
                 <p className="text-xs font-semibold text-slate-500">특정 공급사 의존도</p>
                 <p className="text-lg md:text-xl font-extrabold text-slate-900 mt-1.5 tracking-tight">--</p>
-                <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full rounded-full bg-slate-200" style={{ width: "40%" }} />
-                </div>
                 <p className="text-[11px] text-slate-400 mt-1.5 break-keep">발주 3건+ 누적 시 산출</p>
               </div>
             </div>
@@ -1187,7 +1180,7 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {/* ═══ §11.205 공급사 점유율 + 실시간 이상 지출 로그 (호영님 시안 정합) ═══ */}
+        {/* ═══ §11.205 공급사 점유율 + 이상 지출 점검 (§analytics-signal-honesty 로 제목 정정) ═══ */}
         {/* 좌: TOP SUPPLIER DEPENDENCY MATRIX (vendorItems top 3 + Others 합계 horizontal bar)
             우: AUTOMATED RISK MONITORING (anomalies severity 색상 list)
             데이터 0 시 placeholder + 축적 안내. canonical truth 변경 0 — 기존 derived
@@ -1270,22 +1263,25 @@ export default function AnalyticsPage() {
                 )}
               </div>
 
-              {/* 우: 실시간 이상 지출 로그 */}
+              {/* 우: 이상 지출 점검 */}
               <div className="rounded-xl border border-bd bg-pn p-5 shadow-sm">
                 <div className="flex items-start justify-between mb-5">
                   <div>
-                    <h3 className="text-base font-bold text-slate-900 mb-1">실시간 이상 지출 로그</h3>
+                    {/* §analytics-signal-honesty (2026-09-22 · 호영님 P1)
+                        🛑 옛 제목은 「실시간 이상 지출 로그」 + 점멸 뱃지 「N New Signals」 였다. 셋 다 참이 아니었다:
+                          · 실시간 아님 — 이 화면의 데이터는 5분 캐시(useQuery staleTime)이고 푸시도 구독도 없다.
+                          · New 아님 — totalSignals 는 매 로드마다 다시 계산한 **개수**다. 읽음 상태도,
+                            직전 시점과의 비교도 없다. 기준선이 없으므로 「새로 생긴 것」 을 말할 수 없다.
+                          · 점멸(animate-ping)은 방금 도착했다는 신호다 — 그 사건 자체가 없다.
+                        지금: 무엇을 센 것인지 그대로 쓴다(규칙으로 표시한 건수). */}
+                    <h3 className="text-base font-bold text-slate-900 mb-1">이상 지출 점검</h3>
                     <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
-                      Automated Risk Monitoring
+                      반복 구매 · 고액 단건 규칙 점검
                     </p>
                   </div>
                   {totalSignals > 0 && (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[11px] font-bold">
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500" />
-                      </span>
-                      {totalSignals} New Signals
+                      표시 {totalSignals}건
                     </span>
                   )}
                 </div>
@@ -1367,9 +1363,13 @@ export default function AnalyticsPage() {
                 </tbody>
               </table>
             </div>
+            {/* §analytics-signal-honesty (2026-09-22 · 호영님 P1) — 라벨이 동작과 달랐다.
+                옛 「전체 내역 다운로드」 는 다운로드가 아니라 **이동**이었고, 목적지(구매 운영)는
+                지출 내역이 아니라 견적→발주 전환 큐였다. 두 거짓을 같이 없앤다:
+                이동이라고 말하고, 실제로 지출 내역과 CSV 내보내기가 있는 보고서로 보낸다. */}
             <div className="px-5 py-3 border-t border-bd">
-              <Link href="/dashboard/purchases" className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors">
-                전체 내역 다운로드 <ArrowRight className="h-3 w-3" />
+              <Link href="/dashboard/reports" className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors">
+                보고서에서 전체 내역 보기 <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
           </div>

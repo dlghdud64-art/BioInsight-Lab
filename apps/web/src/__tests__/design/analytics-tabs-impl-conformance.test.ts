@@ -121,8 +121,12 @@ const W_BTN_GENERATE = windowBetween(
 );
 /** tabs 배열 리터럴 */
 const W_TABS_ARRAY = windowBetween("const tabs:", "];", "const tabs:");
-/** 사유 인라인 1줄 */
-const W_REASON = windowBetween("완료된 발주 1건 이상 필요", "</p>", "<p");
+/** 사유 인라인 1줄
+ *  🔁 창 마커 이동 (§analytics-signal-honesty · 2026-09-22 · 호영님 P1)
+ *     구 마커는 **문안**(「완료된 발주 1건 이상 필요」)이었다. 그 문안이 실제 비활성 조건과 달라
+ *     같은 커밋에서 교체되자 창이 깨졌다(수집 단계 throw) — 문안이 바뀌면 또 깨진다.
+ *     마커를 구조(사유 노드의 id)로 옮긴다. 이 창이 검사하는 것은 문안이 아니라 타이포·정렬이다. */
+const W_REASON = windowBetween("id={`ai-report-reason-${variant}`}", "</p>", "<p");
 
 /* ── SPEC_TO_TW — 명세값 ↔ Tailwind 유틸 ───────────────────────────────
  * 🛑 이 표가 없으면 아래 8건은 grep 이 실패한다. 실패가 아니라 **검사 0** 으로
@@ -238,7 +242,15 @@ const CHECKS: Record<string, () => void> = {
     expect(W_BTN_GENERATE).not.toMatch(/disabled:opacity-60/);
   },
   "S9-disabled-reason-inline": () => {
-    expect(W_REASON).toContain("AI 리포트 생성 · 완료된 발주 1건 이상 필요");
+    /* 🔁 결정 전이 (§analytics-signal-honesty · 2026-09-22 · 호영님 P1 지시 6번)
+     *    시안 문안 「AI 리포트 생성 · 완료된 발주 1건 이상 필요」 는 **실제 비활성 조건과 달랐다** —
+     *    조건은 `dataInsufficient = !hasMonthlyData`(최근 6개월 지출 0)이고 발주 건수가 아니다.
+     *    화면이 틀린 사유를 말하고 있었고, 호영님이 문구 정정을 지시했다.
+     *    🛑 fixture(analytics-tabs-comp.json · .render.json)는 **시안에서 추출한 증거**라 고치지 않는다.
+     *       시안이 뭐라고 했는지는 그대로 남고, 제품이 그와 갈린 사실과 근거를 이 자리에 적는다.
+     *    라벨 부분(「AI 리포트 생성」)은 이 전이에 포함되지 않는다 — 별도 판정 대기(상신함). */
+    expect(W_REASON).toContain("AI 리포트 생성 · 최근 6개월 지출 기록 필요");
+    expect(W_REASON).not.toContain("완료된 발주");
     expect(W_REASON).toContain(tw("font-size: 11px"));
     expect(W_REASON).toContain(tw("color: #94a3b8"));
     expect(W_REASON).toContain("text-right");

@@ -94,10 +94,15 @@ describe("§11.244 #6 — AI 리포트 button disabled + tooltip", () => {
     expect(page).toMatch(/aria-describedby=\{[\s\S]{0,80}?ai-report-reason-\$\{variant\}/);
     expect(page).toMatch(/id=\{`ai-report-reason-\$\{variant\}`\}/);
 
-    // ③ 사유 문안 — 부분매칭만. 표현이 진화해도 정책이 남아 있으면 통과한다
+    // ③ 사유 문안 — 부분매칭만. 표현이 진화해도 정책이 남아 있으면 통과한다.
+    //   🔁 앵커 이동 2회차 (§analytics-signal-honesty · 2026-09-22 · 호영님 P1)
+    //      구 단언은 `완료된 발주` · `1건` 을 물었는데, 그건 **실제 조건이 아니었다** —
+    //      비활성 조건은 `dataInsufficient = !hasMonthlyData`, 즉 최근 6개월 지출이 0 이다(발주 건수 아님).
+    //      화면이 틀린 사유를 말하고 있었고 이 단언이 그 문안을 잠그고 있었다. 실제 정책 문안으로 옮긴다.
     const reason = page.slice(page.indexOf("ai-report-reason-${variant}`}"));
-    expect(reason).toMatch(/완료된 발주/);
-    expect(reason).toMatch(/1건/);
+    expect(reason).toMatch(/최근 6개월/);
+    expect(reason).toMatch(/지출 기록/);
+    expect(reason).not.toMatch(/완료된 발주/);
 
     // ④ S9 역계약 — AI 리포트 버튼은 title 툴팁에 의존하지 않는다
     //    (1220·1282 의 truncate 보조 title 은 무관 — 버튼 블록만 본다)
