@@ -1,10 +1,21 @@
 "use client";
 
+/**
+ * 운영 작업함 — §inbox-seed-cutoff (2026-09-22 · 호영님 판정)
+ *
+ * 🛑 이 화면은 ops-console 시드 그래프(seed-data.ts)만으로 목록 전량을 만들었다 — 가상 RFQ(RFQ-2026-0041) ·
+ *    가상 발주(PO-2026-0088) · 가상 입고(RCV-2026-0031) · 내부 키가 그대로 박힌 제목(inv-item-fbs 재주문 필요).
+ *    서버 데이터로 바뀌는 경로가 0 이라 모든 사용자에게 같은 11건이 떴고, 퀵 액션은 그 시드 스토어만 바꿨다.
+ *    진입점은 살아 있었다(모바일 대시보드 「지금 할 일」 전체 보기).
+ * 지금: 운영 브리핑 팝업과 **같은 함수**(fetchRealInboxItems)로 읽는다. 연결된 종류는 견적뿐이고
+ *   화면이 그 사실을 문구로 밝힌다. 액션은 상세로 이동만 한다(로컬 스토어 변경 0).
+ * 계약: __tests__/regression/ops-seed-cutoff.test.ts
+ */
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useOpsStore } from "@/lib/ops-console/ops-store";
+import { useQuery } from "@tanstack/react-query";
+import { fetchRealInboxItems } from "@/lib/operational-brief/fetch-real-inbox";
 import {
-  buildFullInbox,
   calculateSummaryStats,
   filterByModule,
   filterByState,
@@ -23,13 +34,14 @@ import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobi
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { formatRelativeKr } from "@/components/operational-brief/relative-time";
-import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
+import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
   ExternalLink,
   Inbox,
+  Loader2,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -83,13 +95,33 @@ const DUE_BADGE: Record<string, string> = {
   normal: "bg-zinc-500/10 text-zinc-400",
 };
 
+// ── 읽기 전용 퀵 액션 ──
+// 작업함은 로컬 스토어를 바꾸지 않는다. 즉시 실행형(발행·확인 처리 등)은 상세로 보내는 액션으로 바꾼다 —
+// 라벨이 「발주서 발행」 인데 누르면 이동만 하는 거짓 라벨을 만들지 않기 위해서다.
+const NO_LOCAL_MUTATION = {
+  issuePO: () => {},
+  acknowledgePO: () => {},
+  createQuoteFromReorder: () => {},
+  completeExpiryAction: () => {},
+};
+function readOnlyQuickAction(item: UnifiedInboxItem): InboxQuickAction | null {
+  const qa = buildInboxQuickAction(item, NO_LOCAL_MUTATION);
+  if (!qa) return null;
+  if (qa.requiresDetail) return qa;
+  return { label: "상세 보기", canExecute: true, requiresDetail: true, detailRoute: item.entityRoute };
+}
+
 // ── 컴포넌트 ──
 
 export default function InboxPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const store = useOpsStore();
+  const inboxQuery = useQuery({
+    queryKey: ["operational-inbox"],
+    queryFn: fetchRealInboxItems,
+    staleTime: 60_000,
+  });
 
   // Initialize state from URL searchParams
   const [moduleFilter, setModuleFilter] = useState<string>(
@@ -117,34 +149,8 @@ export default function InboxPage() {
     router.replace(newUrl, { scroll: false });
   }, [moduleFilter, stateFilter, ownerFilter, pathname, router]);
 
-  // Build unified inbox from store data
-  const allItems = useMemo(
-    () =>
-      buildFullInbox(
-        store.quoteRequests,
-        store.quoteResponses,
-        store.quoteComparisons,
-        store.purchaseOrders,
-        store.approvalExecutions,
-        store.acknowledgements,
-        store.receivingBatches,
-        store.stockPositions,
-        store.reorderRecommendations,
-        store.expiryActions,
-      ),
-    [
-      store.quoteRequests,
-      store.quoteResponses,
-      store.quoteComparisons,
-      store.purchaseOrders,
-      store.approvalExecutions,
-      store.acknowledgements,
-      store.receivingBatches,
-      store.stockPositions,
-      store.reorderRecommendations,
-      store.expiryActions,
-    ],
-  );
+  // 실데이터(운영 브리핑 팝업과 같은 함수). 시드 폴백 0.
+  const allItems = useMemo(() => inboxQuery.data ?? [], [inboxQuery.data]);
 
   // Summary stats (from all items, before filtering)
   const stats: InboxSummaryStats = useMemo(
@@ -273,24 +279,13 @@ export default function InboxPage() {
     setOwnerFilter("all");
   }, []);
 
-  // Execute action on selected item via quick action adapter
+  // 액션 = 상세로 이동. 이 화면에서 상태를 바꾸지 않는다(§inbox-seed-cutoff — 예전엔 시드 스토어만 바꿨다).
   const handleAction = useCallback(
     (item: UnifiedInboxItem) => {
-      const quickAction = buildInboxQuickAction(item, store);
-      if (quickAction && !quickAction.requiresDetail && quickAction.onExecute) {
-        quickAction.onExecute();
-        // §11.158 cache-bust — quickAction 실행 후 inbox + work_queue brief stale
-        invalidateBriefNarrative({ workQueueTaskId: item.id, module: "inbox", sourceUpdatedAt: new Date() });
-        invalidateBriefNarrative({ workQueueTaskId: item.id, module: "work_queue", sourceUpdatedAt: new Date() });
-        store.refreshInbox();
-        setSelectedItemId(null);
-      } else if (quickAction?.requiresDetail && quickAction.detailRoute) {
-        router.push(quickAction.detailRoute);
-      } else {
-        router.push(item.entityRoute);
-      }
+      const quickAction = readOnlyQuickAction(item);
+      router.push(quickAction?.detailRoute ?? item.entityRoute);
     },
-    [store, router],
+    [router],
   );
 
   const hasActiveFilters = moduleFilter !== "all" || stateFilter !== "all" || ownerFilter !== "all";
@@ -303,7 +298,10 @@ export default function InboxPage() {
           운영 작업함
         </h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          견적, 승인, 입고, 재고 위험을 우선순위대로 처리합니다
+          공급사 응답 대기 · 응답 도착 견적을 우선순위대로 처리합니다
+        </p>
+        <p className="text-xs text-slate-400 mt-0.5">
+          발주 · 입고 · 재고 위험은 아직 이 작업함에 연결되지 않았습니다
         </p>
       </div>
 
@@ -441,7 +439,18 @@ export default function InboxPage() {
             selectedItem ? "pr-0" : "",
           )}
         >
-          {filteredItems.length === 0 ? (
+          {inboxQuery.isLoading ? (
+            <div className="flex items-center gap-2 py-16 justify-center text-sm text-slate-500 bg-pn rounded-lg border border-bd">
+              <Loader2 className="h-4 w-4 animate-spin" /> 작업함 불러오는 중
+            </div>
+          ) : inboxQuery.isError ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 bg-red-50 rounded-lg border border-red-200">
+              <p className="text-sm font-semibold text-red-700">운영 작업함을 불러오지 못했습니다</p>
+              <Button variant="outline" size="sm" className="text-xs" onClick={() => void inboxQuery.refetch()}>
+                다시 시도
+              </Button>
+            </div>
+          ) : filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-slate-500 gap-3 bg-pn rounded-lg border border-bd">
               <Inbox className="h-10 w-10 opacity-25" />
               <p className="text-sm">
@@ -519,13 +528,13 @@ export default function InboxPage() {
             onClose={() => setSelectedItemId(null)}
             onAction={() => handleAction(selectedItem)}
             onNavigate={() => router.push(selectedItem.entityRoute)}
-            quickAction={buildInboxQuickAction(selectedItem, store)}
+            quickAction={readOnlyQuickAction(selectedItem)}
           />
         )}
 
         {/* §11.155 모바일 변종 — desktop ContextPanel (hidden lg:block) 와 mutually exclusive */}
         {selectedItem && (() => {
-          const qa = buildInboxQuickAction(selectedItem, store);
+          const qa = readOnlyQuickAction(selectedItem);
           return (
             <MobileOperationalBriefSheet
               open={!!selectedItem}

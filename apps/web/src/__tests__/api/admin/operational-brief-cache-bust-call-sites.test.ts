@@ -27,11 +27,10 @@ const SURFACES = [
     path: "../../../app/dashboard/inventory/inventory-content.tsx",
     moduleKey: "inventory",
   },
-  {
-    label: "inbox (handleAction)",
-    path: "../../../app/dashboard/inbox/page.tsx",
-    moduleKey: "inbox",
-  },
+  // §inbox-seed-cutoff (2026-09-22 · 호영님 판정) — inbox (handleAction) 제거.
+  //   그 표면은 더 이상 **변경을 하지 않는다**(예전엔 시드 스토어만 바꿨다 · 저장 0). 액션은 상세로 이동만 한다.
+  //   변경이 없으면 무효화할 캐시도 없다 → 목록에서 뺀다. 대신 아래에서 "변경 0" 을 단언해
+  //   누군가 인박스에 mutation 을 붙이면서 cache-bust 를 빠뜨리면 그 자리에서 드러나게 한다.
   {
     label: "quotes (handleSendSuccess)",
     path: "../../../app/dashboard/quotes/page.tsx",
@@ -39,7 +38,17 @@ const SURFACES = [
   },
 ];
 
-describe("§11.158 cache-bust call-sites — 5 surface", () => {
+describe("§11.158 cache-bust call-sites · 4 surface (+ 인박스는 변경 0)", () => {
+  it("§inbox-seed-cutoff · 운영 작업함은 변경을 하지 않는다 (그래서 cache-bust 대상이 아니다)", () => {
+    const inbox = readFileSync(
+      resolve(__dirname, "../../../app/dashboard/inbox/page.tsx"),
+      "utf8",
+    );
+    expect(inbox).toMatch(/router\.push\(quickAction\?\.detailRoute \?\? item\.entityRoute\)/);
+    expect(inbox).not.toMatch(/useMutation|csrfFetch|\bonExecute\(\)/);
+    // mutation 이 다시 생기면 이 단언이 RED → 그때 위 SURFACES 에 인박스를 되돌린다(근거 커밋과 함께).
+  });
+
   for (const s of SURFACES) {
     describe(s.label, () => {
       const source = readFileSync(resolve(__dirname, s.path), "utf8");

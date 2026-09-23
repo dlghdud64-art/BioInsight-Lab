@@ -47,9 +47,8 @@ import {
   type QuoteStatusEmailKind,
 } from "@/lib/email/quote-status-email-content";
 import { cn } from "@/lib/utils";
-import { useOpsStore } from "@/lib/ops-console/ops-store";
+import { fetchRealInboxItems } from "@/lib/operational-brief/fetch-real-inbox";
 import {
-  buildFullInbox,
   sortInboxItems,
   type UnifiedInboxItem,
   type InboxSourceModule,
@@ -117,11 +116,10 @@ function useIsMobile(): boolean {
 }
 
 /** Popup root — 단일 큐(칩 필터 + 2섹션 + 인라인 1줄 AI). */
-/* §brief-realdata-quotes (호영님 2026-06-29) — LIVE: 운영 브리핑 quotes 실데이터 연동.
-   true → (1) GET /api/operational-brief/inbox 의 실 SENT 견적(quote_response_pending)만 노출,
-   (2) "데모 데이터" 배지 제거, (3) 견적 통보(실 PATCH) 활성화.
-   PO/입고/재고·비교 카드는 0(미조회 — 가짜 채우기 0). false 복귀 시 시드로 롤백. */
-const BRIEF_DATA_IS_LIVE = true;
+/* §brief-realdata-quotes (호영님 2026-06-29) — 운영 브리핑 = 실데이터(GET /api/operational-brief/inbox)만.
+   §inbox-seed-cutoff (2026-09-22 · 호영님 판정) — 시드 폴백·BRIEF_DATA_IS_LIVE 플래그 제거.
+   플래그가 상수 true 라 시드 경로(seedInbox)·「데모 데이터」 배지·통보 비활성 문구는 도달 0 인 죽은 코드였다.
+   출처는 /dashboard/inbox 와 같은 함수(fetchRealInboxItems). PO/입고/재고·비교 카드는 0(미조회 — 가짜 채우기 0). */
 
 /* §brief-proposal-ui (호영님 2026-06-29) — 넘기기(dismiss) 사유. 정직 라벨 only.
    가짜 진척 주장(자동화/모델 반영 류) 0 — dismiss 는 순수 view-state 숨김(서버 변형 0). */
@@ -145,7 +143,6 @@ export function OperationalBriefPopup() {
     isMinimized,
     toggleMinimize,
   } = useOperationalBriefPopup();
-  const store = useOpsStore();
   const isMobile = useIsMobile();
 
   // 칩 필터(게이트 아님). null = 전체.
@@ -179,14 +176,13 @@ export function OperationalBriefPopup() {
   const [refreshKey, setRefreshKey] = useState(0);
   const refetchInbox = () => setRefreshKey((k) => k + 1);
   useEffect(() => {
-    if (!isOpen || !BRIEF_DATA_IS_LIVE) return;
+    if (!isOpen) return;
     let cancelled = false;
     setLiveLoading(true);
     setLiveError(false);
-    fetch("/api/operational-brief/inbox")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("load failed"))))
-      .then((j) => {
-        if (!cancelled) setLiveItems(Array.isArray(j?.items) ? j.items : []);
+    fetchRealInboxItems()
+      .then((items) => {
+        if (!cancelled) setLiveItems(items);
       })
       .catch(() => {
         if (!cancelled) setLiveError(true);
@@ -199,36 +195,8 @@ export function OperationalBriefPopup() {
     };
   }, [isOpen, refreshKey]);
 
-  const seedInbox = useMemo(
-    () =>
-      buildFullInbox(
-        store.quoteRequests,
-        store.quoteResponses,
-        store.quoteComparisons,
-        store.purchaseOrders,
-        store.approvalExecutions,
-        store.acknowledgements,
-        store.receivingBatches,
-        store.stockPositions,
-        store.reorderRecommendations,
-        store.expiryActions,
-      ),
-    [
-      store.quoteRequests,
-      store.quoteResponses,
-      store.quoteComparisons,
-      store.purchaseOrders,
-      store.approvalExecutions,
-      store.acknowledgements,
-      store.receivingBatches,
-      store.stockPositions,
-      store.reorderRecommendations,
-      store.expiryActions,
-    ],
-  );
-
-  // §brief-realdata-quotes — LIVE = 실데이터 inbox, 아니면 시드.
-  const allItems = BRIEF_DATA_IS_LIVE ? (liveItems ?? []) : seedInbox;
+  // §inbox-seed-cutoff — 실데이터만. 시드 폴백 0.
+  const allItems = liveItems ?? [];
 
   const sortedItems = useMemo(() => sortInboxItems(allItems), [allItems]);
 
@@ -297,8 +265,8 @@ export function OperationalBriefPopup() {
       onToggleExpand={(id) => setSelectedItemId(id === selectedItemId ? null : id)}
       onDismiss={dismissItem}
       onRestore={restoreItem}
-      loading={BRIEF_DATA_IS_LIVE && liveLoading && liveItems === null}
-      error={BRIEF_DATA_IS_LIVE && liveError}
+      loading={liveLoading && liveItems === null}
+      error={liveError}
       onClose={close}
     />
     </BriefRefetchContext.Provider>
@@ -447,11 +415,6 @@ function BriefQueue({
               </>
             )}
           </span>
-          {!BRIEF_DATA_IS_LIVE && (
-            <span className="inline-flex items-center rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold text-yellow-700" title="실데이터 연동 전 — 표시 항목은 예시입니다">
-              데모 데이터
-            </span>
-          )}
         </div>
       </div>
 
@@ -836,15 +799,8 @@ function BriefCardInline({
         ))}
 
       {/* §brief-quote-status-email — 견적 모듈: 고객 완료/취소 통보(발송 전 미리보기→확인→발송).
-          §brief-demo-guard — 시드 데이터에서는 실 PATCH 차단(정직 안내). 실데이터 연동 시 활성화. */}
-      {brief.module === "quote" &&
-        (BRIEF_DATA_IS_LIVE ? (
-          <QuoteNotifyAction quoteId={item.entityId} />
-        ) : (
-          <p className="text-[11px] text-slate-400">
-            데모 데이터 — 고객 통보 발송은 실데이터 연동 후 활성화됩니다.
-          </p>
-        ))}
+          §inbox-seed-cutoff — 항목은 실데이터뿐이라 시드용 차단 분기(§brief-demo-guard)는 제거. */}
+      {brief.module === "quote" && <QuoteNotifyAction quoteId={item.entityId} />}
     </div>
   );
 }

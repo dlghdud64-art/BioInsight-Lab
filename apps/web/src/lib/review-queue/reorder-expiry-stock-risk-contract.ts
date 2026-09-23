@@ -143,6 +143,8 @@ export interface InventoryStockPositionContract {
   workspaceId: string;
   /** 재고 품목 ID */
   inventoryItemId: string;
+  /** 화면 표시용 품목명. 없으면 화면은 「품목명 미확인」 을 쓴다 — inventoryItemId(내부 키)를 제목에 내지 않는다. */
+  itemDisplayName?: string;
   /** 카탈로그 품목 ID (연결된 경우) */
   catalogItemId?: string;
   /** 보관 위치 ID */
@@ -307,6 +309,8 @@ export interface ReorderRecommendationContract {
   workspaceId: string;
   /** 재고 품목 ID */
   inventoryItemId: string;
+  /** 화면 표시용 품목명. 없으면 화면은 「품목명 미확인」 을 쓴다 — inventoryItemId(내부 키)를 제목에 내지 않는다. */
+  itemDisplayName?: string;
   /** 보관 위치 ID */
   locationId: string;
   /** 추천 생성 시점 (ISO 8601) */
@@ -376,6 +380,8 @@ export interface ExpiryActionContract {
   workspaceId: string;
   /** 재고 품목 ID */
   inventoryItemId: string;
+  /** 화면 표시용 품목명. 없으면 화면은 「품목명 미확인」 을 쓴다 — inventoryItemId(내부 키)를 제목에 내지 않는다. */
+  itemDisplayName?: string;
   /** 보관 위치 ID */
   locationId: string;
   /** 로트 번호 */

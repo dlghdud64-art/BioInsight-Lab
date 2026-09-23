@@ -64,7 +64,9 @@ const LEGACY = [
   "lib/layout-system/work-window-system.ts",
   "lib/ops-console/seed-data.ts",
   "lib/organization/default-name.ts",
-  "lib/review-queue/operator-console-contract.ts",
+  // 제거됨: "lib/review-queue/operator-console-contract.ts" — §inbox-seed-cutoff(2026-09-22) ·
+  //   INBOX_ITEMS·스토어 레거시 인박스 삭제로 렌더 도달 경로가 끊겼다(유령 경로 방지)
+
   // 제거됨: "lib/vendor-portal/vendor-portal-store.ts" — §vendor-portal-seed-retired(2026-09-22) · 포털 라우트·시드 삭제
 ];
 

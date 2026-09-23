@@ -30,7 +30,6 @@ import type {
   ReorderRecommendationContract,
   ExpiryActionContract,
 } from '../review-queue/reorder-expiry-stock-risk-contract';
-import type { OperatorInboxItem } from '../review-queue/operator-console-contract';
 import type { UnifiedInboxItem } from './inbox-adapter';
 import {
   type EntityGraph,
@@ -53,7 +52,6 @@ import {
   ALL_REORDER_RECOMMENDATIONS,
   ALL_EXPIRY_ACTIONS,
   ALL_LOT_RISKS,
-  INBOX_ITEMS,
   VENDOR_MAP,
 } from './seed-data';
 
@@ -93,7 +91,6 @@ export interface OpsStore {
   stockPositions: InventoryStockPositionContract[];
   reorderRecommendations: ReorderRecommendationContract[];
   expiryActions: ExpiryActionContract[];
-  inboxItems: OperatorInboxItem[];
   unifiedInboxItems: UnifiedInboxItem[];
 
   // Entity graph (for direct access)
@@ -142,278 +139,6 @@ export interface OpsStore {
 const OpsStoreContext = createContext<OpsStore | null>(null);
 
 // ---------------------------------------------------------------------------
-// Legacy inbox generation (for OperatorInboxItem compatibility)
-// ---------------------------------------------------------------------------
-
-function generateLegacyInboxItems(
-  quoteRequests: QuoteRequestContract[],
-  _quoteResponses: QuoteResponseContract[],
-  purchaseOrders: PurchaseOrderContract[],
-  acknowledgements: PurchaseOrderAcknowledgementContract[],
-  receivingBatches: ReceivingBatchContract[],
-  stockPositions: InventoryStockPositionContract[],
-  reorderRecommendations: ReorderRecommendationContract[],
-  _expiryActions: ExpiryActionContract[],
-): OperatorInboxItem[] {
-  const items: OperatorInboxItem[] = [];
-  const now = new Date();
-
-  function hoursSince(iso: string): number {
-    return Math.max(0, (now.getTime() - new Date(iso).getTime()) / (1000 * 60 * 60));
-  }
-
-  for (const qr of quoteRequests) {
-    if (qr.status === 'partially_responded' || qr.status === 'sent') {
-      items.push({
-        id: `gen-qr-${qr.id}`,
-        itemType: 'request',
-        title: `${qr.requestNumber} 공급사 응답 대기`,
-        description: `${qr.summary.respondedVendors}/${qr.summary.totalVendors} 공급사 응답`,
-        status: 'quote_response_pending',
-        priority: qr.priority === 'urgent' ? 'p0' : 'p1',
-        ownershipState: 'assigned_to_me',
-        createdAt: qr.createdAt,
-        dueAt: qr.dueAt,
-        slaHours: 72,
-        elapsedHours: Math.round(hoursSince(qr.createdAt)),
-        isOverdue: new Date(qr.dueAt) < now,
-        isBlocked: false,
-        sourceContext: {
-          type: 'quote_request',
-          entityId: qr.id,
-          label: qr.requestNumber,
-          href: `/dashboard/quotes/${qr.id}`,
-        },
-        workspaceId: qr.workspaceId,
-      });
-    }
-  }
-
-  for (const po of purchaseOrders) {
-    if (po.status === 'approved' || po.status === 'ready_to_issue') {
-      items.push({
-        id: `gen-po-issue-${po.id}`,
-        itemType: 'request',
-        title: `${po.poNumber} 발행 대기`,
-        description: '승인 완료, 공급사 발행 가능',
-        status: 'ready_to_issue',
-        priority: 'p1',
-        ownershipState: 'assigned_to_me',
-        createdAt: po.createdAt,
-        slaHours: 8,
-        elapsedHours: Math.round(hoursSince(po.createdAt)),
-        isOverdue: hoursSince(po.createdAt) > 8,
-        isBlocked: false,
-        sourceContext: {
-          type: 'purchase_order',
-          entityId: po.id,
-          label: po.poNumber,
-          href: `/dashboard/purchase-orders/${po.id}`,
-        },
-        impactLabel: `${VENDOR_MAP[po.vendorId] ?? po.vendorId} ₩${po.totalAmount.toLocaleString('ko-KR')}`,
-        workspaceId: po.workspaceId,
-      });
-    }
-
-    if (po.status === 'issued') {
-      const ack = acknowledgements.find((a) => a.poId === po.id);
-      if (!ack || ack.status === 'sent' || ack.status === 'not_sent') {
-        items.push({
-          id: `gen-po-ack-${po.id}`,
-          itemType: 'request',
-          title: `${po.poNumber} 공급사 확인 대기`,
-          description: `${VENDOR_MAP[po.vendorId] ?? '공급사'} 발주 확인 미응답`,
-          status: 'acknowledgement_pending',
-          priority: 'p2',
-          ownershipState: 'assigned_to_team',
-          createdAt: po.issuedAt ?? po.createdAt,
-          slaHours: 72,
-          elapsedHours: Math.round(hoursSince(po.issuedAt ?? po.createdAt)),
-          isOverdue: false,
-          isBlocked: false,
-          sourceContext: {
-            type: 'purchase_order',
-            entityId: po.id,
-            label: po.poNumber,
-            href: `/dashboard/purchase-orders/${po.id}`,
-          },
-          workspaceId: po.workspaceId,
-        });
-      }
-    }
-  }
-
-  for (const rb of receivingBatches) {
-    const hasDocMissing = rb.lineReceipts.some(
-      (l) => l.documentStatus === 'partial' || l.documentStatus === 'missing',
-    );
-    const hasQuarantine = rb.lineReceipts.some((l) =>
-      l.lotRecords.some((lot) => lot.quarantineStatus === 'quarantined'),
-    );
-
-    if (hasDocMissing) {
-      items.push({
-        id: `gen-rb-doc-${rb.id}`,
-        itemType: 'document_issue',
-        title: `${rb.receivingNumber} 문서 누락`,
-        description: '입고 품목 중 필수 문서 미첨부 항목 존재',
-        status: 'receiving_doc_missing',
-        priority: 'p0',
-        ownershipState: 'assigned_to_me',
-        createdAt: rb.receivedAt,
-        slaHours: 24,
-        elapsedHours: Math.round(hoursSince(rb.receivedAt)),
-        isOverdue: hoursSince(rb.receivedAt) > 24,
-        isBlocked: true,
-        blockedReason: '필수 문서 없이 검수 진행 불가',
-        sourceContext: {
-          type: 'receiving_batch',
-          entityId: rb.id,
-          label: rb.receivingNumber,
-          href: `/dashboard/receiving/${rb.id}`,
-        },
-        workspaceId: rb.workspaceId,
-      });
-    }
-
-    if (hasQuarantine) {
-      items.push({
-        id: `gen-rb-quar-${rb.id}`,
-        itemType: 'inventory_action',
-        title: `${rb.receivingNumber} 보류 품목`,
-        description: '온도 이탈 또는 손상으로 보류 보관 중',
-        status: 'receiving_quarantine',
-        priority: 'p0',
-        ownershipState: 'assigned_to_me',
-        createdAt: rb.receivedAt,
-        slaHours: 24,
-        elapsedHours: Math.round(hoursSince(rb.receivedAt)),
-        isOverdue: hoursSince(rb.receivedAt) > 24,
-        isBlocked: true,
-        blockedReason: '보류 검사 완료 전 출고 불가',
-        sourceContext: {
-          type: 'receiving_batch',
-          entityId: rb.id,
-          label: rb.receivingNumber,
-          href: `/dashboard/receiving/${rb.id}`,
-        },
-        workspaceId: rb.workspaceId,
-      });
-    }
-
-    const hasInspectionPending = rb.lineReceipts.some(
-      (l) =>
-        l.inspectionRequired &&
-        (l.inspectionStatus === 'pending' || l.inspectionStatus === 'in_progress'),
-    );
-
-    if ((hasDocMissing || hasQuarantine || hasInspectionPending) && rb.status !== 'posted' && rb.status !== 'closed') {
-      items.push({
-        id: `gen-rb-post-${rb.id}`,
-        itemType: 'inventory_action',
-        title: `${rb.receivingNumber} 재고 반영 차단`,
-        description: '미해결 이슈로 인해 전체 반영 불가',
-        status: 'posting_blocked',
-        priority: 'p1',
-        ownershipState: 'assigned_to_team',
-        createdAt: rb.receivedAt,
-        slaHours: 8,
-        elapsedHours: Math.round(hoursSince(rb.receivedAt)),
-        isOverdue: hoursSince(rb.receivedAt) > 8,
-        isBlocked: true,
-        blockedReason: '검수 미완료 또는 문서 누락',
-        sourceContext: {
-          type: 'receiving_batch',
-          entityId: rb.id,
-          label: rb.receivingNumber,
-          href: `/dashboard/receiving/${rb.id}`,
-        },
-        workspaceId: rb.workspaceId,
-      });
-    }
-  }
-
-  for (const sp of stockPositions) {
-    if (sp.riskStatus === 'reorder_due' || sp.riskStatus === 'critical_shortage') {
-      items.push({
-        id: `gen-sp-reorder-${sp.id}`,
-        itemType: 'inventory_action',
-        title: `${sp.inventoryItemId} 재주문 필요`,
-        description: `가용 ${sp.availableQuantity}${sp.unit} (보류 ${sp.quarantinedQuantity})`,
-        status: 'reorder_due',
-        priority: sp.riskStatus === 'critical_shortage' ? 'p0' : 'p1',
-        ownershipState: 'assigned_to_team',
-        createdAt: sp.snapshotAt,
-        slaHours: 48,
-        elapsedHours: Math.round(hoursSince(sp.snapshotAt)),
-        isOverdue: false,
-        isBlocked: false,
-        sourceContext: {
-          type: 'stock_position',
-          entityId: sp.id,
-          label: `${sp.inventoryItemId} 재고`,
-          href: `/dashboard/stock-risk`,
-        },
-        workspaceId: sp.workspaceId,
-      });
-    }
-
-    if (sp.riskStatus === 'expiry_risk') {
-      items.push({
-        id: `gen-sp-expiry-${sp.id}`,
-        itemType: 'inventory_action',
-        title: `${sp.inventoryItemId} 유효기간 위험`,
-        description: '만료 임박 재고 포함',
-        status: 'expiry_risk',
-        priority: 'p2',
-        ownershipState: 'assigned_to_team',
-        createdAt: sp.snapshotAt,
-        slaHours: 168,
-        elapsedHours: Math.round(hoursSince(sp.snapshotAt)),
-        isOverdue: false,
-        isBlocked: false,
-        sourceContext: {
-          type: 'stock_position',
-          entityId: sp.id,
-          label: `${sp.inventoryItemId} 재고`,
-          href: `/dashboard/stock-risk`,
-        },
-        workspaceId: sp.workspaceId,
-      });
-    }
-  }
-
-  for (const rr of reorderRecommendations) {
-    if (rr.status === 'blocked') {
-      items.push({
-        id: `gen-rr-blocked-${rr.id}`,
-        itemType: 'budget_risk',
-        title: `${rr.inventoryItemId} 재주문 차단`,
-        description: rr.blockedReasons.join(' / '),
-        status: 'blocked_reorder',
-        priority: rr.urgency === 'urgent' ? 'p0' : 'p1',
-        ownershipState: 'unassigned',
-        createdAt: rr.generatedAt,
-        slaHours: 24,
-        elapsedHours: Math.round(hoursSince(rr.generatedAt)),
-        isOverdue: hoursSince(rr.generatedAt) > 24,
-        isBlocked: true,
-        blockedReason: rr.blockedReasons.join(' + '),
-        sourceContext: {
-          type: 'reorder_recommendation',
-          entityId: rr.id,
-          label: `재주문 추천 ${rr.id.toUpperCase()}`,
-          href: `/dashboard/stock-risk`,
-        },
-        workspaceId: rr.workspaceId,
-      });
-    }
-  }
-
-  return items;
-}
-
-// ---------------------------------------------------------------------------
 // Provider
 // ---------------------------------------------------------------------------
 
@@ -423,9 +148,6 @@ interface OpsStoreProviderProps {
 
 export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
   const [graph, setGraph] = useState<EntityGraph>(() => createInitialGraph());
-  const [inboxItems, setInboxItems] = useState<OperatorInboxItem[]>(
-    () => [...INBOX_ITEMS],
-  );
 
   // Derived unified inbox
   const unifiedInboxItems = useMemo(() => recalculateInbox(graph), [graph]);
@@ -437,19 +159,6 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
   const dispatch = useCallback((action: TransitionAction) => {
     setGraph((prev) => {
       const next = applyTransition(prev, action);
-      // Also update legacy inbox
-      setInboxItems(
-        generateLegacyInboxItems(
-          next.quoteRequests,
-          next.quoteResponses,
-          next.purchaseOrders,
-          next.acknowledgements,
-          next.receivingBatches,
-          next.stockPositions,
-          next.reorderRecommendations,
-          next.expiryActions,
-        ) as OperatorInboxItem[],
-      );
       return next;
     });
   }, []);
@@ -543,7 +252,6 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
   const resetToInitial = useCallback(() => {
     resetDemoClock();
     setGraph(createInitialGraph());
-    setInboxItems([...INBOX_ITEMS] as OperatorInboxItem[]);
   }, []);
 
   // -----------------------------------------------------------------------
@@ -562,7 +270,6 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
       stockPositions: graph.stockPositions,
       reorderRecommendations: graph.reorderRecommendations,
       expiryActions: graph.expiryActions,
-      inboxItems: Array.isArray(inboxItems) ? inboxItems : [],
       unifiedInboxItems,
       graph,
       selectVendor,
@@ -581,7 +288,7 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
       dispatch,
     }),
     [
-      graph, inboxItems, unifiedInboxItems,
+      graph, unifiedInboxItems,
       selectVendor, convertQuoteToPO, issuePO, acknowledgePO,
       recordArrival, completeInspection, postToInventory, attachReceivingDocument,
       createQuoteFromReorder, completeExpiryAction, resolveReorderBlocker,

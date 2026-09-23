@@ -12,6 +12,7 @@
 
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 import { resolve } from "node:path";
 
 const SRC = resolve(__dirname, "../../..");
@@ -20,8 +21,11 @@ const read = (rel: string) => readFileSync(resolve(SRC, rel), "utf8");
 const ADAPTER = read("lib/operational-brief/real-quote-inbox.ts");
 const ROUTE = read("app/api/operational-brief/inbox/route.ts");
 const POPUP = read("components/operational-brief/popup.tsx");
+const FETCHER = read("lib/operational-brief/fetch-real-inbox.ts");
+/** 부정 단언은 주석 제거본에 — 폐기 사유를 적은 주석이 스스로 걸리지 않도록 */
+const POPUP_CODE = stripComments(POPUP);
 
-describe("§brief-realdata-quotes — 어댑터(실 Quote → inbox, honesty)", () => {
+describe("§brief-realdata-quotes · 어댑터(실 Quote → inbox, honesty)", () => {
   it("buildRealQuoteInbox export + db.quote.findMany SENT+RESPONDED 스코프", () => {
     expect(ADAPTER).toMatch(/export async function buildRealQuoteInbox/);
     expect(ADAPTER).toMatch(/db\.quote\.findMany/);
@@ -34,7 +38,7 @@ describe("§brief-realdata-quotes — 어댑터(실 Quote → inbox, honesty)", 
   it("buildInboxFromQuotes 재사용 + comparisons=[] (비교 검토 아이템 미생성·drift 0)", () => {
     expect(ADAPTER).toMatch(/buildInboxFromQuotes\(reqs,\s*resps,\s*\[\]\)/);
   });
-  it("§brief-realdata-responded — RESPONDED → quote_review_required 직접 emit(canonical 재사용)", () => {
+  it("§brief-realdata-responded · RESPONDED → quote_review_required 직접 emit(canonical 재사용)", () => {
     expect(ADAPTER).toMatch(/q\.status === QuoteStatus\.RESPONDED/);
     expect(ADAPTER).toMatch(/workType:\s*"quote_review_required"/);
     expect(ADAPTER).toContain("응답 도착");
@@ -42,7 +46,7 @@ describe("§brief-realdata-quotes — 어댑터(실 Quote → inbox, honesty)", 
     expect(ADAPTER).toMatch(/calculateInboxPriority\(item\)/);
     expect(ADAPTER).toMatch(/sortInboxItems\(/);
   });
-  it("§brief-realdata-orgscope — 본인 OR 소속 조직 견적(detail/PATCH 권한 정합)", () => {
+  it("§brief-realdata-orgscope · 본인 OR 소속 조직 견적(detail/PATCH 권한 정합)", () => {
     expect(ADAPTER).toMatch(/db\.organizationMember\.findMany/);
     expect(ADAPTER).toMatch(/OR:\s*\[/);
     expect(ADAPTER).toMatch(/\{ userId \}/);
@@ -50,7 +54,7 @@ describe("§brief-realdata-quotes — 어댑터(실 Quote → inbox, honesty)", 
   });
 });
 
-describe("§brief-realdata-quotes — API 라우트(읽기 전용)", () => {
+describe("§brief-realdata-quotes · API 라우트(읽기 전용)", () => {
   it("GET export + auth 401 가드", () => {
     expect(ROUTE).toMatch(/export async function GET/);
     expect(ROUTE).toMatch(/await auth\(\)/);
@@ -62,22 +66,25 @@ describe("§brief-realdata-quotes — API 라우트(읽기 전용)", () => {
   });
 });
 
-describe("§brief-realdata-quotes — popup LIVE 연동", () => {
-  it("BRIEF_DATA_IS_LIVE = true (플립)", () => {
-    expect(POPUP).toMatch(/const BRIEF_DATA_IS_LIVE = true;/);
+describe("§brief-realdata-quotes · popup LIVE 연동", () => {
+  // §inbox-seed-cutoff (2026-09-22 · 호영님 판정) — 승계: 플래그·시드 폴백은 제거됐고, 명제는 그대로다.
+  //   "브리핑 목록 = 실데이터만" · 시드가 사라져도 이 명제는 살아 있어야 한다.
+  it("목록은 실데이터만 · 시드 폴백·플래그 0 (역계약 · 주석 제거본)", () => {
+    expect(POPUP).toMatch(/const allItems = liveItems \?\? \[\];/);
+    expect(POPUP_CODE).not.toMatch(/\bBRIEF_DATA_IS_LIVE\b/);
+    expect(POPUP_CODE).not.toMatch(/\bseedInbox\b/);
+    expect(POPUP_CODE).not.toMatch(/\buseOpsStore\b/);
+    expect(POPUP_CODE).not.toMatch(/\bbuildFullInbox\b/);
   });
-  it("LIVE 시 실 inbox endpoint fetch", () => {
-    expect(POPUP).toContain('fetch("/api/operational-brief/inbox")');
-  });
-  it("allItems = LIVE ? 실데이터 : 시드(시드 store 불침범)", () => {
-    expect(POPUP).toContain("const seedInbox = useMemo(");
-    expect(POPUP).toMatch(/const allItems = BRIEF_DATA_IS_LIVE \? \(liveItems \?\? \[\]\) : seedInbox;/);
+  it("실 inbox endpoint 는 /dashboard/inbox 와 같은 함수로 부른다", () => {
+    expect(POPUP).toContain("fetchRealInboxItems()");
+    expect(FETCHER).toContain('export const REAL_INBOX_ENDPOINT = "/api/operational-brief/inbox"');
   });
   it("로딩/에러 상태 정직", () => {
     expect(POPUP).toContain("불러오는 중");
     expect(POPUP).toContain("운영 브리핑을 불러오지 못했습니다");
   });
-  it("§brief-realdata-refetch — 발송 후 inbox 재조회(context 트리거)", () => {
+  it("§brief-realdata-refetch · 발송 후 inbox 재조회(context 트리거)", () => {
     expect(POPUP).toContain("BriefRefetchContext");
     expect(POPUP).toMatch(/setRefreshKey\(\(k\) => k \+ 1\)/);
     expect(POPUP).toMatch(/\}, \[isOpen, refreshKey\]\);/);
@@ -85,14 +92,15 @@ describe("§brief-realdata-quotes — popup LIVE 연동", () => {
   });
 });
 
-describe("§brief-realdata-quotes — 보존(회귀 0)", () => {
-  it("견적 통보(실 PATCH)·미리보기 보존 — LIVE 활성", () => {
-    expect(POPUP).toMatch(/BRIEF_DATA_IS_LIVE \? \([\s\S]{0,120}<QuoteNotifyAction/);
+describe("§brief-realdata-quotes · 보존(회귀 0)", () => {
+  it("견적 통보(실 PATCH)·미리보기 보존", () => {
+    expect(POPUP).toContain("<QuoteNotifyAction");
     expect(POPUP).toContain("확인하고 발송");
   });
-  it("데모 배지 코드 보존(flip-safe — !LIVE 게이트)", () => {
-    expect(POPUP).toMatch(/!BRIEF_DATA_IS_LIVE && \(/);
-    expect(POPUP).toContain("데모 데이터");
+  it("§inbox-seed-cutoff · 시드용 「데모 데이터」 배지·통보 차단 분기 0 (도달 0 이던 죽은 코드)", () => {
+    expect(POPUP_CODE).not.toMatch(/데모 데이터/);
+    // 견적 통보는 조건 없이 활성 (예전엔 플래그 분기 안에 있었다)
+    expect(POPUP).toMatch(/brief\.module === "quote" && <QuoteNotifyAction quoteId=\{item\.entityId\} \/>/);
   });
   it("track-3 dismiss/idle 보존", () => {
     expect(POPUP).toContain("오늘 숨김");

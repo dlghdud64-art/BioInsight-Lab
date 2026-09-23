@@ -108,6 +108,16 @@ function hoursSince(iso: string): number {
   return Math.max(0, (NOW_MS() - new Date(iso).getTime()) / (1000 * 60 * 60));
 }
 
+/**
+ * 재고 계열 항목 제목의 품목 라벨 — §inbox-seed-cutoff (2026-09-22 · 호영님)
+ * inventoryItemId 는 내부 키다(예: inv-item-fbs). 제목에 그대로 내면 사용자는 키를 읽게 된다.
+ * 표시명이 없으면 없다고 말한다.
+ */
+export function stockItemLabel(x: { itemDisplayName?: string }): string {
+  const name = x.itemDisplayName?.trim();
+  return name && name.length > 0 ? name : '품목명 미확인';
+}
+
 export function resolveDueState(
   dueAt: string | undefined,
 ): UnifiedInboxItem['dueState'] {
@@ -601,7 +611,7 @@ export function buildInboxFromStockRisk(
       workType: 'reorder_due',
       entityId: rr.id,
       entityRoute: `/dashboard/stock-risk`,
-      title: `${rr.inventoryItemId} 재주문 ${isBlocked ? '차단' : '필요'}`,
+      title: `${stockItemLabel(rr)} 재주문 ${isBlocked ? '차단' : '필요'}`,
       summary: isBlocked
         ? rr.blockedReasons.join(' / ')
         : `가용 ${rr.currentAvailableQuantity}${rr.recommendedUnit}, ${rr.recommendedOrderQuantity}${rr.recommendedUnit} 발주 권장`,
@@ -641,7 +651,7 @@ export function buildInboxFromStockRisk(
       workType: 'expiry_action_due',
       entityId: ea.id,
       entityRoute: `/dashboard/stock-risk`,
-      title: `${ea.inventoryItemId} 유효기간 조치 필요`,
+      title: `${stockItemLabel(ea)} 유효기간 조치 필요`,
       summary: ea.daysToExpiry !== undefined
         ? `만료까지 ${ea.daysToExpiry}일, ${ea.affectedQuantity}${ea.unit} 영향`
         : `${ea.affectedQuantity}${ea.unit} 조치 필요`,
@@ -674,7 +684,7 @@ export function buildInboxFromStockRisk(
         workType: 'quarantine_constrained',
         entityId: sp.id,
         entityRoute: `/dashboard/stock-risk`,
-        title: `${sp.inventoryItemId} 보류 제약`,
+        title: `${stockItemLabel(sp)} 보류 제약`,
         summary: `보류 ${sp.quarantinedQuantity}${sp.unit}, 가용 ${sp.availableQuantity}${sp.unit}`,
         priority: 'p0',
         owner: undefined,
