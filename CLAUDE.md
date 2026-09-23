@@ -1033,6 +1033,36 @@ base  apps/web/tsconfig.json          include = "src" + ".next/types/**/*.ts"   
 지우면 `TS6053 File not found` 가 뜨고 총계가 튄다(같은 시점 실측 424 → 29). **두 번 돌려
 같은 수가 나오는지 확인**하고, 다르면 상대 빌드가 끝난 뒤 다시 잰다.
 
+### 1-b. 🛑 §sandbox-git-lock — `index.lock` 은 **샌드박스가 남긴다** (2026-09-23 신설)
+
+샌드박스(Cowork 세션)는 `.git/` 에 **파일을 만들 수는 있고 지울 수는 없다.**
+마운트된 폴더의 삭제 권한이 꺼져 있기 때문이다. 실측:
+
+```
+touch .git/x   → 성공
+rm    .git/x   → Operation not permitted
+```
+
+그래서 git 이 만든 `index.lock` 이 **정상 종료 후에도 남는다.**
+git 자신도 지우려다 실패하며 경고를 낸다:
+`warning: unable to unlink '.git/index.lock': Operation not permitted`
+
+⚠️ **0바이트 · git 프로세스 0개 · 시간 경과는 이 경우의 정상 모습이지 stale 판정 근거가 아니다.**
+2026-09-21~23 에 세 번 나왔고 세 번 다 "다른 세션 것" 으로 판정됐다 — 셋 다 틀렸다.
+프로세스가 없다는 것은 소유자를 **확인할 수 없다**는 뜻이지 아니라는 증거가 아니다.
+
+**샌드박스가 지킬 것**
+
+- read-only git 은 `git --no-optional-locks status|log|diff` 로 부른다.
+  index refresh 용 락을 아예 잡지 않는다(git 2.34.1 에서 지원 확인).
+- `.git/` 에 쓰는 명령(`git add` · `git commit` · `git read-tree` …)은 쓰지 않는다.
+  임시 저장소가 필요하면 `.git` **밖**에 따로 `git init` 한다.
+- 🛑 `GIT_INDEX_FILE` 만으로는 부족하다. index 는 갈라지지만 **object store 는 공용**이라
+  `git add` 가 `.git/objects/` 에 임시 파일을 남긴다(2026-09-22 실측, operator 가 청소).
+
+**lock 을 발견한 세션**: 샌드박스가 직전에 git 을 돌렸으면 그것이 원인이다.
+위 조치 이후에도 계속 나오면 그때 4조건 판정으로 돌아간다.
+
 ### 2. 🛑 `git stash` 는 **자기 변경만** — 경로를 지정한다
 
 ```
