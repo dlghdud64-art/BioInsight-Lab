@@ -22,7 +22,7 @@ function stripComments(src: string): string {
 const VIEW = "src/components/receiving/mobile-receiving-view.tsx";
 const PAGE = "src/app/dashboard/receiving/page.tsx";
 
-describe("§mobile-receiving-rcv-card P2 — RCV 단위 뷰모델 소비(이슈 분열 제거)", () => {
+describe("§mobile-receiving-rcv-card P2 · RCV 단위 뷰모델 소비(이슈 분열 제거)", () => {
   it("canonical 파생 뷰모델(MobileReceivingCard/Summary) 사용, ModuleLandingItem 미사용", () => {
     const src = read(VIEW);
     expect(src).toMatch(/from "@\/lib\/ops-console\/mobile-receiving-view-model"/);
@@ -32,14 +32,17 @@ describe("§mobile-receiving-rcv-card P2 — RCV 단위 뷰모델 소비(이슈 
     expect(stripComments(src)).not.toMatch(/ModuleLandingItem/);
   });
 
-  it("page.tsx: receivingBatches → buildMobileReceivingSummary 파생 주입", () => {
+  // §receiving-mobile-canonical (2026-09-22 · 호영님 판정) 승계 — 파생 주입이라는 명제는 그대로,
+  //   출처만 시드(receivingBatches)에서 정본(caseList.rows = ReceivingDraft)으로 옮겼다.
+  it("page.tsx: 정본 케이스 행 → 모바일 요약 파생 주입 (시드 아님)", () => {
     const src = read(PAGE);
-    expect(src).toMatch(/buildMobileReceivingSummary\(receivingBatches, nowIso\)/);
+    expect(src).toMatch(/buildMobileReceivingSummaryFromCases\(caseList\.rows, nowIso\)/);
     expect(src).toMatch(/summary=\{mobileSummary\}/);
+    expect(stripComments(src)).not.toMatch(/receivingBatches|postToInventory/);
   });
 });
 
-describe("§mobile-receiving-rcv-card P2 — 흰 카드(배경 채색 금지)", () => {
+describe("§mobile-receiving-rcv-card P2 · 흰 카드(배경 채색 금지)", () => {
   it("카드 = 흰 배경 + 보더 #e6eaf0", () => {
     const src = read(VIEW);
     expect(src).toMatch(/border border-\[#e6eaf0\] bg-white/);
@@ -54,7 +57,7 @@ describe("§mobile-receiving-rcv-card P2 — 흰 카드(배경 채색 금지)", 
   });
 });
 
-describe("§mobile-receiving-rcv-card P2 — 체크리스트 순서·의존·최종 CTA", () => {
+describe("§mobile-receiving-rcv-card P2 · 체크리스트 순서·의존·최종 CTA", () => {
   it("체크리스트 헤더 + 자동 소멸 안내", () => {
     const src = read(VIEW);
     expect(src).toMatch(/반영까지 남은 일 · /);
@@ -80,7 +83,7 @@ describe("§mobile-receiving-rcv-card P2 — 체크리스트 순서·의존·최
   });
 });
 
-describe("§mobile-receiving-rcv-card P2 — 번호 칩 신호등(§11.302 yellow, amber 금지)", () => {
+describe("§mobile-receiving-rcv-card P2 · 번호 칩 신호등(§11.302 yellow, amber 금지)", () => {
   it("문서=red / 보류=yellow / 대기=gray", () => {
     const src = read(VIEW);
     expect(src).toMatch(/bg-\[#fef2f2\] text-\[#b91c1c\]/); // 문서 red
@@ -95,16 +98,19 @@ describe("§mobile-receiving-rcv-card P2 — 번호 칩 신호등(§11.302 yello
   });
 });
 
-describe("§mobile-receiving-rcv-card P2 — 배선(dead button 0) · 회귀 0", () => {
+describe("§mobile-receiving-rcv-card P2 · 배선(dead button 0) · 회귀 0", () => {
   it("첨부/검사/반영 실 핸들러 wiring", () => {
     const src = read(VIEW);
     expect(src).toMatch(/onClick=\{\(\) => onAttach\(card\)\}/);
     expect(src).toMatch(/onClick=\{\(\) => onInspect\(card\)\}/);
   });
 
-  it("page.tsx: onPost → store.postToInventory 실 mutation + onAttach/onInspect 실 네비", () => {
+  // §receiving-mobile-canonical (2026-09-22 · 호영님 판정) 승계 — 명제는 「dead button 0 · 실제 경로 연결」 이다.
+  //   옛 단언은 그 실제 경로로 `postToInventory`(시드 스토어 · 저장 0)를 요구했다 — 이제 정본 경로를 요구한다.
+  it("page.tsx: onPost → 정본 반영 경로(일괄 처리 모달) + onInspect 실 네비", () => {
     const src = read(PAGE);
-    expect(src).toMatch(/postToInventory\(card\.id\)/);
+    expect(stripComments(src)).not.toMatch(/postToInventory/);
+    expect(src).toMatch(/handleCta\(row\)/);
     expect(src).toMatch(/router\.push\(`\/dashboard\/receiving\/\$\{card\.id\}`\)/);
     expect(src).toMatch(/import \{ labToast \}/);
   });

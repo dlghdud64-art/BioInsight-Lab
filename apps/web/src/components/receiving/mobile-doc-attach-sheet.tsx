@@ -13,18 +13,27 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, CheckCircle2, AlertTriangle, Upload, X, Loader2, Trash2 } from "lucide-react";
-import type { ReceivingBatchContract } from "@/lib/review-queue/receiving-inbound-contract";
 import { labToast } from "@/lib/toast/lab-toast";
 import {
   useReceivingDocuments,
-  useResolvedOrderId,
   uploadReceivingDocumentWithProgress,
   type ReceivingDocumentItem,
 } from "@/hooks/use-receiving-documents";
 
+/**
+ * §receiving-mobile-canonical (2026-09-22) — 첨부 대상은 정본 입고안이다.
+ * 예전엔 시드 계약(ReceivingBatchContract)을 받아 poId 로 발주를 되찾았다.
+ * 입고안은 발주 id 를 직접 들고 있으므로 되찾을 필요가 없다(조회 1회 제거).
+ */
+export interface MobileAttachTarget {
+  /** 표시 번호 — 입고안에는 RCV 채번이 없어 발주번호를 쓴다(데스크톱과 같은 값) */
+  displayNumber: string;
+  orderId: string | null;
+}
+
 interface Props {
   open: boolean;
-  rb: ReceivingBatchContract | null;
+  target: MobileAttachTarget | null;
   onClose: () => void;
 }
 
@@ -43,8 +52,9 @@ function formatAttachedLine(doc: ReceivingDocumentItem): string {
   return [date, doc.uploadedBy].filter(Boolean).join(" ") + (date ? " 첨부" : "");
 }
 
-export function MobileDocAttachSheet({ open, rb, onClose }: Props) {
-  const { orderId, isResolving } = useResolvedOrderId(open && rb ? rb.poId : null);
+export function MobileDocAttachSheet({ open, target, onClose }: Props) {
+  const orderId = target?.orderId ?? null;
+  const isResolving = false;
   const { documents, isLoading, isError, removeDocument, invalidate } = useReceivingDocuments(
     open ? orderId : null,
   );
@@ -130,7 +140,7 @@ export function MobileDocAttachSheet({ open, rb, onClose }: Props) {
     </div>
   );
 
-  if (!rb) return null;
+  if (!target) return null;
 
   return (
     <div
@@ -150,7 +160,7 @@ export function MobileDocAttachSheet({ open, rb, onClose }: Props) {
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
           <div className="min-w-0">
             <h2 className="text-[15px] font-extrabold text-slate-900">문서 첨부</h2>
-            <p className="mt-0.5 truncate text-[12px] text-slate-500">{rb.receivingNumber}</p>
+            <p className="mt-0.5 truncate text-[12px] text-slate-500">{target.displayNumber}</p>
           </div>
           <button
             type="button"

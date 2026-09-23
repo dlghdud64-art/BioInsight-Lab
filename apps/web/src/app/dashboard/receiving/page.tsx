@@ -19,13 +19,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
-import { useOpsStore } from "@/lib/ops-console/ops-store";
 import { MODULE_ORIENTATION } from "@/lib/ops-console/module-landing-adapter";
 import { MobileReceivingView } from "@/components/receiving/mobile-receiving-view";
-import {
-  buildMobileReceivingSummary,
-  type MobileReceivingCard,
-} from "@/lib/ops-console/mobile-receiving-view-model";
+import { buildMobileReceivingSummaryFromCases } from "@/lib/ops-console/mobile-receiving-from-drafts";
+import type { MobileReceivingCard } from "@/lib/ops-console/mobile-receiving-view-model";
 import { MobileDocAttachSheet } from "@/components/receiving/mobile-doc-attach-sheet";
 import { ReceivingCaseListView } from "@/components/receiving/receiving-case-list";
 import { ReceivingBatchModal } from "@/components/receiving/receiving-batch-modal";
@@ -174,16 +171,17 @@ export default function ReceivingLandingPage() {
     }
   };
 
-  // ── 모바일 (§mobile-receiving-rcv-card 무접촉) ────────────────────
-  const { receivingBatches, postToInventory } = useOpsStore();
+  // ── 모바일 — §receiving-mobile-canonical (2026-09-22 · 호영님 판정) ─────────
+  //   데스크톱과 **같은 정본 행**(caseList.rows)에서 파생한다. 예전엔 ops 시드(receivingBatches)를 그려
+  //   실재하지 않는 입고 1건이 모든 사용자의 휴대폰에 떴고, 「재고 반영」 은 시드 스토어만 바꿨다(저장 0).
   const [nowIso] = useState(() => new Date().toISOString());
   const mobileSummary = useMemo(
-    () => buildMobileReceivingSummary(receivingBatches, nowIso),
-    [receivingBatches, nowIso],
+    () => buildMobileReceivingSummaryFromCases(caseList.rows, nowIso),
+    [caseList.rows, nowIso],
   );
   const [attachCardId, setAttachCardId] = useState<string | null>(null);
-  const attachBatch = attachCardId
-    ? receivingBatches.find((b) => b.id === attachCardId) ?? null
+  const attachRow = attachCardId
+    ? caseList.rows.find((r) => r.id === attachCardId) ?? null
     : null;
 
   return (
@@ -208,23 +206,37 @@ export default function ReceivingLandingPage() {
           className="mb-4"
         />
 
-        {/* ── Mobile (below md) — 무접촉 ── */}
+        {/* ── Mobile (below md) — 정본 목록. 로딩·오류·0건을 데스크톱과 같은 상태로 ── */}
         <div className="md:hidden">
-          <MobileReceivingView
-            summary={mobileSummary}
-            onAttach={(card: MobileReceivingCard) => setAttachCardId(card.id)}
-            onInspect={(card: MobileReceivingCard) => router.push(`/dashboard/receiving/${card.id}`)}
-            onPost={(card: MobileReceivingCard) => {
-              postToInventory(card.id);
-              labToast.success(
-                "재고 반영 완료",
-                `<b>${card.receivingNumber}</b> 재고에 반영되었습니다.`,
-              );
-            }}
-          />
+          {loading ? (
+            <div className="flex items-center gap-2 text-[13px] text-slate-500 py-6">
+              <Loader2 className="h-4 w-4 animate-spin" /> 입고 목록 불러오는 중
+            </div>
+          ) : loadError ? (
+            <div className="rounded-[13px] border border-red-200 bg-red-50 p-4">
+              <p className="text-[13px] font-semibold text-red-700">{loadError}</p>
+              <button
+                onClick={() => { setLoading(true); void load(); }}
+                className="mt-3 h-9 px-3 rounded-lg border border-slate-200 bg-white text-[12.5px] font-semibold text-slate-600 inline-flex items-center gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> 다시 시도
+              </button>
+            </div>
+          ) : (
+            <MobileReceivingView
+              summary={mobileSummary}
+              onAttach={(card: MobileReceivingCard) => setAttachCardId(card.id)}
+              onInspect={(card: MobileReceivingCard) => router.push(`/dashboard/receiving/${card.id}`)}
+              // 재고 반영 = 데스크톱과 같은 canonical 경로(일괄 처리 모달 → /approve). 로컬 상태 변경 0.
+              onPost={(card: MobileReceivingCard) => {
+                const row = caseList.rows.find((r) => r.id === card.id);
+                if (row) handleCta(row);
+              }}
+            />
+          )}
           <MobileDocAttachSheet
-            open={attachBatch != null}
-            rb={attachBatch}
+            open={attachRow != null}
+            target={attachRow ? { displayNumber: attachRow.displayNumber, orderId: attachRow.orderId } : null}
             onClose={() => setAttachCardId(null)}
           />
         </div>

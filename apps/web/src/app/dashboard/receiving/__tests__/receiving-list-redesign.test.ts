@@ -23,7 +23,7 @@ const PAGE = "src/app/dashboard/receiving/page.tsx";
 const LIST = "src/components/receiving/receiving-case-list.tsx";
 const VM = "src/lib/ops-console/receiving-desktop-view-model.ts";
 
-describe("§receiving-list-redesign — canonical 전환 (P4 truth)", () => {
+describe("§receiving-list-redesign · canonical 전환 (P4 truth)", () => {
   it("데스크탑 리스트가 receiving-drafts 3-status 를 canonical 로 읽는다", () => {
     const src = read(PAGE);
     expect(src).toMatch(
@@ -37,18 +37,19 @@ describe("§receiving-list-redesign — canonical 전환 (P4 truth)", () => {
     expect(src).not.toMatch(/buildModuleLandingItems/);
   });
 
-  it("데스크탑 반영은 일괄 처리 모달(/approve 경로) 직행 — 데모 postToInventory 를 쓰지 않는다", () => {
+  // §receiving-mobile-canonical (2026-09-22 · 호영님 판정) 승계 — 모바일도 같은 canonical 경로로 옮겼다.
+  //   원 명제(「반영은 /approve 직행 · 데모 postToInventory 0」)는 이제 **두 기기 전부**에 적용된다.
+  it("반영은 데스크톱·모바일 모두 일괄 처리 모달(/approve 경로) 직행 · 데모 postToInventory 0", () => {
     const src = read(PAGE);
-    // 모바일(무접촉) 경로만 잔존 — card 단위 시그니처.
-    expect(src).toMatch(/postToInventory\(card\.id\)/);
-    // 구 데스크탑 데모 경로(ModuleLandingItem 단위) 부활 차단.
-    expect(src).not.toMatch(/postToInventory\(item\./);
+    expect(stripComments(src)).not.toMatch(/postToInventory/);
+    // 모바일 CTA 도 같은 핸들러를 탄다
+    expect(src).toMatch(/onPost=\{\(card: MobileReceivingCard\) => \{[\s\S]{0,200}handleCta\(row\)/);
     // 일괄 처리 모달 배선 + 커밋 후 refetch.
     expect(src).toMatch(/<ReceivingBatchModal[\s\S]{0,400}?onCommitted=\{\(\) => void load\(\)\}/);
   });
 });
 
-describe("§receiving-list-redesign — 우측 패널 폐기 (P3)", () => {
+describe("§receiving-list-redesign · 우측 패널 폐기 (P3)", () => {
   it("quickview-drawer · 구 데스크탑 리스트 · 데모 반영 모달 import 0", () => {
     // 주석 제외(폐기 사유 서술은 허용) — 코드 축만 검사.
     const src = stripComments(read(PAGE));
@@ -65,7 +66,7 @@ describe("§receiving-list-redesign — 우측 패널 폐기 (P3)", () => {
   });
 });
 
-describe("§receiving-list-redesign — CTA 단일 계약 (P2)", () => {
+describe("§receiving-list-redesign · CTA 단일 계약 (P2)", () => {
   it("리스트 컴포넌트는 caseCtaLabel 만 쓰고 CTA 문구를 하드코딩하지 않는다", () => {
     const src = read(LIST);
     expect(src).toMatch(/caseCtaLabel/);
@@ -85,7 +86,7 @@ describe("§receiving-list-redesign — CTA 단일 계약 (P2)", () => {
   });
 });
 
-describe("§receiving-list-redesign — COA 인라인 드롭존 (P3)", () => {
+describe("§receiving-list-redesign · COA 인라인 드롭존 (P3)", () => {
   it("드롭존 = 문서 API 실배선 (csrfFetch FormData, front-only 0)", () => {
     const src = read(PAGE);
     expect(src).toMatch(/csrfFetch\(`\/api\/receiving\/documents\/\$\{row\.orderId\}`/);
@@ -115,10 +116,10 @@ describe("§receiving-list-redesign — COA 인라인 드롭존 (P3)", () => {
   });
 });
 
-describe("§receiving-list-redesign — 빈 상태 CTA (2026-09-02 호영님)", () => {
+describe("§receiving-list-redesign · 빈 상태 CTA (2026-09-02 호영님)", () => {
   const SIDEBAR = "src/app/_components/dashboard-sidebar.tsx";
 
-  it("빈 상태가 발주로 유도하지 않는다 — purchase-orders 링크 0", () => {
+  it("빈 상태가 발주로 유도하지 않는다 · purchase-orders 링크 0", () => {
     // 실사용 범위는 견적·입고. 발주 관리는 §purchasing-hide 로 메뉴에서도 숨긴 표면이라
     // 거기로 보내는 것은 dead path 안내였다.
     const src = stripComments(read(PAGE));
@@ -133,7 +134,7 @@ describe("§receiving-list-redesign — 빈 상태 CTA (2026-09-02 호영님)", 
     expect(src).toMatch(/처리 중인 입고가 없습니다[\s\S]{0,500}?openModal\("scan_hub"\)/);
   });
 
-  it("사이드바 — 구매 운영·발주 관리는 purchasing 게이트 아래 (정의는 보존)", () => {
+  it("사이드바 · 구매 운영·발주 관리는 purchasing 게이트 아래 (정의는 보존)", () => {
     const src = stripComments(read(SIDEBAR));
     // 정의 보존(플래그 on 시 복귀 가능) + 렌더 필터가 두 href 를 함께 배제.
     expect(src).toMatch(/href: "\/dashboard\/purchases"/);
@@ -144,8 +145,8 @@ describe("§receiving-list-redesign — 빈 상태 CTA (2026-09-02 호영님)", 
   });
 });
 
-describe("§receiving-list-redesign — §11.302 색·타이포 (전 표면)", () => {
-  it("amber/orange Tailwind 금지 — 주의 = yellow 신호등", () => {
+describe("§receiving-list-redesign · §11.302 색·타이포 (전 표면)", () => {
+  it("amber/orange Tailwind 금지 · 주의 = yellow 신호등", () => {
     for (const rel of [PAGE, LIST]) {
       const src = read(rel);
       expect(src, rel).not.toMatch(/amber-\d/);
@@ -159,7 +160,7 @@ describe("§receiving-list-redesign — §11.302 색·타이포 (전 표면)", (
     expect(src).toMatch(/row\.holdChips\.map[\s\S]{0,300}?bg-red-50 text-red-700 border border-red-200/);
   });
 
-  it("em dash 구분자 0 — 판별기 파일 단위 (placeholder·주석 제외)", () => {
+  it("em dash 구분자 0 · 판별기 파일 단위 (placeholder·주석 제외)", () => {
     for (const rel of [PAGE, LIST, VM]) {
       const hits = violations(read(rel));
       expect(hits, `${rel}: ${JSON.stringify(hits)}`).toHaveLength(0);
