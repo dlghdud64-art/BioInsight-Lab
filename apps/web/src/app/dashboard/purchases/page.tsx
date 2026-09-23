@@ -320,6 +320,26 @@ export default function PurchasesPage() {
     },
   });
 
+  /* §quote-approval-team (2026-09-22 · 호영님 (가)안) — 결재 요청 시 팀 귀속을 **명시 전달**한다.
+   * 이 경로가 견적→결재의 유일한 생성 지점인데 teamId 를 안 채워 팀별 지출이 영원히 0 이었다.
+   * 소속 팀이 하나면 미리 채우되 **숨기지 않는다** — 채워진 값이 보여야 틀렸을 때 고칠 수 있다(호영님).
+   * 멤버십·조직 일치 검증은 서버가 한다(client 는 표시·전달만). */
+  const myTeamsQuery = useQuery<{ teams: { id: string; name: string }[] }>({
+    queryKey: ["my-teams"],
+    queryFn: async () => {
+      const res = await fetch("/api/team", { cache: "no-store" });
+      if (!res.ok) throw new Error("팀 목록을 불러오지 못했습니다");
+      return res.json();
+    },
+    staleTime: 5 * 60_000,
+  });
+  const myTeams = myTeamsQuery.data?.teams ?? [];
+  const [approvalTeamId, setApprovalTeamId] = useState<string>("");
+  // 소속 팀이 정확히 하나면 기본 선택(표시는 유지) · 여러 개면 사용자가 고른다
+  useEffect(() => {
+    if (myTeams.length === 1 && approvalTeamId === "") setApprovalTeamId(myTeams[0].id);
+  }, [myTeams, approvalTeamId]);
+
   // §11.209d-pr-auto-create — Quote → PurchaseRequest 결재 요청 mutation.
   // R&D Operations / Enterprise workspace 의 결재 정책 (in_app_approval)
   // 활성 시만 호출 가능 (server enforceAction + policy check). 성공 시
@@ -333,6 +353,8 @@ export default function PurchasesPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
+          // 팀 미선택이면 보내지 않는다 — 서버가 조용히 추측하지 않는다(팀 없는 조직도 있다)
+          body: JSON.stringify(approvalTeamId ? { teamId: approvalTeamId } : {}),
         },
       );
       if (!res.ok) {
@@ -1399,6 +1421,27 @@ export default function PurchasesPage() {
                   {approvalPolicy === "in_app_approval" &&
                     selectedItem.internalApprovalStatus === "NOT_REQUIRED" &&
                     !canApprove && (
+                      <div className="space-y-1.5">
+                        {/* §quote-approval-team — 팀 귀속 선택. 하나여도 숨기지 않는다. */}
+                        {myTeams.length > 0 ? (
+                          <label className="block">
+                            <span className="text-[11px] font-semibold text-slate-500">팀 귀속</span>
+                            <select
+                              value={approvalTeamId}
+                              onChange={(e) => setApprovalTeamId(e.target.value)}
+                              className="mt-1 w-full h-9 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                            >
+                              <option value="">팀 없음(조직으로만 귀속)</option>
+                              {myTeams.map((t) => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : (
+                          <p className="text-[11px] text-slate-400 break-keep">
+                            소속된 팀이 없어 조직으로만 귀속됩니다
+                          </p>
+                        )}
                       <Button
                         size="sm"
                         className="w-full h-9 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50"
@@ -1417,6 +1460,7 @@ export default function PurchasesPage() {
                           </>
                         )}
                       </Button>
+                      </div>
                     )}
                   {/* §11.209d-mutation — approve/reject CTA. ADMIN/OWNER 만,
                       internalApprovalStatus === "PENDING" + latestPendingRequestId

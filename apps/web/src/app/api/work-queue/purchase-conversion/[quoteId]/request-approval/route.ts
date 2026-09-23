@@ -69,6 +69,15 @@ export async function POST(
       );
     }
 
+    /* §quote-approval-team (2026-09-22 · 호영님 판정 (가)안) — 팀 귀속은 **명시 전달**이다.
+     * 이 경로가 quoteId 를 채우는 유일한 생성 지점인데 teamId 를 안 채웠다 → 팀별 지출 집계가 영원히 0.
+     * 🛑 「소속 팀이 하나면 서버가 알아서」 는 채택하지 않았다(호영님):
+     *    사용자가 두 번째 팀에 들어가는 순간 귀속이 조용히 바뀌고, 그 원인이 화면 어디에도 안 보인다.
+     *    「이 건은 다른 팀 것」 을 표현할 방법도 사라진다.
+     * 전달이 없으면 예전과 같이 팀 없이 만든다(팀이 없는 조직도 있다) — 조용한 추측만 하지 않는다. */
+    const body = (await request.json().catch(() => ({}))) as { teamId?: unknown };
+    const teamId = typeof body.teamId === "string" && body.teamId.trim().length > 0 ? body.teamId.trim() : null;
+
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
@@ -193,6 +202,41 @@ export async function POST(
       );
     }
 
+    /* §quote-approval-team — 팀이 전달됐으면 **서버가 검증**한다(§purchase-request-org-axis 와 같은 규칙).
+     *   ① 요청자가 그 팀의 멤버인가  ② 그 팀이 이 결재의 조직(orgId)에 속하는가
+     * 둘을 따로 세운다 — 팀 멤버십만 보면 다른 조직 산하 팀으로 귀속시킬 수 있다(귀속 정확 != 행위 허용). */
+    if (teamId) {
+      const team = await db.team.findUnique({
+        where: { id: teamId },
+        select: { organizationId: true },
+      });
+      if (!team) {
+        enforcement.fail();
+        return NextResponse.json(
+          { error: "TEAM_NOT_FOUND", message: "팀을 찾을 수 없습니다." },
+          { status: 404 },
+        );
+      }
+      if (team.organizationId !== orgId) {
+        enforcement.fail();
+        return NextResponse.json(
+          { error: "TEAM_ORG_MISMATCH", message: "이 결재의 조직에 속한 팀이 아닙니다." },
+          { status: 403 },
+        );
+      }
+      const teamMembership = await db.teamMember.findUnique({
+        where: { userId_teamId: { userId: session.user.id, teamId } },
+        select: { id: true },
+      });
+      if (!teamMembership) {
+        enforcement.fail();
+        return NextResponse.json(
+          { error: "TEAM_FORBIDDEN", message: "본인이 속한 팀으로만 귀속할 수 있습니다." },
+          { status: 403 },
+        );
+      }
+    }
+
     const candidate = await selectApproverByAmount({
       workspaceId,
       organizationId: orgId,
@@ -224,11 +268,13 @@ export async function POST(
     const purchaseRequest = await db.purchaseRequest.create({
       data: {
         requesterId: session.user.id,
-        /* §purchase-request-org-axis (2026-08-30) — 이 경로는 teamId 를 안 채운다.
-         * 파생 규칙 2갈래 중 두 번째: teamId 없으면 서버 파생(workspace 축) + 멤버십 게이트.
-         * 🛑 이 경로가 quoteId 를 채우는 유일한 생성 지점이고, teamId 부재로 orgId 가
-         *    undefined 여서 승인 시 예산 게이트를 통째로 건너뛰고 있었다. */
+        /* §purchase-request-org-axis (2026-08-30) — 조직은 workspace 축에서 파생하고 판정은 멤버십 축.
+         * §quote-approval-team (2026-09-22 · 호영님 (가)안) — 팀은 **호출자가 명시**한 값만 채운다.
+         *   이 경로가 quoteId 를 채우는 유일한 생성 지점인데 teamId 가 늘 비어 있어
+         *   팀별 지출 집계가 영원히 0 이었다(「팀별 보기」 가 비어 있던 진짜 원인).
+         *   전달이 없으면 null — 조용한 추측을 하지 않는다. */
         organizationId: orgId,
+        teamId,
         approverId,
         title: quote.title,
         message: `견적 ${quote.title} 결재 요청 (자동 생성)`,
