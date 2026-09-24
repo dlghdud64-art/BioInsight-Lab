@@ -131,7 +131,7 @@ const GUIDE_ENTRIES: GuideEntry[] = [
   { id: "sc-2", category: "search-compare", icon: GitCompareArrows, title: "비교 워크스페이스", what: "여러 제품을 행 기반으로 나란히 비교하여 가격, 규격, 납기를 한눈에 파악합니다.", when: "동일 품목의 제조사·규격·가격을 비교하고 싶을 때", keyInputs: ["비교할 품목 (검색에서 추가)", "그룹 설정"], nextAction: "최적 품목 선택 후 견적 요청", link: { label: "비교 워크스페이스 열기", href: "/compare" } },
   // ── 견적 요청과 구매 ──
   { id: "qp-1", category: "quote-purchase", icon: FileText, title: "견적 요청", what: "비교에서 선택한 품목이나 직접 입력한 품목 목록으로 견적을 요청합니다.", when: "구매 전 가격·납기를 확인해야 할 때", keyInputs: ["품목 목록", "수량", "희망 납기", "특이사항"], nextAction: "벤더 회신 확인 → 가격 비교", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
-  { id: "qp-2", category: "quote-purchase", icon: GitCompareArrows, title: "견적 비교 및 확정", what: "복수 벤더의 회신을 가격·납기·MOQ 기준으로 비교하고 최종 견적을 확정합니다.", when: "벤더 회신이 도착한 후", keyInputs: ["벤더별 회신 내용", "비교 기준"], nextAction: "승인 요청 또는 발주 진행", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
+  { id: "qp-2", category: "quote-purchase", icon: GitCompareArrows, title: "견적 비교 및 확정", what: "복수 벤더의 회신을 가격·납기·MOQ 기준으로 비교하고 최종 견적을 확정합니다.", when: "벤더 회신이 도착한 후", keyInputs: ["벤더별 회신 내용", "비교 기준"], nextAction: "결재 요청", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
   // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 카드 qp-3「발주 및 구매 관리」 제거. 설명하던 기능(발주 진행·구매 이력 증빙)이
   //   제품에 없다. 지원센터가 없는 기능을 안내하면 그 자체가 거짓 약속이다.
   // ── 입고와 재고 운영 ──
@@ -147,7 +147,7 @@ const GUIDE_ENTRIES: GuideEntry[] = [
   { id: "sf-5", category: "safety", icon: FileText, title: "GMP 문서·감사 대응", what: "구매·입고·사용·폐기의 감사 추적(audit trail)을 기록하여 GMP 및 규제 감사에 대응할 수 있는 증적을 확보합니다.", when: "GMP 심사나 내부·외부 감사를 준비할 때", keyInputs: [], nextAction: "감사 추적 로그 내보내기", link: { label: "감사 로그 보기", href: "/dashboard/audit" } },
   // ── 조직/권한 관리 ──
   { id: "org-1", category: "org-role", icon: Users, title: "멤버 초대 및 역할 관리", what: "팀원에게 Viewer, Requester, Approver, Admin, Owner 역할을 부여합니다.", when: "새 팀원이 합류하거나 권한을 변경할 때", keyInputs: ["이메일 주소", "역할 선택"], nextAction: "초대 이메일 발송 확인", link: { label: "조직 설정으로 이동", href: "/dashboard/organizations" } },
-  { id: "org-2", category: "org-role", icon: Shield, title: "승인 체계 설정", what: "견적 확정·발주 시 Approver의 승인을 거치도록 워크플로를 설정합니다.", when: "고액 구매나 팀 내부 승인 프로세스가 필요할 때", keyInputs: ["승인 필수 금액 기준", "승인자 지정"], nextAction: "승인 요청 테스트", link: { label: "조직 설정으로 이동", href: "/dashboard/organizations" } },
+  { id: "org-2", category: "org-role", icon: Shield, title: "승인 체계 설정", what: "견적 확정 시 Approver의 승인을 거치도록 워크플로를 설정합니다.", when: "고액 구매나 팀 내부 승인 프로세스가 필요할 때", keyInputs: ["승인 필수 금액 기준", "승인자 지정"], nextAction: "승인 요청 테스트", link: { label: "조직 설정으로 이동", href: "/dashboard/organizations" } },
   { id: "org-3", category: "org-role", icon: Shield, title: "Owner / Admin / 일반 멤버 권한 차이", what: "Owner는 조직당 1명으로 결제, 조직 삭제, 소유권 이전 등 최고 권한을 갖습니다. Admin은 멤버 초대·역할 변경·설정을 관리하지만 Owner 변경이나 조직 삭제는 불가합니다.", when: "역할별 접근 범위를 확인하거나 변경해야 할 때", keyInputs: [], nextAction: "역할 변경은 조직 설정에서 수행", link: { label: "조직 설정으로 이동", href: "/dashboard/organizations" } },
   // ── 알림/설정/구독 ──
   { id: "noti-1", category: "notification", icon: Bell, title: "알림 채널 설정", what: "이메일, 인앱 알림, 하루 한 번 요약 등 알림 수신 방식을 선택합니다.", when: "중요 알림을 놓치고 싶지 않을 때", keyInputs: ["알림 유형별 ON/OFF", "수신 채널"], nextAction: "하루 한 번 요약 시간 설정", link: { label: "알림 설정으로 이동", href: "/dashboard/settings" } },
@@ -161,7 +161,7 @@ const GUIDE_ENTRIES: GuideEntry[] = [
   { id: "ai-4", category: "ai-bom-pdf", icon: Sparkles, title: "AI 텍스트 대체", what: "제품명이 약어이거나 불분명할 때 AI가 정확한 정식 제품명을 제안합니다.", when: "검색 결과가 부정확하거나 품목 특정이 어려울 때", keyInputs: ["원본 텍스트"], nextAction: "대체 결과 확인 → 검색 재실행", link: { label: "검색에서 사용하기", href: "/dashboard/search" } },
   // ── 역할별 가이드 ──
   { id: "role-1", category: "role-guide", icon: UserCog, title: "연구원 (Requester)", what: "시약 검색, 비교, 견적 요청을 주로 수행하며, 입고된 시약의 재고를 관리합니다.", when: "실험에 필요한 시약을 직접 찾아 요청해야 할 때", keyInputs: [], nextAction: "검색 → 비교 → 견적 요청", link: { label: "검색 시작하기", href: "/dashboard/search" } },
-  { id: "role-2", category: "role-guide", icon: ShoppingCart, title: "구매 담당 (Approver)", what: "연구원이 요청한 견적을 검토·승인하고 벤더와의 커뮤니케이션 및 발주를 처리합니다.", when: "견적 승인 요청이 도착했을 때", keyInputs: [], nextAction: "견적 검토 → 승인/반려 → 발주", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
+  { id: "role-2", category: "role-guide", icon: ShoppingCart, title: "구매 담당 (Approver)", what: "연구원이 요청한 견적을 검토하고 결재 요청을 승인·반려합니다.", when: "견적 승인 요청이 도착했을 때", keyInputs: [], nextAction: "견적 검토 → 승인/반려 → 입고 추적", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
   { id: "role-3", category: "role-guide", icon: BarChart3, title: "랩 매니저 (Admin)", what: "팀 전체의 예산, 재고, 구매 현황을 모니터링하고 보고서를 생성합니다.", when: "팀 운영 현황을 종합적으로 파악해야 할 때", keyInputs: [], nextAction: "대시보드 → 분석 → 보고서", link: { label: "분석 보기", href: "/dashboard/analytics" } },
   { id: "role-4", category: "role-guide", icon: Shield, title: "관리자 (Owner)", what: "조직 설정, 멤버 관리, 구독·결제, 보안 정책 등 시스템 전반을 관리합니다. Owner는 조직당 1명으로, 결제·삭제·소유권 이전 등 최고 권한을 보유합니다.", when: "조직 레벨의 설정 변경이 필요할 때", keyInputs: [], nextAction: "조직 설정 → 멤버 → 구독 관리", link: { label: "조직 설정으로 이동", href: "/dashboard/organizations" } },
 ];

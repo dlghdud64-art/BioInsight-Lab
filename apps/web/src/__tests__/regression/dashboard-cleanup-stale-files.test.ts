@@ -62,9 +62,13 @@ describe("§11.160 dashboard cleanup — git tree hygiene", () => {
     expect(tracked).toEqual([]);
   });
 
-  it("회귀 0: 핵심 surface 보존 (purchases/quotes/inbox/inventory/work-queue/settings)", () => {
+  it("회귀 0: 핵심 surface 보존 (quotes/inbox/inventory/work-queue/settings)", () => {
+    /* 🔁 승계 §purchases-ui-removed(2026-09-24 · 호영님 판정) — purchases 는 더 이상 핵심 surface 가 아니다.
+     *   발주를 지우자 그 화면의 KPI 4개가 전부 생산자 없는 0이 됐고, 같은 판정으로 삭제했다.
+     *   ⚠️ 이 단언은 `git ls-tree` 로 **HEAD** 를 읽는다 — `git rm` 스테이징 상태에서는 GREEN 이고
+     *      커밋이 HEAD 를 옮긴 **뒤에야** RED 가 된다. §병렬 세션 3-c 의 「삭제는 두 축으로 잰다」 참조.
+     *      부재 쪽 명제는 §purchases-ui-removed ① 이 파일시스템 축으로 든다. */
     const surfaces = [
-      "apps/web/src/app/dashboard/purchases/page.tsx",
       "apps/web/src/app/dashboard/quotes/page.tsx",
       "apps/web/src/app/dashboard/inbox/page.tsx",
       "apps/web/src/app/dashboard/inventory/inventory-content.tsx",

@@ -222,7 +222,9 @@ const PIPELINE_STEPS = [
   { icon: Search, label: "검색", sub: "시약·장비 단일 검색" },
   { icon: GitCompare, label: "비교", sub: "벤더별 스펙 가격 비교" },
   { icon: FileText, label: "견적", sub: "견적 요청 초안 준비" },
-  { icon: ShoppingCart, label: "발주", sub: "승인 라인 및 연동" },
+  // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 퍼블릭 랜딩이 **없는 기능**을 광고하고 있었다.
+  //   발주는 제품에 없다(화면·DB 모델 모두). 결재는 유지되므로 「승인 라인」 은 참이다.
+  { icon: ShoppingCart, label: "결재", sub: "승인 라인 및 추적" },
   { icon: PackageCheck, label: "입고/재고", sub: "재고 연동 추적" },
 ];
 
