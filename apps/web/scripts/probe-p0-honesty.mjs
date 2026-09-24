@@ -287,6 +287,11 @@ const PROBES = {
     edits: [[BUDGET_DETAIL, "${formatAmt(ctrl.total)} · 삭제하면", "${formatAmt(ctrl.total)} \u2014 삭제하면"]],
   },
 
+  "J8-raw-fetch-delete": {
+    desc: "삭제를 raw fetch 로 되돌림 -> (J)①-b RED (CSRF 403 · prod 실측 재현)",
+    edits: [[BUDGET_DETAIL, "await csrfFetch(`/api/budgets/${id}`, { method: \"DELETE\" })", "await fetch(`/api/budgets/${id}`, { method: \"DELETE\" })"]],
+  },
+
   "C1-comment-only": {
     desc: "코드는 인라인으로 되돌리고 **주석에만** 토큰을 남긴다 -> (H)④ RED (§comment-axis 준수 증명)",
     edits: [

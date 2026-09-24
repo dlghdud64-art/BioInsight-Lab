@@ -33,6 +33,16 @@ describe("§budget-delete-ui · 지울 수 있는 화면", () => {
     expect(src).toMatch(/onConfirm=\{handleDelete\}/);
   });
 
+  it("①-b 삭제는 csrfFetch 로 보낸다 · raw fetch 변이 0", () => {
+    // 🛑 prod 실측 2026-09-24: raw fetch 로 DELETE 를 보내 CSRF 미들웨어가 403 으로 막았다.
+    //    ① 은 "DELETE 를 부른다" 만 물었고 **어떻게 보내는지**는 묻지 않았다. 게이트는 전부 통과했다.
+    const src = code(PAGE);
+    expect(src).toMatch(/csrfFetch\(`\/api\/budgets\/\$\{id\}`,\s*\{\s*method:\s*"DELETE"/);
+    // 이 화면의 변이 요청(POST/PUT/PATCH/DELETE)은 raw fetch 로 나가지 않는다.
+    const rawMutations = src.match(/(?<![A-Za-z])fetch\([^)]*method:\s*"(POST|PUT|PATCH|DELETE)"/g) ?? [];
+    expect(rawMutations, "raw fetch 변이가 남아 있다 · CSRF 에 막힌다").toEqual([]);
+  });
+
   it("② 확인은 React 모달이다 · window.confirm 류 0", () => {
     const src = code(PAGE);
     expect(src).toContain("ConfirmDialog");
