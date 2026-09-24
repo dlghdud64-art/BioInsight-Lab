@@ -89,6 +89,29 @@ function productNameOf(meta: Record<string, unknown>): string | null {
 }
 
 /**
+ * §order-notif-identifier (2026-09-24 · 호영님 P1) — 주문 알림의 식별자.
+ *
+ * 🛑 문제: 알림 센터에 「주문 생성」 이 2건인데 제목이 **글자까지 똑같아** 어느 주문인지 구분되지 않았다
+ *    (라이브 실측: 「주문 생성 · 30일 전」 · 「주문 생성 · 32일 전」). 재고 알림이 `productName` 을
+ *    안 읽어 전량 「… 재고」 로만 보이던 것(§notifications-route)과 **같은 형태**다.
+ *
+ * prod 실측 2026-09-24 (읽기 전용 SELECT · ref xhid…dhsw · userCount 3 / orgCount 2 대조):
+ *   NotificationEvent.metadata = { quoteId, orderNumber, totalAmount }   (2건 전부)
+ *   NotificationAction.payload = { label, quoteId, eventType, actionType, orderNumber, totalAmount }
+ *   🔑 두 건에서 **갈리는 필드는 `orderNumber` 하나**다 — ORD-20260824-SKSQ · ORD-20260822-C3PN.
+ *      `quoteId` 는 두 건이 **같은 값**이라 식별자가 되지 못한다. 대표 품목 필드는 payload 에 없다.
+ *
+ * metadata 를 먼저 보고 없으면 payload 를 본다 — 두 자리 모두에 있는 것을 실측했고,
+ * 어느 한쪽만 채우는 생산자가 나중에 생겨도 제목이 비지 않게 한다.
+ */
+function orderNumberOf(item: NotificationItem): string | null {
+  const meta = (item.event.metadata ?? {}) as Record<string, unknown>;
+  const payload = (item.payload ?? {}) as Record<string, unknown>;
+  const v = meta.orderNumber ?? payload.orderNumber;
+  return typeof v === "string" && v.trim().length > 0 ? v : null;
+}
+
+/**
  * NotificationItem 으로부터 사용자에게 보일 한국어 텍스트 생성.
  * metadata 에서 quoteTitle / rejectionReason / itemName 등 추출.
  */
@@ -136,10 +159,19 @@ export function buildNotificationText(item: NotificationItem): string {
     return lines ? `입고 완료 · ${lines}개 품목` : "입고 완료";
   }
 
-  // 주문
-  if (eventType === "ORDER_PLACED") return "주문 생성";
-  if (eventType === "ORDER_SHIPPED") return "주문 배송 시작";
-  if (eventType === "ORDER_DELIVERED") return "주문 배송 완료";
+  // 주문 — §order-notif-identifier: 식별자(주문번호)를 제목에 넣는다. 형제 슬롯 3개 전부.
+  if (eventType === "ORDER_PLACED") {
+    const no = orderNumberOf(item);
+    return no ? `주문 생성 · ${no}` : "주문 생성";
+  }
+  if (eventType === "ORDER_SHIPPED") {
+    const no = orderNumberOf(item);
+    return no ? `주문 배송 시작 · ${no}` : "주문 배송 시작";
+  }
+  if (eventType === "ORDER_DELIVERED") {
+    const no = orderNumberOf(item);
+    return no ? `주문 배송 완료 · ${no}` : "주문 배송 완료";
+  }
 
   // 비교·에스컬레이션·예산·일반 승인
   if (eventType === "COMPARE_COMPLETED") return "비교 분석 완료";

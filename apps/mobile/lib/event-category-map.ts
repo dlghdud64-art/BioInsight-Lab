@@ -9,6 +9,21 @@ function productNameOf(meta: Record<string, unknown>): string | null {
 }
 
 /**
+ * §order-notif-identifier (2026-09-24 · 호영님 P1) — 주문 알림의 식별자.
+ * 웹 canonical 과 **같은 형태**로 유지한다(이 파일 헤더의 drift 차단 lock).
+ *
+ * prod 실측 2026-09-24(읽기 전용): metadata·payload 양쪽에 `orderNumber` 가 있고,
+ * 2건에서 **갈리는 필드는 그것 하나**다(`quoteId` 는 두 건이 같은 값이라 식별자가 못 된다).
+ * 대표 품목 필드는 payload 에 없다.
+ */
+function orderNumberOf(item: NotificationItem): string | null {
+  const meta = (item.event.metadata ?? {}) as Record<string, unknown>;
+  const payload = (item.payload ?? {}) as Record<string, unknown>;
+  const v = meta.orderNumber ?? payload.orderNumber;
+  return typeof v === "string" && v.trim().length > 0 ? v : null;
+}
+
+/**
  * §11.209d-notification-inapp-mobile-screen — eventType → UI 카테고리 매핑.
  *
  * canonical truth (§11.209d-notification-inapp-web-bell-ui):
@@ -126,9 +141,19 @@ export function buildNotificationText(item: NotificationItem): string {
     return lines ? `입고 완료 · ${lines}개 품목` : "입고 완료";
   }
 
-  if (eventType === "ORDER_PLACED") return "주문 생성";
-  if (eventType === "ORDER_SHIPPED") return "주문 배송 시작";
-  if (eventType === "ORDER_DELIVERED") return "주문 배송 완료";
+  // §order-notif-identifier — 식별자(주문번호)를 제목에 넣는다. 형제 슬롯 3개 전부.
+  if (eventType === "ORDER_PLACED") {
+    const no = orderNumberOf(item);
+    return no ? `주문 생성 · ${no}` : "주문 생성";
+  }
+  if (eventType === "ORDER_SHIPPED") {
+    const no = orderNumberOf(item);
+    return no ? `주문 배송 시작 · ${no}` : "주문 배송 시작";
+  }
+  if (eventType === "ORDER_DELIVERED") {
+    const no = orderNumberOf(item);
+    return no ? `주문 배송 완료 · ${no}` : "주문 배송 완료";
+  }
 
   if (eventType === "COMPARE_COMPLETED") return "비교 분석 완료";
   if (eventType === "APPROVAL_NEEDED") return "승인 요청 도착";
