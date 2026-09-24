@@ -43,17 +43,20 @@ describe("§11.352 — 발주 인계 재명명 (구매 운영 surface)", () => {
 });
 
 describe("§11.352 — dead-end 해소 (발주 관리 전진)", () => {
-  it("confirmed 시 발주 관리(/dashboard/purchase-orders)로 전진 링크", () => {
+  it("confirmed 시 입고 관리로 전진 링크", () => {
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 명제(dead-end 를 만들지 않고 **다음 화면으로 전진시킨다**)는 불변이다.
+     *   목적지였던 발주 관리를 삭제했으므로 전진처를 입고 관리로 옮긴다.
+     *   🛑 앵커를 낮춘 게 아니다 — 목적지가 존재하지 않게 된 것이 사실이고, 검사가 그 사실을 따라간다. */
     const src = read(PAGE);
     expect(src).toContain('selectedItem.conversionStatus === "confirmed"');
-    expect(src).toContain('href="/dashboard/purchase-orders"');
-    expect(src).toContain("발주 관리에서 외부 발주·입고 추적");
+    expect(src).toContain('href="/dashboard/receiving"');
+    expect(src).toContain("입고 관리에서 진행 추적");
   });
-  it("빈 상태 카피가 발주 관리 추적으로 전진 안내 (§11.334 온보딩 supersede)", () => {
+  it("빈 상태 카피가 입고 관리 추적으로 전진 안내 (§11.334 온보딩 supersede)", () => {
     // §11.334 — 빈상태 온보딩이 §11.284d 카피 supersede: "…상태를 추적" → "…를 추적하세요".
-    //   전진 안내(발주 관리에서 외부 발주·입고 추적) 의도는 불변, 문구만 시안 정합.
+    //   전진 안내(외부 발주·입고 추적) 의도는 불변. §po-ui-removed(2026-09-24 · 호영님 판정) 로 화면 이름만 입고 관리로.
     const src = read(PAGE);
-    expect(src).toContain("발주 관리에서 외부 발주·입고를 추적");
+    expect(src).toContain("입고 관리에서 외부 발주·입고를 추적");
   });
 });
 

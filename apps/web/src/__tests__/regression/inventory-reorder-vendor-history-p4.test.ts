@@ -14,6 +14,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const read = (rel: string) => readFileSync(join(REPO_ROOT, rel), "utf8");
@@ -46,17 +47,19 @@ describe("§inventory-redesign P4 — dead button 0 (정직 disabled + 사유)",
 
   it("바로 발주 = query string pre-fill (DB write 0) — 실 라우팅", () => {
     const src = read(SHEET);
-    expect(src).toMatch(/prefill:\s*"reorder-recommendation"/);
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — prefill·supplier query string 은
+     *   **삭제된 발주 생성 화면**으로 보내던 것이다. 남는 명제는 부정 쪽 하나다(아래). */
     /* 🔄 재조준 (2026-08-19) — (a) sentinel 낡음. 옛 축은 params.set("supplier" 였는데
      *    acb71541 이 URLSearchParams 생성자 리터럴로 바꿨다. **supplier 전달은 보존**됐고
      *    형식만 달라졌다. 잠글 것은 "supplier 가 실려 나가는가" 이지 "어떤 문법으로 싣는가" 가 아니다.
      *    🛑 두 형식을 모두 통과시킨다.
      *    ⚠️ acb71541 body 는 이 경로를 "Q31 바로발주 prefill 경로는 무변경 보존" 이라 적었으나
      *       형식이 바뀌었다. 행동은 보존됐어도 "무변경" 은 사실이 아니다 — body 는 근거가 아니다. */
-    expect(src).toMatch(/params\.set\(\s*["']supplier["']|supplier:\s*\w/);
     /* 🛑 제목의 "DB write 0" 은 **바로 발주 경로에 한정**된다.
      *    견적 요청은 acb71541 이후 초안을 생성한다(DB write 1). 그래서 제목도 좁혔다. */
-    expect(src).toMatch(/purchase-orders\/new\?\$\{params\.toString\(\)\}/);
+    // 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 발주 생성 화면 삭제로 이 경로가 사라졌다. 남는 명제는 부정 쪽이다.
+    // 부정 단언은 **주석 제거본**에 건다(CLAUDE.md) — 끊은 사유를 적은 주석에 걸리지 않게.
+    expect(stripComments(src)).not.toMatch(/\/dashboard\/purchase-orders/);
   });
 });
 

@@ -80,18 +80,10 @@ const sidebarGroups: SidebarGroup[] = [
         href: "/dashboard/purchases",
         icon: ShoppingCart,
       },
-      {
-        // §11.83 #purchase-orders-sidebar-entry-add
-        // §11.55 dead-end 패턴 9번째 회귀 정리 — `/dashboard/purchase-orders`
-        // (643 lines alive surface) 가 desktop sidebar 진입점 부재였던 문제.
-        // 모바일 bottom-nav-more-sheet 의 "발주" 항목 (ClipboardList icon) 과
-        // 동일 entry. ontology 상 "구매 운영"(견적→발주 결정) vs "발주 관리"
-        // (PO 발행 후 ready/needs_review/waiting_external/handoff) 는 분리된
-        // stage 라 두 메뉴 정당.
-        title: "발주 관리",
-        href: "/dashboard/purchase-orders",
-        icon: ClipboardList,
-      },
+      // §po-ui-removed (2026-09-24 · 호영님 판정) — 「발주 관리」 항목 제거.
+      //   §11.83 이 이 항목을 넣은 근거는 "643 lines alive surface 에 진입점이 없다" 였는데,
+      //   그 표면(app/dashboard/purchase-orders/**)을 이번에 **삭제**했다. 가리키는 곳이 없는 메뉴다.
+      //   구매 운영(/dashboard/purchases)은 플래그 숨김으로 남는다(라우트는 살아 있다).
       {
         // §11.365 — "지출 분석"을 상단 독립(dashboardLinks) → PURCHASE 그룹으로 이동
         //   (IA 정합). 구매·예산 분석류라 구매 리포트와 인접 배치. href/icon 보존.
@@ -181,8 +173,6 @@ const ICON_TINT: Record<string, { active: string; inactive: string }> = {
   "/dashboard/analytics":    { active: "text-indigo-600",  inactive: "text-indigo-300" },
   "/dashboard/quotes":       { active: "text-blue-600",    inactive: "text-blue-400" },
   "/dashboard/purchases":    { active: "text-blue-600",    inactive: "text-blue-400" },
-  // §11.83 #purchase-orders-sidebar-entry-add — 발주 단계 (PO 관리) blue 동계
-  "/dashboard/purchase-orders": { active: "text-blue-600", inactive: "text-blue-400" },
   "/dashboard/reports":      { active: "text-blue-600",    inactive: "text-blue-400" },
   "/dashboard/budget":       { active: "text-emerald-600", inactive: "text-emerald-400" },
   "/dashboard/inventory":    { active: "text-teal-600",    inactive: "text-teal-400" },
@@ -215,7 +205,9 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   //   견적→발주 결정 단계라 발주 관리와 같은 purchasing 축이다. 항목을 지우지 않고
   //   필터에 얹는 이유: 라우트·페이지·정의를 남겨 플래그 on 만으로 되돌리기 위함.
   const purchasingOn = getFlag("ENABLE_PURCHASING");
-  const PURCHASING_HIDDEN_HREFS = ["/dashboard/purchase-orders", "/dashboard/purchases"];
+  // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 라우트를 삭제했으므로 숨길 항목이 아니라 **없는 항목**이다.
+  //   구매 운영(/dashboard/purchases)만 플래그로 숨긴다.
+  const PURCHASING_HIDDEN_HREFS = ["/dashboard/purchases"];
   const visibleGroups = sidebarGroups.map((g) => ({
     ...g,
     items: g.items.filter((it) => purchasingOn || !PURCHASING_HIDDEN_HREFS.includes(it.href)),

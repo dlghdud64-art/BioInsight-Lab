@@ -190,7 +190,8 @@ describe("§11.181 7 surface FAB onClick prop 제거", () => {
     { name: "quotes", path: "src/app/dashboard/quotes/page.tsx" },
     { name: "inventory-content", path: "src/app/dashboard/inventory/inventory-content.tsx" },
     { name: "work-queue-console", path: "src/components/dashboard/work-queue-console.tsx" },
-    { name: "purchase-orders-list", path: "src/app/dashboard/purchase-orders/page.tsx" },
+    // 제거 2026-09-24 §po-ui-removed: { name: "purchase-orders-list", path: "src/app/dashboard/purchase-orders/page.tsx" }
+    //   사유 = 발주 UI 라우트 전체 삭제(호영님 판정). 나머지 surface 는 무손상.
   ];
 
   for (const { name, path } of SURFACES) {

@@ -9,6 +9,8 @@
  */
 "use client";
 
+/* §po-ui-removed (2026-09-24) — 발주 UI 삭제로 목적지가 없어졌다. 이 컴포넌트는 렌더 도달 0 이라
+     목적지를 새로 정하지 않고 링크만 끊는다(존폐는 「렌더 도달 0 컴포넌트 전수」 큐). */
 import { useMemo } from "react";
 import Link from "next/link";
 import { RelativeTimeText } from "@/components/ui/relative-time-text";
@@ -74,7 +76,7 @@ function buildOrderEvents(orders: OrderQueueItem[]): LedgerEvent[] {
         title: `${o.poNumber} 승인 완료`,
         detail: `${o.productName} · ${o.totalAmount.toLocaleString()}원`,
         timestamp: o.approvedAt,
-        href: `/dashboard/purchase-orders`,
+        href: "",
       });
     }
     // 수령 완료
@@ -85,7 +87,7 @@ function buildOrderEvents(orders: OrderQueueItem[]): LedgerEvent[] {
         title: `${o.poNumber} 입고 완료`,
         detail: `${o.productName} · ${o.receivedQuantity ?? o.quantity}${o.unit}`,
         timestamp: o.receivedAt,
-        href: `/dashboard/purchase-orders`,
+        href: "",
       });
     }
     // 승인 대기
@@ -96,7 +98,7 @@ function buildOrderEvents(orders: OrderQueueItem[]): LedgerEvent[] {
         title: `${o.poNumber} 승인 대기`,
         detail: `${o.productName} · ${o.totalAmount.toLocaleString()}원`,
         timestamp: o.updatedAt,
-        href: `/dashboard/purchase-orders`,
+        href: "",
       });
     }
     // Dispatch 준비
@@ -107,7 +109,7 @@ function buildOrderEvents(orders: OrderQueueItem[]): LedgerEvent[] {
         title: `${o.poNumber} 발송 준비`,
         detail: o.computed.nextAction,
         timestamp: o.updatedAt,
-        href: `/dashboard/purchase-orders`,
+        href: "",
       });
     }
   }
@@ -125,7 +127,7 @@ function buildFastTrackEvents(
     detail: `사용자가 AI의 Fast-Track 권장을 수락하여 승인함 · ${e.totalAmount.toLocaleString()}원`,
     timestamp: e.acceptedAt,
     // §11.162: PO list canonical = /dashboard/purchase-orders
-    href: `/dashboard/purchase-orders`,
+    href: "",
   }));
 }
 

@@ -91,8 +91,8 @@ export function QueueDetailPanel({
     if (!relatedEntityType || !relatedEntityId) return;
     const pathMap: Record<string, string> = {
       QUOTE: "/dashboard/quotes",
-      // §11.162: ORDER → /dashboard/purchase-orders (canonical PO list)
-      ORDER: "/dashboard/purchase-orders",
+      // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 삭제. ORDER 는 입고에서 추적한다.
+      ORDER: "/dashboard/receiving",
       INVENTORY_RESTOCK: "/dashboard/inventory",
       PURCHASE_REQUEST: "/dashboard/purchases",
       COMPARE_SESSION: "/dashboard/compare",

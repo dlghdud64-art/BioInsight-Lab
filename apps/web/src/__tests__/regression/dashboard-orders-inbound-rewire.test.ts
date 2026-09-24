@@ -47,22 +47,24 @@ const REWIRED_FILES: { path: string; label: string }[] = [
   { path: "src/components/dashboard/ai-action-inbox.tsx",                        label: "AI action approve href" },
   { path: "src/components/dashboard/console/queue-detail-panel.tsx",             label: "ORDER pathMap" },
   { path: "src/components/dashboard/work-queue-console.tsx",                     label: "ORDER pathMap" },
-  { path: "src/components/dashboard/overlay/workbench-progress-overlay.tsx",     label: "workbenchHref fallback" },
+  { path: "src/components/dashboard/overlay/workbench-progress-overlay.tsx",     label: "workbenchHref fallback" }, // §po-ui-removed(2026-09-24 · 호영님 판정): fallback 이 입고로
 ];
 
 describe("§11.162 dashboard/orders inbound rewire", () => {
-  it("ORDER entity 매핑 caller 가 /dashboard/purchase-orders 사용", () => {
+  it("ORDER entity 매핑 caller 가 /dashboard/receiving 사용", () => {
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 이 파일의 명제는 「레거시 /dashboard/orders 로 보내지 않고 canonical 로 보낸다」 다.
+     *   canonical 목적지가 발주 목록 → 입고 관리로 바뀌었을 뿐 명제는 그대로다. */
     // queue-detail-panel + work-queue-console 의 ORDER pathMap 검증
     const queueDetailSrc = readFileSync(
       resolve(APPS_WEB, "src/components/dashboard/console/queue-detail-panel.tsx"),
       "utf8",
     );
-    expect(queueDetailSrc).toMatch(/ORDER:\s*["']\/dashboard\/purchase-orders["']/);
+    expect(queueDetailSrc).toMatch(/ORDER:\s*["']\/dashboard\/receiving["']/);
     const consoleSrc = readFileSync(
       resolve(APPS_WEB, "src/components/dashboard/work-queue-console.tsx"),
       "utf8",
     );
-    expect(consoleSrc).toMatch(/ORDER:\s*["']\/dashboard\/purchase-orders["']/);
+    expect(consoleSrc).toMatch(/ORDER:\s*["']\/dashboard\/receiving["']/);
   });
 
   it("dashboard 가 더 이상 /dashboard/orders 로 발주 전환 navigate 안 함 (§dashboard-dedup 트림)", () => {
@@ -75,36 +77,39 @@ describe("§11.162 dashboard/orders inbound rewire", () => {
     expect(dashboardSrc).not.toMatch(/href:\s*["']\/dashboard\/orders["']/);
   });
 
-  it("AI action approveHref + ledger Fast-Track + budget 발주 보기 가 /dashboard/purchase-orders 사용", () => {
+  it("AI action approveHref + ledger Fast-Track + budget 보기 가 레거시 /dashboard/orders 로 가지 않는다", () => {
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — ai-action-inbox · action-ledger 는 **렌더 도달 0** 이라 새 목적지를
+     *   추측하지 않고 링크만 끊었다(§po-ui-removed 자기 한계 1). 남는 명제는 부정 쪽이다:
+     *   레거시 /dashboard/orders 로는 절대 보내지 않는다. 예산 상세는 라이브라 입고로 옮겼다. */
     const aiInboxSrc = readFileSync(
       resolve(APPS_WEB, "src/components/dashboard/ai-action-inbox.tsx"),
       "utf8",
     );
     expect(aiInboxSrc).not.toMatch(/approveHref:\s*["']\/dashboard\/orders["']/);
-    expect(aiInboxSrc).toMatch(/\/dashboard\/purchase-orders/);
 
     const ledgerSrc = readFileSync(
       resolve(APPS_WEB, "src/components/dashboard/action-ledger.tsx"),
       "utf8",
     );
     expect(ledgerSrc).not.toMatch(/href:\s*`?\/dashboard\/orders`?/);
-    expect(ledgerSrc).toMatch(/\/dashboard\/purchase-orders/);
 
     const budgetSrc = readFileSync(
       resolve(APPS_WEB, "src/app/dashboard/budget/[id]/page.tsx"),
       "utf8",
     );
     expect(budgetSrc).not.toMatch(/href="\/dashboard\/orders"/);
-    expect(budgetSrc).toMatch(/\/dashboard\/purchase-orders/);
+    expect(budgetSrc).toMatch(/\/dashboard\/receiving/);
   });
 
-  it("workbench-progress-overlay fallback 이 /dashboard/purchase-orders 사용", () => {
+  it("workbench-progress-overlay fallback 이 /dashboard/receiving 사용", () => {
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — fallback 목적지가 발주 목록에서 입고로.
+     *   명제(레거시 /dashboard/orders 로 떨어지지 않고 canonical 로 간다)는 불변. */
     const overlaySrc = readFileSync(
       resolve(APPS_WEB, "src/components/dashboard/overlay/workbench-progress-overlay.tsx"),
       "utf8",
     );
     // workbenchHref fallback 이 변경됨
-    expect(overlaySrc).toMatch(/workbenchHref\s*=\s*overlayRoutePath\s*\?\?\s*["']\/dashboard\/purchase-orders["']/);
+    expect(overlaySrc).toMatch(/workbenchHref\s*=\s*overlayRoutePath\s*\?\?\s*["']\/dashboard\/receiving["']/);
   });
 
   it("dashboard/orders/page.tsx redirect-only legacy git tree 에서 제거", () => {

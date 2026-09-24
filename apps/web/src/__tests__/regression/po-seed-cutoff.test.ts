@@ -35,48 +35,19 @@ import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 const SRC = join(__dirname, "..", "..");
 const code = (rel: string) => stripComments(readFileSync(join(SRC, rel), "utf8"));
 
-const LIST = "app/dashboard/purchase-orders/page.tsx";
-const DETAIL = "app/dashboard/purchase-orders/[poId]/page.tsx";
-const DISPATCH = "app/dashboard/purchase-orders/[poId]/dispatch/page.tsx";
-const NOTICE = "app/dashboard/purchase-orders/_components/po-unwired-notice.tsx";
 const RECV_LIST = "components/receiving/receiving-case-list.tsx";
 const RECV_DETAIL = "app/dashboard/receiving/[receivingId]/page.tsx";
 
 describe("§po-seed-cutoff · 발주 화면은 지어낸 발주를 그리지 않는다", () => {
-  it("① 목록은 시드를 읽지 않는다 · 파생 구조는 보존", () => {
-    const src = code(LIST);
-    expect(src).not.toMatch(/\buseOpsStore\b/);
-    expect(src).not.toMatch(/ops-console\/(ops-store|seed-data)/);
-    expect(src).toMatch(/const unifiedInboxItems: UnifiedInboxItem\[\] = \[\];/);
-    // 실데이터가 붙을 자리 — 파생 3종은 그대로 둔다(구조 보존)
-    expect(src).toMatch(/buildModuleHeaderStats\(unifiedInboxItems, "po"\)/);
-    expect(src).toMatch(/buildModulePriorityQueue\(unifiedInboxItems, "po", 6\)/);
-    expect(src).toMatch(/buildModuleLandingItems\(unifiedInboxItems, "po"\)/);
-  });
 
-  it("② 빈 상태가 살아난다 · 문구는 현재 참인 것까지만", () => {
-    const src = code(LIST);
-    expect(src).toMatch(/\{isEmpty && \(/);
-    expect(src).toMatch(/title="발주 목록 데이터 없음"/);
-    expect(src).toMatch(/이 화면은 아직 실제 발주에 연결되지 않았습니다/);
-    // 없는 경로를 안내하던 옛 문구(역계약)
-    expect(src).not.toMatch(/발주로 전환하면 여기서 진행 상태를 추적합니다/);
-    expect(src).not.toMatch(/아직 발주된 항목이 없습니다/);
-  });
 
-  it("③ 상세·발송은 시드 조회 0 · 「찾을 수 없음」 이라 말하지 않는다", () => {
-    for (const rel of [DETAIL, DISPATCH]) {
-      const src = code(rel);
-      expect(src, `${rel}: 시드 스토어`).not.toMatch(/\buseOpsStore\b|useDispatchWorkbenchData/);
-      expect(src, `${rel}: 시드 데이터`).not.toMatch(/ops-console\/seed-data|VENDOR_MAP/);
-      expect(src, `${rel}: 시드 id 조회`).not.toMatch(/purchaseOrders\.find/);
-      expect(src, `${rel}: not_found 주장`).not.toMatch(/not_found|찾을 수 없습니다/);
-      expect(src, `${rel}: 안내`).toMatch(/<PoUnwiredNotice\b/);
-    }
-    const notice = code(NOTICE);
-    expect(notice).toMatch(/이 화면은 아직 실제 발주에 연결되지 않았습니다/);
-    expect(notice).toMatch(/href="\/dashboard\/receiving"/);
-  });
+
+  /* 🛑 은퇴 §po-ui-removed(2026-09-24 · 호영님 판정) — ①②③⑤.
+   *    이 네 명제는 전부 **발주 화면이 존재한다**는 전제 위에 서 있었다
+   *    (목록은 시드를 안 읽는다 · 빈 상태가 살아난다 · 상세·발송은 시드 조회 0 · 조건부 훅 0).
+   *    화면을 통째 삭제했으므로 재는 대상이 없다 — 더 강한 명제(경로 부활 0)를
+   *    regression/po-ui-removed.test.ts ①② 가 든다. 시드 측 명제는 아래 ⑥ 에 남아 있다.
+   *    본문은 이 커밋 직전 판까지 살아 있다. */
 
   it("④ 입고 → 발주 상세 링크 0 · 발주번호는 텍스트로 남는다", () => {
     for (const rel of [RECV_LIST, RECV_DETAIL]) {
@@ -109,18 +80,4 @@ describe("§po-seed-cutoff · 발주 화면은 지어낸 발주를 그리지 않
     }
   });
 
-  it("⑤ 조건부 훅 0 · 상세·발송은 훅이 아예 없고, 목록은 파생 앞에 early return 이 없다", () => {
-    // 상세·발송 — 정적 화면이라 훅 호출 0 (옛 상세의 `if (!po) return` 뒤 useMemo 형태가 원천 차단)
-    for (const rel of [DETAIL, DISPATCH]) {
-      expect(code(rel), `${rel}: 훅`).not.toMatch(/\buse[A-Z]\w*\(/);
-    }
-    // 목록 — 컴포넌트 본문(선언 ~ 첫 최상위 return)에 조건부 return 0.
-    //   창을 파일 전체로 열면 뒤에 선언된 하위 컴포넌트의 훅이 걸린다(창 시작점·경계 ②⑤).
-    const list = code(LIST);
-    const start = list.indexOf("function PurchaseOrderLandingPageInner() {");
-    const end = list.indexOf("\n  return (", start);
-    expect(start).toBeGreaterThan(-1);
-    expect(end).toBeGreaterThan(start);
-    expect(list.slice(start, end)).not.toMatch(/^\s{2}if \([^)]*\)[\s\S]{0,40}?\breturn\b/m);
-  });
 });

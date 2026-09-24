@@ -37,7 +37,10 @@ const PURCHASES_PATH = resolve(
   __dirname,
   "../../app/dashboard/purchases/page.tsx",
 );
-const PURCHASE_ORDERS_PATH = resolve(
+/* 🛑 은퇴 §po-ui-removed(2026-09-24 · 호영님 판정) — 발주 화면 자체가 삭제됐다. purchaseOrdersFilter 를 **저장하는 쪽**
+ *    (route zod · useUserPreferences helper)은 #1·#2 가 계속 잠근다. 읽어서 탭으로 복원하던
+ *    화면이 없을 뿐이다. 실제 발주 화면이 다시 생기면 #4 를 그때 되살린다. */
+const _RETIRED_PURCHASE_ORDERS_PATH = resolve(
   __dirname,
   "../../app/dashboard/purchase-orders/page.tsx",
 );
@@ -45,7 +48,7 @@ const PURCHASE_ORDERS_PATH = resolve(
 const route = safeRead(ROUTE_PATH);
 const helper = safeRead(HELPER_PATH);
 const purchases = safeRead(PURCHASES_PATH);
-const purchaseOrders = safeRead(PURCHASE_ORDERS_PATH);
+void _RETIRED_PURCHASE_ORDERS_PATH;
 
 describe("§11.230c (a)-6 #1 — preferences route zod 확장", () => {
   it("purchasesFilter zod object 추가", () => {
@@ -99,19 +102,9 @@ describe("§11.230c (a)-6 #3 — purchases/page.tsx server hydration", () => {
   });
 });
 
-describe("§11.230c (a)-6 #4 — purchase-orders/page.tsx server hydration", () => {
-  it("useUserPreferences import", () => {
-    expect(purchaseOrders).toMatch(/useUserPreferences/);
-  });
-
-  it("server hydration (preferences.purchaseOrdersFilter → setActiveTab)", () => {
-    expect(purchaseOrders).toMatch(/preferences[\s\S]{0,1000}purchaseOrdersFilter[\s\S]{0,1000}setActiveTab/);
-  });
-
-  it("persistence — updatePurchaseOrdersFilter 호출", () => {
-    expect(purchaseOrders).toMatch(/updatePurchaseOrdersFilter/);
-  });
-});
+/* 🛑 은퇴 §po-ui-removed(2026-09-24 · 호영님 판정) — #4 발주 화면 hydration.
+ *    purchaseOrdersFilter 를 **저장하는 쪽**(route zod · useUserPreferences helper)은
+ *    #1·#2 가 계속 잠근다. 읽어서 탭으로 복원하던 화면만 사라졌다. */
 
 describe("§11.230c (a)-6 #5 — invariant 보존", () => {
   it("§11.230c (a) preferences route GET/PATCH 보존", () => {
@@ -138,13 +131,10 @@ describe("§11.230c (a)-6 #5 — invariant 보존", () => {
     expect(purchases).toMatch(/setQueueTab/);
   });
 
-  it("purchase-orders ModuleBucketKey / setActiveTab 보존", () => {
-    expect(purchaseOrders).toMatch(/ModuleBucketKey/);
-    expect(purchaseOrders).toMatch(/setActiveTab/);
-  });
+  /* 🛑 은퇴 §po-ui-removed — 「purchase-orders ModuleBucketKey / setActiveTab 보존」. 잴 화면이 삭제됐다. */
 
   it("§11.230c (a)-6 trace marker", () => {
-    const combined = route + "\n" + helper + "\n" + purchases + "\n" + purchaseOrders;
+    const combined = route + "\n" + helper + "\n" + purchases;
     expect(combined).toMatch(/§11\.230c \(a\)-6|11\.230c \(a\)-6|§11\.230c-a-6/);
   });
 });

@@ -25,6 +25,8 @@
  *   - canonical truth: 카드는 count display-only — mutation 0.
  */
 
+/* §po-ui-removed (2026-09-24) — 발주 UI 삭제로 목적지가 없어졌다. 이 컴포넌트는 렌더 도달 0 이라
+     목적지를 새로 정하지 않고 링크만 끊는다(존폐는 「렌더 도달 0 컴포넌트 전수」 큐). */
 import Link from "next/link";
 import {
   FileText,
@@ -73,7 +75,7 @@ const ACTIONS: QuickAction[] = [
   {
     label: "입고 처리",
     description: "도착한 발주를 입고 등록합니다",
-    href: "/dashboard/purchase-orders",
+    href: "",
     icon: Truck,
     countKey: "receiving",
   },

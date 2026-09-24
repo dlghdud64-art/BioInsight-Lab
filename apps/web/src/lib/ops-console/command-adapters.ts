@@ -80,7 +80,8 @@ export function buildQuoteCommandSurface(ctx: QuoteCommandContext): CommandSurfa
       blockedReasons: !isVendorSelected ? ['먼저 공급사를 선택하세요'] : isConverted ? ['이미 전환됨'] : [],
       confirmRequired: true,
       confirmMessage: '선정된 공급사로 발주를 생성합니다. 계속하시겠습니까?',
-      nextRoute: '/dashboard/purchase-orders',
+      // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 라우트 삭제. 목적지를 입고로 옮긴다.
+      nextRoute: '/dashboard/receiving',
       nextOwner: '구매 담당자',
       postActionSummary: '발주 생성 → 승인 프로세스 진입',
     },
@@ -125,7 +126,7 @@ export function buildQuoteCommandSurface(ctx: QuoteCommandContext): CommandSurfa
       createHandoffCommand(
         'quote-goto-po',
         '발주 관리 이동',
-        '/dashboard/purchase-orders',
+        '/dashboard/receiving',
         () => {},
       ),
     );
@@ -146,7 +147,7 @@ export function buildQuoteCommandSurface(ctx: QuoteCommandContext): CommandSurfa
     contextCommands,
     aggregatedBlockers: blockedReasons,
     handoffTarget: isConverted
-      ? { label: '발주 관리', href: '/dashboard/purchase-orders' }
+      ? { label: '입고 관리', href: '/dashboard/receiving' }
       : undefined,
   };
 }
@@ -364,16 +365,9 @@ export function buildReceivingCommandSurface(ctx: ReceivingCommandContext): Comm
 
   // Context: navigation
   const contextCommands = [];
-  if (rb.poId) {
-    contextCommands.push(
-      createHandoffCommand(
-        'rcv-goto-po',
-        '발주 이동',
-        `/dashboard/purchase-orders/${rb.poId}`,
-        () => {},
-      ),
-    );
-  }
+  // §po-ui-removed (2026-09-24 · 호영님 판정) — 「발주 이동」 명령 제거.
+  //   목적지였던 발주 상세(/dashboard/purchase-orders/[poId])를 삭제했다. 갈 곳 없는 명령을 남기지 않는다.
+  //   발주번호 자체는 입고 화면이 텍스트로 계속 보여준다(§po-seed-cutoff ④).
   if (isPosted) {
     contextCommands.push(
       createHandoffCommand(

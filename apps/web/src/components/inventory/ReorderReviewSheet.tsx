@@ -194,17 +194,13 @@ export function ReorderReviewSheet({
     }
   };
 
-  /** §11.310 Q31 — 바로 발주 = query string + PO 화면 진입 시 draft auto-create */
+  /** §11.310 Q31 — 바로 발주.
+   *  🛑 §po-ui-removed (2026-09-24 · 호영님 판정) — 목적지였던 발주 생성 화면(/dashboard/purchase-orders/new)을
+   *     삭제했다. purchasingOn 게이트 뒤라 오늘은 눌리지 않지만, 플래그를 켜면 **404 로 간다.**
+   *     경로를 끊는다 — 이 버튼의 목적지는 발주 UI 가 다시 생길 때 함께 정한다(큐 참조).
+   *     견적 요청 경로(아래 handleQuoteRequest 계열)는 무손상이다. */
   const handleDirectPurchase = () => {
     if (!hasVendor || !purchasingOn) return;
-    const params = new URLSearchParams({
-      productName: data.productName,
-      quantity: String(qty),
-      supplier: primaryVendor.vendorName,
-      unitPrice: String(primaryVendor.unitPrice),
-      prefill: "reorder-recommendation",
-    });
-    router.push(`/dashboard/purchase-orders/new?${params.toString()}`);
     onClose();
   };
 

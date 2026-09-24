@@ -21,10 +21,6 @@ const quotes = readFileSync(
   "utf8",
 );
 // P3 확장 surface — 구매/재고/대시보드 rollout + AppPageHeader 4탭
-const purchaseOrders = readFileSync(
-  resolve(__dirname, "../../app/dashboard/purchase-orders/page.tsx"),
-  "utf8",
-);
 const inventoryMobile = readFileSync(
   resolve(__dirname, "../../components/inventory/mobile-inventory-view.tsx"),
   "utf8",
@@ -95,28 +91,10 @@ describe("§11.374 [SUPERSEDED — §quote-flat KPI-dedup 2026-06-21] 견적 모
 // 회귀/canonical 보존 assert 는 현재 GREEN(구현 후에도 유지).
 // ═══════════════════════════════════════════════════════════════════
 
-describe("§11.374 P3.2 구매 — StatusCountGrid 채택 [RED until P3.2]", () => {
-  it("StatusCountGrid import + 사용", () => {
-    expect(purchaseOrders).toMatch(
-      /import \{ StatusCountGrid \} from "@\/components\/layout\/status-count-grid"/,
-    );
-    expect(purchaseOrders).toMatch(/<StatusCountGrid/);
-  });
-});
+// §po-ui-removed(2026-09-24 · 호영님 판정) — 발주 UI 라우트 전체 삭제.
+//   아래 세 블록이 읽던 purchase-orders/page.tsx 가 없다 — 재는 표면이 사라졌으므로 은퇴한다.
+//   명제(StatusCountGrid 채택 · canonical count · 필터 wiring · AppPageHeader)는 남은 surface 에서 그대로 산다.
 
-describe("§11.374 P3.2 구매 — canonical/wiring 보존 [회귀 0, GREEN]", () => {
-  it("canonical count 소스 보존(headerStats)", () => {
-    expect(purchaseOrders).toMatch(/headerStats\[/);
-    expect(purchaseOrders).toMatch(/MODULE_HEADER_STAT_META/);
-  });
-  it("필터 wiring 보존(setActiveTab + PO_BUCKET_TABS)", () => {
-    expect(purchaseOrders).toMatch(/setActiveTab\(/);
-    expect(purchaseOrders).toMatch(/PO_BUCKET_TABS/);
-  });
-  it("상태별 분류 aria 의미 보존", () => {
-    expect(purchaseOrders).toMatch(/상태별 분류/);
-  });
-});
 
 describe("§11.374 P3.3 [SUPERSEDED — §web-mobile-reskin-fidelity 2026-07-01] 재고 집계 → navy 헤더 이전", () => {
   // 재고 모바일 상태요약(StatusCountGrid 2x2)은 §web-mobile-reskin-fidelity(navy 헤더 3 KPI +
@@ -156,10 +134,6 @@ describe("§11.374 P3.4 AppPageHeader 4탭 채택 [RED until P3.4]", () => {
   it("견적 — AppPageHeader import + 사용", () => {
     expect(quotes).toMatch(/import \{[^}]*AppPageHeader[^}]*\} from "@\/components\/layout\/page-header"/);
     expect(quotes).toMatch(/<AppPageHeader/);
-  });
-  it("구매 — AppPageHeader import + 사용", () => {
-    expect(purchaseOrders).toMatch(/import \{[^}]*AppPageHeader[^}]*\} from "@\/components\/layout\/page-header"/);
-    expect(purchaseOrders).toMatch(/<AppPageHeader/);
   });
   it("대시보드 — AppPageHeader import + 사용", () => {
     expect(dashboard).toMatch(/import \{[^}]*AppPageHeader[^}]*\} from "@\/components\/layout\/page-header"/);

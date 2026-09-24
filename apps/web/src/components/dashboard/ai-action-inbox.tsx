@@ -1,5 +1,7 @@
 "use client";
 
+/* §po-ui-removed (2026-09-24) — 발주 UI 삭제로 목적지가 없어졌다. 이 컴포넌트는 렌더 도달 0 이라
+     목적지를 새로 정하지 않고 링크만 끊는다(존폐는 「렌더 도달 0 컴포넌트 전수」 큐). */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAiActions, useApproveAiAction, useDismissAiAction, type AiActionItem } from "@/hooks/use-ai-actions";
@@ -78,7 +80,7 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     badgeClass: "bg-yellow-50 text-yellow-700  bg-yellow-50 text-yellow-400 border-yellow-200  border-yellow-800",
     approveToast: "Follow-up 메일이 승인되었습니다",
     // §11.162: PO list canonical = /dashboard/purchase-orders
-    approveHref: "/dashboard/purchase-orders",
+    approveHref: "",
   },
   STATUS_CHANGE_SUGGEST: {
     icon: Clock,
@@ -92,7 +94,7 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     badgeClass: "bg-purple-50 text-purple-700  bg-purple-50 text-purple-400 border-purple-200  border-purple-800",
     approveToast: "주문 상태가 변경되었습니다",
     // §11.162: PO list canonical = /dashboard/purchase-orders
-    approveHref: "/dashboard/purchase-orders",
+    approveHref: "",
   },
   // §11.302d-6a-3-α — REORDER_SUGGESTION orange → red 격상 (badge label "재고 위험"
   //   = 위험 강조, STAGE REORDER_SUGGESTION 도 이미 red — 일관성).

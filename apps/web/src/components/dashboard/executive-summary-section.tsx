@@ -17,6 +17,8 @@
  */
 "use client";
 
+/* §po-ui-removed (2026-09-24) — 발주 UI 삭제로 목적지가 없어졌다. 이 컴포넌트는 렌더 도달 0 이라
+     목적지를 새로 정하지 않고 링크만 끊는다(존폐는 「렌더 도달 0 컴포넌트 전수」 큐). */
 import { useEffect, useMemo, useState } from "react";
 // §11.196e — recharts dead import 제거 (9 symbol 모두 actual JSX 사용 0).
 //   ExecutiveSummary 가 사실 recharts 의존 0 인데 import 만 끌고 있어
@@ -627,7 +629,7 @@ export function ExecutiveSummarySection({
           toneOverride={
             kpis.pendingApprovalCount + kpis.anomalyCount + reorderReviewCount === 0 ? "emerald" : "amber"
           }
-          href="/dashboard/purchase-orders"
+          href=""
           breakdown={[
             { label: "승인 대기", value: `${kpis.pendingApprovalCount}건` },
             { label: "이상 신호", value: `${kpis.anomalyCount}건` },
@@ -656,7 +658,7 @@ export function ExecutiveSummarySection({
           }
           risk={kpis.pendingApprovalCount >= 3 ? "warning" : "none"}
           toneOverride="blue"
-          href="/dashboard/purchase-orders"
+          href=""
           breakdown={[
             { label: "총 금액", value: `₩${kpis.pendingApprovalAmount.toLocaleString("ko-KR")}` },
             {
@@ -703,7 +705,7 @@ export function ExecutiveSummarySection({
                 ? "amber"
                 : "emerald"
           }
-          href="/dashboard/purchase-orders"
+          href=""
           breakdown={[
             { label: "예산 위험", value: kpis.anomalyDetail.includes("예산") ? kpis.anomalyDetail : "0건" },
             {

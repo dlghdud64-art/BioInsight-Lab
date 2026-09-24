@@ -9,6 +9,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 function read(rel: string): string {
@@ -62,9 +63,13 @@ describe("§inventory-reorder-surface-unify P3b — 회귀 0 (§11.310 보존)",
   it("견적 요청 CTA 는 live 로 남는다 (testid 보존)", () => {
     expect(src).toMatch(/data-testid="reorder-review-request-quote-cta"/);
   });
-  it("바로 발주 PO draft wiring 불변 — purchase-orders/new + prefill", () => {
-    expect(src).toMatch(/router\.push\(`\/dashboard\/purchase-orders\/new\?\$\{params\.toString\(\)\}`\)/);
-    expect(src).toMatch(/prefill:\s*["']reorder-recommendation["']/);
+  it("바로 발주 · 목적지가 삭제됐으므로 경로를 끊었다 (404 로 보내지 않는다)", () => {
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 구 명제는 「발주 생성 화면으로 prefill 해서 보낸다」 였다.
+     *   그 화면이 삭제됐다. purchasingOn 게이트 뒤라 오늘 눌리지는 않지만, 플래그를 켜면
+     *   **404 로 간다** — 그래서 경로를 끊었다. 목적지는 발주 UI 가 다시 생길 때 함께 정한다. */
+    // 부정 단언은 **주석 제거본**에 건다(CLAUDE.md) — 끊은 사유를 적은 주석에 걸리지 않게.
+    expect(stripComments(src)).not.toMatch(/\/dashboard\/purchase-orders/);
+    expect(src).toMatch(/const handleDirectPurchase = \(\) =>/);
   });
   it("amber/orange 0 (§11.310 색상 정합) — 사유 문구 muted slate", () => {
     expect(src).not.toMatch(/bg-amber-|text-amber-|bg-orange-/);

@@ -63,10 +63,12 @@ describe("§11.372 ② 더보기 시트 X 이중 렌더", () => {
     expect(moreSheet).toMatch(/h-10 w-10/);
   });
 
-  it("회귀 0: 시트 메뉴 wiring 보존(전체 메뉴/대시보드/발주/설정/로그아웃)", () => {
+  it("회귀 0: 시트 메뉴 wiring 보존(전체 메뉴/대시보드/입고/설정/로그아웃)", () => {
     expect(moreSheet).toMatch(/전체 메뉴/);
     expect(moreSheet).toMatch(/대시보드/);
-    expect(moreSheet).toMatch(/href: "\/dashboard\/purchase-orders"/);
+    // §po-ui-removed(2026-09-24 · 호영님 판정) — 발주 항목 삭제. 명제(중간 항목이 배선돼 있다)는
+    //   그대로 두고 대상을 살아 있는 항목으로 옮긴다. 발주 항목의 **부재**는 §po-ui-removed ③ 이 든다.
+    expect(moreSheet).toMatch(/href: "\/dashboard\/receiving"/);
     expect(moreSheet).toMatch(/href: "\/dashboard\/settings"/);
     expect(moreSheet).toMatch(/로그아웃/);
   });

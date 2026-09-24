@@ -68,7 +68,9 @@ function buildStages(s: DashboardSummary | undefined): PipelineStage[] {
       total: po?.total ?? 0,
       attention: po?.ordered ?? 0,
       attentionLabel: "미확정",
-      href: "/dashboard/purchase-orders",
+      // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 삭제. 수는 summary 가 계속 내지만
+      //   눌렀을 때 갈 화면이 없다 → 진행이 실제로 보이는 입고로 보낸다.
+      href: "/dashboard/receiving",
     },
     {
       key: "receive",

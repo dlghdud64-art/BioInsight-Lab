@@ -11,7 +11,7 @@
  *   6곳의 0건/빈 상태 요소가 흰 배경 + 점선 테두리이고 회색 채움이 없다. 창은 **요소 단위**다 —
  *   각 요소의 className 문자열 리터럴(0건 분기) 하나만 본다(파일 전체 grep 금지 · 2026-09-21 절차).
  *
- *     KPI 카드   inventory-content 헤더 「전체 품목」 0건 · status-count-grid 0건 셀 · purchase-orders 0건 KPI
+ *     KPI 카드   inventory-content 헤더 「전체 품목」 0건 · status-count-grid 0건 셀
  *     빈 상태    inventory-flow-view · storage-location-view 「데이터 없음」 · budget 「지출 추이·부서별 소진 데이터 없음」
  *
  * ── 범위 밖 (의도적) ──
@@ -63,10 +63,7 @@ const SITES: { name: string; get: () => string }[] = [
     name: "status-count-grid 0건 셀",
     get: () => literalAfter(code("components/layout/status-count-grid.tsx"), ": isZero", '? "'),
   },
-  {
-    name: "purchase-orders 0건 KPI",
-    get: () => literalAfter(code("app/dashboard/purchase-orders/page.tsx"), "const toneCard = isZero", '? "'),
-  },
+  // 제거 §po-ui-removed(2026-09-24 · 호영님 판정): "purchase-orders 0건 KPI" — 발주 화면 삭제로 잴 요소가 없다(정책 불변).
   {
     name: "inventory-flow-view 데이터 없음",
     get: () => literalAfter(code("components/inventory/inventory-flow-view.tsx"),

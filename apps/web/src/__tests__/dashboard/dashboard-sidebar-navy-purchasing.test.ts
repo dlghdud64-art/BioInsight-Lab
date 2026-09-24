@@ -36,15 +36,16 @@ describe("§sidebar-purchasing-gate — 발주 관리 게이팅", () => {
   it("ENABLE_PURCHASING off 시 발주 관리 렌더 필터(getFlag + purchase-orders 제외)", () => {
     // 승계(2026-09-02): 필터가 단일 href 비교 → 목록 포함 검사로 형태 변경(구매 운영 동반 게이팅).
     //   의도(플래그 off 면 발주 관리가 렌더 목록에서 빠진다)는 불변이므로 그 의도를 다시 잠근다.
+    // 승계 2 (2026-09-24 · §po-ui-removed): 발주 관리 메뉴는 **숨김이 아니라 삭제**됐다.
+    //   플래그 게이팅 자체는 구매 운영(/dashboard/purchases)에 그대로 남으므로 명제는 산다.
     expect(SRC).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
-    expect(SRC).toMatch(/PURCHASING_HIDDEN_HREFS = \[[^\]]*"\/dashboard\/purchase-orders"/);
+    expect(SRC).toMatch(/PURCHASING_HIDDEN_HREFS = \[[^\]]*"\/dashboard\/purchases"/);
     expect(SRC).toMatch(/purchasingOn \|\| !PURCHASING_HIDDEN_HREFS\.includes\(it\.href\)/);
     expect(SRC).toMatch(/visibleGroups/);
   });
-  it("회귀 0 — 발주 관리 NavItem 정의(소스 문자열) 보존(rollback)", () => {
-    expect(SRC).toMatch(/title: "발주 관리"/);
-    expect(SRC).toMatch(/href: "\/dashboard\/purchase-orders"/);
-  });
+  /* 🛑 은퇴 (2026-09-24 · §po-ui-removed) — 「회귀 0: 발주 관리 NavItem 정의 보존(rollback)」.
+   *    명제가 **뒤집혔다.** 그 rollback 전제(나중에 다시 붙인다)를 호영님이 철회했고,
+   *    이제 발주 NavItem 은 **없어야** 한다. 반대 명제는 §po-ui-removed ③ 이 든다. */
   it("회귀 0 — 견적 관리·재고 관리 메뉴 보존", () => {
     expect(SRC).toMatch(/title: "견적 관리"/);
     expect(SRC).toMatch(/title: "재고 관리"/);

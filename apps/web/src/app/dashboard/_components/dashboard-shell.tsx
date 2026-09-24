@@ -11,7 +11,6 @@ import { NotificationSonnerBridge } from "@/components/notifications/notificatio
 import { OrderCandidatePeekDrawer } from "@/components/orders/order-candidate-peek-drawer";
 import { GovernanceDevPanel } from "@/components/dashboard/console/governance-dev-panel";
 import { WorkbenchProgressOverlay } from "@/components/dashboard/overlay/workbench-progress-overlay";
-import { WorkbenchFullOverlay } from "@/components/dashboard/overlay/workbench-full-overlay";
 import { GovernedActionComposerBridge } from "@/components/governed-action/governed-action-composer-bridge";
 import { OperationalBriefPopupProvider } from "@/components/operational-brief/popup-context";
 import { OperationalBriefPopup } from "@/components/operational-brief/popup";
@@ -91,7 +90,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <NotificationSonnerBridge />
         <OrderCandidatePeekDrawer />
         <WorkbenchProgressOverlay />
-        <WorkbenchFullOverlay />
+      {/* §po-ui-removed (2026-09-24 · 호영님 판정) — WorkbenchFullOverlay 마운트 제거.
+          그 오버레이는 /dashboard/purchase-orders/** 전용이었고 그 라우트를 삭제했다. */}
         <GovernanceDevPanel />
         <GovernedActionComposerBridge />
         {/* §global-modal-root — `GlobalModal` 은 루트 레이아웃으로 올렸다.

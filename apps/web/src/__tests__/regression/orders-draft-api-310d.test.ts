@@ -17,7 +17,6 @@ import { join } from "node:path";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const API_PATH = "src/app/api/orders/draft/route.ts";
-const PAGE_PATH = "src/app/dashboard/purchase-orders/new/page.tsx";
 
 function read(rel: string): string {
   return readFileSync(join(REPO_ROOT, rel), "utf8");
@@ -80,51 +79,12 @@ describe("§11.310d — /api/orders/draft route", () => {
   });
 });
 
-describe("§11.310d — new page handleCreate fetch wiring", () => {
-  it("isSubmitting state (button disabled 분기)", () => {
-    const src = read(PAGE_PATH);
-    expect(src).toMatch(/isSubmitting.*useState\(false\)/);
-    expect(src).toMatch(/setIsSubmitting/);
-  });
-
-  it("handleCreate — async + fetch /api/orders/draft POST", () => {
-    const src = read(PAGE_PATH);
-    expect(src).toMatch(/handleCreate\s*=\s*async\s*\(\)\s*=>/);
-    expect(src).toMatch(/csrfFetch\(["']\/api\/orders\/draft["']/);
-    expect(src).toMatch(/method:\s*["']POST["']/);
-  });
-
-  it("Body payload (productName / supplier / quantity / unitPrice / notes / source)", () => {
-    const src = read(PAGE_PATH);
-    expect(src).toMatch(/productName:\s*form\.productName\.trim\(\)/);
-    expect(src).toMatch(/supplier:\s*form\.supplier\.trim\(\)/);
-    expect(src).toMatch(/quantity:\s*form\.quantity/);
-    expect(src).toMatch(/source:\s*isReorderRecommendation\s*\?\s*"reorder-recommendation"\s*:\s*"manual"/);
-  });
-
-  it("toast.success + router.push (성공 시 PO 목록 redirect)", () => {
-    const src = read(PAGE_PATH);
-    expect(src).toMatch(/toast\.success\(["']발주 draft가 등록되었습니다/);
-    expect(src).toMatch(/router\.push\(["']\/dashboard\/purchase-orders["']\)/);
-  });
-
-  it("toast.error (실패 시) + setIsSubmitting(false) finally", () => {
-    const src = read(PAGE_PATH);
-    expect(src).toMatch(/toast\.error\(msg\)/);
-    expect(src).toMatch(/setIsSubmitting\(false\)/);
-  });
-
-  it("button disabled={isSubmitting} + label '등록 중...'", () => {
-    const src = read(PAGE_PATH);
-    expect(src).toMatch(/disabled=\{isSubmitting\}/);
-    expect(src).toMatch(/isSubmitting \? "등록 중\.\.\." : "발주 생성"/);
-  });
-
-  it("§11.310d 안내문 — emerald 톤 (이전 slate-50 → emerald-50)", () => {
-    const src = read(PAGE_PATH);
-    expect(src).toMatch(/bg-emerald-50 border border-emerald-200[\s\S]{0,300}PurchaseRecord에 등록/);
-  });
-});
+/* 🛑 은퇴 §po-ui-removed(2026-09-24 · 호영님 판정) — describe("§11.310d — new page handleCreate fetch wiring").
+ *    그 블록은 삭제된 `app/dashboard/purchase-orders/new/page.tsx` 하나만 읽었다.
+ *    명제 원문: isSubmitting 중복제출 가드 · handleCreate 가 실 POST /api/orders/draft ·
+ *    payload 6필드 · 성공 시 toast+redirect · 실패 시 toast.error+finally · 버튼 disabled 라벨.
+ *    🔑 **엔드포인트 자체는 살아 있다** — 위 describe("/api/orders/draft route")가 그대로 든다
+ *    (그쪽은 GREEN). 불러 쓰던 화면만 없어졌다. */
 
 describe("§11.310d — 회귀 0", () => {
   it("기존 /api/orders POST (quote-based) 변경 0 — 별도 endpoint", () => {
@@ -134,21 +94,8 @@ describe("§11.310d — 회귀 0", () => {
     expect(src).toMatch(/order_create/);
   });
 
-  it("§11.310c new page 보존 — form 5 input testid + Suspense + 색상", () => {
-    const src = read(PAGE_PATH);
-    expect(src).toMatch(/data-testid="new-po-productName-input"/);
-    expect(src).toMatch(/data-testid="new-po-supplier-input"/);
-    expect(src).toMatch(/data-testid="new-po-quantity-input"/);
-    expect(src).toMatch(/data-testid="new-po-unitPrice-input"/);
-    expect(src).toMatch(/data-testid="new-po-notes-input"/);
-    expect(src).toMatch(/<Suspense/);
-    expect(src).toMatch(/bg-green-600 hover:bg-green-700/);
-  });
+  /* 🛑 은퇴 §po-ui-removed — 「§11.310c new page 보존」. 재는 파일이 삭제됐다. */
 
-  it("amber/orange 0 (§11.310 scope 정합)", () => {
-    const src = read(PAGE_PATH);
-    expect(src).not.toMatch(/bg-amber-/);
-    expect(src).not.toMatch(/text-amber-/);
-    expect(src).not.toMatch(/bg-orange-/);
-  });
+  /* 🛑 은퇴 §po-ui-removed — 「amber/orange 0」. 같은 삭제 파일이 대상이었다.
+   *    amber 금지 조항(§11.302)은 불변이고 amber-token-ratchet 이 전역을 둔다. */
 });

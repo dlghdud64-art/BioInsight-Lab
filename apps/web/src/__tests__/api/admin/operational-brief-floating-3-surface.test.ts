@@ -19,7 +19,8 @@ describe("§11.177 3 surface floating entry mount (§11.181 popup default 로 ma
   const SURFACES: { name: string; path: string }[] = [
     { name: "inventory-content", path: "src/app/dashboard/inventory/inventory-content.tsx" },
     { name: "work-queue-console", path: "src/components/dashboard/work-queue-console.tsx" },
-    { name: "purchase-orders/page", path: "src/app/dashboard/purchase-orders/page.tsx" },
+    // 제거 2026-09-24 §po-ui-removed: { name: "purchase-orders/page", path: "src/app/dashboard/purchase-orders/page.tsx" }
+    //   사유 = 발주 UI 라우트 전체 삭제(호영님 판정). 남은 2 surface 의 명제는 무손상이다.
   ];
 
   for (const { name, path } of SURFACES) {
@@ -39,7 +40,7 @@ describe("§11.177 lock §11.142 호환 — facts 0 노출", () => {
     const SURFACES = [
       "src/app/dashboard/inventory/inventory-content.tsx",
       "src/components/dashboard/work-queue-console.tsx",
-      "src/app/dashboard/purchase-orders/page.tsx",
+      // 제거 2026-09-24 §po-ui-removed: "src/app/dashboard/purchase-orders/page.tsx"
     ];
     for (const path of SURFACES) {
       const src = read(path);

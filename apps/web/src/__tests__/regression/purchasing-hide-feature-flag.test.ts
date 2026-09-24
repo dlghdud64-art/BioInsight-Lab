@@ -70,10 +70,14 @@ describe("§purchasing-hide — 회귀 0(삭제 아님, 소스/라우트 보존)
     expect(src).toMatch(/\/dashboard\/purchases/);
   });
 
-  it("pipeline — 발주 stage 객체 보존", () => {
+  it("pipeline · 발주 stage 객체 보존(목적지는 입고)", () => {
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 이 파일의 전제는 「숨김이지 삭제가 아니다」 였다.
+     *   발주 **화면**은 그 전제가 철회돼 삭제됐다. 파이프라인 단계(견적→발주→입고)는
+     *   summary 가 계속 수를 내므로 남기고, 누르면 진행이 보이는 입고로 보낸다.
+     *   구매 운영(/dashboard/purchases)은 여전히 「숨김」 이라 이 파일의 나머지는 무손상이다. */
     const src = read("src/components/dashboard/pipeline.tsx");
     expect(src).toMatch(/label: "발주"/);
-    expect(src).toMatch(/\/dashboard\/purchase-orders/);
+    expect(src).toMatch(/href: "\/dashboard\/receiving"/);
   });
 
   it("stat-line — 확정 발주액 item 보존", () => {
@@ -82,11 +86,8 @@ describe("§purchasing-hide — 회귀 0(삭제 아님, 소스/라우트 보존)
     expect(src).toMatch(/po\.confirmedAmount/);
   });
 
-  it("more-sheet — 발주 라우트 보존", () => {
-    const src = read("src/components/layout/bottom-nav-more-sheet.tsx");
-    expect(src).toMatch(/label: "발주"/);
-    expect(src).toMatch(/\/dashboard\/purchase-orders/);
-  });
+  /* 🛑 은퇴 §po-ui-removed — 「more-sheet 발주 라우트 보존」.
+   *    명제가 뒤집혔다: 이제 시트에 발주 항목이 **없어야** 한다(§po-ui-removed ③). */
 
   it("dashboard/page — 발주 단계 라벨 문자열 보존(되살리기용)", () => {
     const src = read("src/app/dashboard/page.tsx");

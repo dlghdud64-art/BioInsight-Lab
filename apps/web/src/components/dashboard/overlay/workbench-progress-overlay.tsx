@@ -103,18 +103,8 @@ function extractIdsFromRoute(routePath: string | null): {
 } {
   if (!routePath) return { caseId: null, poId: null, isDispatch: false };
 
-  // /dashboard/purchase-orders/[poId]/dispatch
-  const poDispatchMatch = routePath.match(
-    /\/dashboard\/purchase-orders\/([^/]+)\/dispatch/
-  );
-  if (poDispatchMatch)
-    return { caseId: null, poId: poDispatchMatch[1], isDispatch: true };
-
-  // /dashboard/purchase-orders/[poId]
-  const poMatch = routePath.match(/\/dashboard\/purchase-orders\/([^/]+)/);
-  if (poMatch)
-    return { caseId: null, poId: poMatch[1], isDispatch: false };
-
+  // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 경로(/dashboard/purchase-orders/**) 분기 제거.
+  //   그 라우트를 삭제했으므로 여기 도달하는 routePath 가 없다. 주문 케이스 경로는 그대로 둔다.
   // /dashboard/orders/[caseId]
   const orderMatch = routePath.match(/\/dashboard\/orders\/([^/]+)/);
   if (orderMatch)
@@ -255,7 +245,8 @@ export function WorkbenchProgressOverlay({
     }, [order]);
 
   // §11.162: PO list canonical = /dashboard/purchase-orders
-  const workbenchHref = overlayRoutePath ?? "/dashboard/purchase-orders";
+  // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 라우트 삭제. 목적지를 입고로 옮긴다.
+  const workbenchHref = overlayRoutePath ?? "/dashboard/receiving";
 
   const content = (
     <div className="flex flex-col flex-1 overflow-hidden">

@@ -23,6 +23,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const read = (rel: string) => readFileSync(join(REPO_ROOT, rel), "utf8");
@@ -154,7 +155,11 @@ describe("§inventory-mobile-reorder-gate — 기존 invariant 보존(회귀 0)"
     //   실생성 + ?prepare= 직행으로 교체. 발주(Q31) prefill 경로는 무변경 보존.
     //   바로 발주 게이팅: 공급사 0 = hide(1b dead button 제거), 공급사 有 = flag 게이팅 유지.
     expect(SHEET).toMatch(/"안전 재고 미달 · 재고 운영 도우미 권장"/);
-    expect(SHEET).toMatch(/prefill: "reorder-recommendation"/); // Q31 발주 경로 보존
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — Q31 「바로 발주」 의 목적지였던
+     *   발주 생성 화면이 삭제됐다. prefill query string 은 그 화면으로 보내던 것이라 사라졌다.
+     *   버튼과 게이팅(아래 3줄)은 그대로 산다 — 목적지는 발주 UI 가 다시 생길 때 함께 정한다. */
+    // 부정 단언은 **주석 제거본**에 건다(CLAUDE.md) — 끊은 사유를 적은 주석이 있다.
+    expect(stripComments(SHEET)).not.toMatch(/dashboard\/purchase-orders/);
     expect(SHEET).toMatch(/hasVendor\s*&&[\s\S]{0,400}reorder-review-direct-purchase-cta/);
     expect(SHEET).toMatch(/disabled=\{!purchasingOn\}/);
     expect(SHEET).toMatch(/bg-green-600 hover:bg-green-700/);

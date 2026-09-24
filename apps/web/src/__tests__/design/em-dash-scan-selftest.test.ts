@@ -53,7 +53,8 @@ describe("§em-dash-scan — 소급 완료분 잠금 (회귀 0)", () => {
   const DONE = [
     "app/dashboard/analytics/page.tsx",
     "components/inventory/ReorderReviewSheet.tsx",
-    "app/dashboard/purchase-orders/new/page.tsx",
+    // §po-ui-removed(2026-09-24 · 호영님 판정) — `app/dashboard/purchase-orders/new/page.tsx` 는
+    //   파일째 삭제됐다. 잠글 대상이 없으므로 목록에서 뺀다(조항 자체는 불변).
     "components/quotes/prepare/quote-prepare-panel.tsx", // 29146a6e(2건) + 369b1a15(L175)
   ];
 

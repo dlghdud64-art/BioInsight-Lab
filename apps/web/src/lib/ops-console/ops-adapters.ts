@@ -564,7 +564,8 @@ export function toPurchaseOrderListItemVM(
     ownerName: po.ownerId,
     riskBadges: [],
     sourceLabel: PO_SOURCE_LABELS[po.sourceType] ?? po.sourceType,
-    href: `/dashboard/purchase-orders/${po.id}`,
+    // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 상세 라우트 삭제. 목적지를 입고로 옮긴다.
+    href: '/dashboard/receiving',
   };
 }
 

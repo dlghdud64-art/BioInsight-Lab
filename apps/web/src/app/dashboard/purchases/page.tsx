@@ -243,7 +243,7 @@ export default function PurchasesPage() {
             .map((r) => r.orderNumber)
             .join(", ") +
           (n > 3 ? ` 외 ${n - 3}건` : "") +
-          " · 발주 관리에서 외부 발주·입고를 추적하세요.",
+          " · 입고 관리에서 외부 발주·입고를 추적하세요.",
       });
       queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
       // §11.158 cache-bust — bulk-PO 직후 영향 quote brief 모두 invalidate
@@ -591,7 +591,7 @@ export default function PurchasesPage() {
                   // mutation itself is atomic so a single OK / Cancel
                   // is the right friction.
                   const ok = window.confirm(
-                    `발주 가능 ${ids.length}건을 발주 인계로 정리합니다. 인계 후 발주 관리에서 외부 발주·입고를 추적합니다. 진행하시겠습니까?`,
+                    `발주 가능 ${ids.length}건을 발주 인계로 정리합니다. 인계 후 입고 관리에서 외부 발주·입고를 추적합니다. 진행하시겠습니까?`,
                   );
                   if (!ok) return;
                   bulkPoMutation.mutate(ids);
@@ -1551,17 +1551,17 @@ export default function PurchasesPage() {
                       )}
                     </>
                   )}
-                  {/* §11.352 — 인계 완료(confirmed) 시 dead-end 해소: 견적 회귀 대신
-                      발주 관리로 전진. 외부 발주·입고 상태는 발주 관리에서 추적
-                      (DECISION_11.35x 요청자 중심 — LabAxis = 의뢰·추적, 실행은 외부). */}
+                  {/* §11.352 — 인계 완료(confirmed) 시 dead-end 해소: 견적 회귀 대신 다음 단계로 전진.
+                      §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 를 삭제했으므로 목적지를 입고 관리로 옮긴다.
+                      외부 발주 이후의 실제 진행(회신·검수·재고 반영)은 입고에서 추적된다. */}
                   {selectedItem.conversionStatus === "confirmed" && (
-                    <Link href="/dashboard/purchase-orders" className="block">
+                    <Link href="/dashboard/receiving" className="block">
                       <Button
                         size="sm"
                         className="w-full h-9 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
                       >
                         <ArrowRight className="h-3.5 w-3.5 mr-1.5" />
-                        발주 관리에서 외부 발주·입고 추적
+                        입고 관리에서 진행 추적
                       </Button>
                     </Link>
                   )}

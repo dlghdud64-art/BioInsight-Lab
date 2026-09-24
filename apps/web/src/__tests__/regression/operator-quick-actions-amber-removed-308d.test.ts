@@ -11,6 +11,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const PATH = "src/components/dashboard/operator-quick-actions.tsx";
@@ -75,7 +76,9 @@ describe("§11.364 — 회귀 0 (4 카드 구조 + wiring)", () => {
     const src = read(PATH);
     expect(src).toMatch(/href:\s*"\/dashboard\/quotes\?labaxisPilot=quote-dispatch"/);
     expect(src).toMatch(/href:\s*"\/dashboard\/purchases"/);
-    expect(src).toMatch(/href:\s*"\/dashboard\/purchase-orders"/);
+    // 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 발주 카드의 목적지가 삭제됐다. 이 표면도 렌더 도달 0 이라 링크만 끊었다.
+    // 부정 단언은 **주석 제거본**에 건다(CLAUDE.md) — 끊은 사유를 적은 주석에 걸리지 않게.
+    expect(stripComments(src)).not.toMatch(/\/dashboard\/purchase-orders/);
     expect(src).toMatch(/href:\s*"\/dashboard\/inventory\?filter=low"/);
   });
 

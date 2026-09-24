@@ -599,7 +599,8 @@ function buildQuoteDownstream(items: UnifiedInboxItem[]): ModuleDownstream[] {
     {
       label: '발주 생성 가능',
       count: poReadyCount,
-      targetRoute: '/dashboard/purchase-orders',
+      // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 라우트 삭제. 목적지를 입고로 옮긴다.
+      targetRoute: '/dashboard/receiving',
       description: '공급사 선정 완료, PO 전환 대기 중인 견적',
     },
   ];
@@ -631,7 +632,8 @@ function buildPODownstream(items: UnifiedInboxItem[]): ModuleDownstream[] {
     downstream.push({
       label: '발행 대기',
       count: issueReadyCount,
-      targetRoute: '/dashboard/purchase-orders',
+      // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 라우트 삭제. 목적지를 입고로 옮긴다.
+      targetRoute: '/dashboard/receiving',
       description: '승인 완료, 공급사 발행 실행 필요',
     });
   }

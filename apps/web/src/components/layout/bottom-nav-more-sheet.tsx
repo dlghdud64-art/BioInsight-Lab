@@ -27,7 +27,8 @@ import { cn } from "@/lib/utils";
 import { getFlag } from "@/lib/feature-flags";
 
 // §purchasing-hide — 발주/구매 off 시 더보기 시트에서 숨길 발주 진입점(소스 보존, 렌더 필터).
-const PURCHASING_HREFS = ["/dashboard/orders", "/dashboard/purchase-orders", "/dashboard/purchases"];
+// §po-ui-removed (2026-09-24 · 호영님 판정) — /dashboard/purchase-orders 라우트 삭제로 목록에서 제거.
+const PURCHASING_HREFS = ["/dashboard/orders", "/dashboard/purchases"];
 
 interface MoreSheetProps {
   open: boolean;
@@ -54,7 +55,6 @@ const menuGroups: { title: string; items: MoreMenuItem[] }[] = [
     title: "운영",
     items: [
       { label: "발주 전환 큐", href: "/dashboard/orders", icon: ClipboardList },
-      { label: "발주", href: "/dashboard/purchase-orders", icon: ClipboardList },
       { label: "입고", href: "/dashboard/receiving", icon: Package },
       { label: "재고 위험", href: "/dashboard/inventory?filter=low", icon: AlertTriangle },
     ],

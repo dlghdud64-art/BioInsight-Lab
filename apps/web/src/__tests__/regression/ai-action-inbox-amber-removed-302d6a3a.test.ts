@@ -22,6 +22,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 
@@ -136,10 +137,15 @@ describe("§11.302d-6a-3-α — 회귀 0 (다른 variant + 핵심 wiring 보존)
     expect(src).toMatch(/EXPIRY_ALERT:\s*\{\s*label:\s*"확인 필요",\s*className:\s*"bg-yellow-50 text-yellow-700/);
   });
 
-  it("FOLLOWUP_DRAFT approveHref + STATUS_CHANGE_SUGGEST approveHref 보존", () => {
+  it("FOLLOWUP_DRAFT · STATUS_CHANGE_SUGGEST approveHref 필드 자체는 보존 (목적지는 비었다)", () => {
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 목적지였던 발주 화면이 삭제됐다. 이 컴포넌트는 **렌더 도달 0** 이라
+     *   새 목적지를 추측하지 않고 링크만 끊었다(§po-ui-removed 자기 한계 1 · 존폐는 별건 큐).
+     *   남는 명제: 구조(approveHref 필드)는 살아 있고, **삭제된 화면으로는 보내지 않는다.** */
     const src = read(PATH);
-    expect(src).toMatch(/FOLLOWUP_DRAFT:[\s\S]{0,800}approveHref:\s*"\/dashboard\/purchase-orders"/);
-    expect(src).toMatch(/STATUS_CHANGE_SUGGEST:[\s\S]{0,800}approveHref:\s*"\/dashboard\/purchase-orders"/);
+    expect(src).toMatch(/FOLLOWUP_DRAFT:[\s\S]{0,800}approveHref:\s*"/);
+    expect(src).toMatch(/STATUS_CHANGE_SUGGEST:[\s\S]{0,800}approveHref:\s*"/);
+    // 부정 단언은 **주석 제거본**에 건다(CLAUDE.md) — 끊은 사유를 적은 주석에 걸리지 않게.
+    expect(stripComments(src)).not.toMatch(/\/dashboard\/purchase-orders/);
   });
 
   it("REORDER_SUGGESTION approveHref /dashboard/inventory 보존", () => {

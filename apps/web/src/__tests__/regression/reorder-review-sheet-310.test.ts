@@ -29,6 +29,7 @@
 
 import { describe, it, expect } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 import { join } from "node:path";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
@@ -63,7 +64,9 @@ describe("§11.310 — ReorderReviewSheet 컴포넌트", () => {
     const src = read(SHEET_PATH);
     expect(src).toMatch(/data-testid="reorder-review-request-quote-cta"/);
     expect(src).toMatch(/router\.push\(`\/dashboard\/quotes\?[^`]*\$\{[^}]*quoteId[^}]*\}/);
-    expect(src).toMatch(/productName:\s*data\.productName/);
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 이 단언은 **삭제된 발주 생성 링크의 query string** 에 걸려 있었다(정규식 4원칙 ④ 대체 매칭).
+     *   견적 경로의 품목명 전파는 초안 제목이 든다 — 그쪽으로 옮긴다. */
+    expect(src).toMatch(/title: `\$\{data\.productName\} 재발주 견적`/);
 
     /* 🔁 은퇴→승계 (2026-08-16) — 같은 it 안의 **4번째** 단언. 위 앵커 이동으로 비로소 드러났다.
      *   🛑 vitest 는 it 당 첫 실패만 보고한다 — 첫 단언을 고치면 형제가 새로 나온다.
@@ -85,8 +88,10 @@ describe("§11.310 — ReorderReviewSheet 컴포넌트", () => {
   it("[바로 발주] CTA — query string + PO draft (Q31 = A)", () => {
     const src = read(SHEET_PATH);
     expect(src).toMatch(/data-testid="reorder-review-direct-purchase-cta"/);
-    expect(src).toMatch(/router\.push\(`\/dashboard\/purchase-orders\/new\?\$\{params\.toString\(\)\}`\)/);
-    expect(src).toMatch(/prefill:\s*["']reorder-recommendation["']/);
+    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 목적지였던 발주 생성 화면이 삭제됐다.
+     *   버튼(과 아래의 렌더 게이트)은 그대로 두되 **404 로 보내지 않는다** 가 남는 명제다.
+     *   목적지는 발주 UI 가 다시 생길 때 함께 정한다(별건 큐). */
+    expect(stripComments(src)).not.toMatch(/\/dashboard\/purchase-orders/);
 
     /* 🔁 은퇴→승계 (2026-08-16 · 38c5aed9 후속) — **축이 바뀌었다: disabled → 렌더 게이트**
      *   구 계약: `disabled={!hasVendor || !purchasingOn}` — 공급사 0건이면 비활성.

@@ -120,7 +120,9 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
       label: "확정 발주액",
       icon: <ClipboardCheck className="h-3.5 w-3.5" />,
       value: s?.modules.po.confirmedAmount ?? 0,
-      href: "/dashboard/purchase-orders",
+      // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 삭제. 금액의 근거는 주문이고,
+      //   그 진행은 입고에서 추적된다.
+      href: "/dashboard/receiving",
     },
   ];
 

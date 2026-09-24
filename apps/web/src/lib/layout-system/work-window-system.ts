@@ -404,7 +404,8 @@ export const PRIORITY_TARGETS: PriorityTarget[] = [
     id: 'po-issue-confirm',
     task: 'PO 발행 확인',
     surface: 'center_work_window',
-    parentScreen: '/dashboard/purchase-orders',
+    // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 라우트 삭제. 목적지를 입고로 옮긴다.
+    parentScreen: '/dashboard/receiving',
     reason: 'high-value 액션 + 발행 전 최종 검토 필수',
     priority: 2,
   },

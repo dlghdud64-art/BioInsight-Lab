@@ -245,7 +245,8 @@ function activityDeepLink(
     case "QUOTE":
       return entityId ? `/dashboard/quotes/${entityId}` : "/dashboard/quotes";
     case "ORDER":
-      return "/dashboard/purchase-orders";
+      // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 삭제. 주문의 진행 상태는 입고에서 추적한다.
+      return "/dashboard/receiving";
     case "PURCHASE_REQUEST":
       return "/dashboard/purchases";
     case "INVENTORY":

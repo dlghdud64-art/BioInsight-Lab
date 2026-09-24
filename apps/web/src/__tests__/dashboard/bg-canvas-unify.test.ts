@@ -23,7 +23,7 @@ const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
 const PAGES: Array<[string, string]> = [
   // 신규 canvas 지시 범위 밖 — 흰색 유지 대상만 존속.
   ["receiving", "app/dashboard/receiving/page.tsx"],
-  ["purchase-orders", "app/dashboard/purchase-orders/page.tsx"],
+  // §po-ui-removed(2026-09-24 · 호영님 판정) — purchase-orders 페이지 삭제. 잴 표면이 없다.
   ["inventory/scan", "app/dashboard/inventory/scan/page.tsx"],
 ];
 

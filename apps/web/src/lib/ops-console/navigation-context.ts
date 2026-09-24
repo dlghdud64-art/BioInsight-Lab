@@ -111,7 +111,8 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
     label: '발주',
     shortLabel: '발주',
     icon: 'ClipboardList',
-    href: '/dashboard/purchase-orders',
+    // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 라우트 삭제. 목적지를 입고로 옮긴다.
+    href: '/dashboard/receiving',
     landingRole: 'list',
     description: '승인 / 발행 / 확인 / 입고 인계',
   },
@@ -160,6 +161,7 @@ export function resolveTopLevelModule(pathname: string): TopLevelModule {
   )
     return 'search';
   if (pathname.startsWith('/dashboard/quotes')) return 'quotes';
+  // §po-ui-removed — 삭제된 라우트지만 판별식은 남긴다: 옛 링크로 들어온 경우를 모듈 미상으로 흘리지 않는다.
   if (pathname.startsWith('/dashboard/purchase-orders'))
     return 'purchase_orders';
   if (pathname.startsWith('/dashboard/receiving')) return 'receiving';

@@ -388,7 +388,8 @@ export function buildPORecoveryReentryContext(
   return {
     sourceType: 'po_issue_context_recovery',
     sourceEntityId: po.id,
-    sourceRoute: `/dashboard/purchase-orders/${po.id}`,
+    // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 라우트 삭제. 목적지를 입고로 옮긴다. 상세가 없으므로 목록 축(입고)으로 되돌린다.
+    sourceRoute: '/dashboard/receiving',
     sourceSummary: `${po.poNumber} — ${isAckTimeout ? '공급사 확인 장기 미응답' : '발행 불가'}, 대체 공급사 검토 필요`,
     reasonCodes,
     requestedItemHints: po.lines.map((line) => ({
@@ -401,7 +402,7 @@ export function buildPORecoveryReentryContext(
     substituteAllowed: false, // 동일 spec 유지
     urgency: 'high',
     linkedInventoryItemId: undefined,
-    returnRoute: `/dashboard/purchase-orders/${po.id}`,
+    returnRoute: '/dashboard/receiving',
   };
 }
 

@@ -62,10 +62,8 @@ describe("§11.302d-6d-1 — 위험 orange → red 격상 (옵션 A)", () => {
 });
 
 describe("§11.302d-6d-1 — status yellow + 장식 sky", () => {
-  it("purchase-orders HIGH priority yellow (위험 아닌 긴급)", () => {
-    const src = readFileSync(join(DASH_DIR, "purchase-orders/page.tsx"), "utf8");
-    expect(src).toMatch(/HIGH:\s*\{\s*bg:\s*"bg-yellow-50"/);
-  });
+  /* 🛑 은퇴 §po-ui-removed(2026-09-24 · 호영님 판정) — 「purchase-orders HIGH priority yellow」. 잴 파일이 삭제됐다.
+   *    정책(주의=yellow · amber 금지)은 불변이고 다른 표면들이 계속 잠근다. */
   it("activity-logs — §log-consolidation 통합(/dashboard/audit redirect, 색상 가드 이전)", () => {
     // 활동 로그 surface 는 §log-consolidation 로 /dashboard/audit(활동/감사 토글)에 흡수.
     // 구 route 는 redirect stub — 색상 가드는 통합 host(log-consolidation-p1)로 이동.

@@ -24,6 +24,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { csrfFetch } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 // §budget-period-axis — 남은 일수는 대시보드와 **같은 함수**로 센다(축이 갈리지 않게).
@@ -206,7 +207,9 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/budgets/${id}`, { method: "DELETE" });
+      // 🛑 §budget-delete-csrf (2026-09-24 prod 실측) — raw fetch 는 CSRF 토큰을 안 싣는다.
+      //   미들웨어가 403 "보안 검증이 완료되지 않아…" 로 막았다. 변이 요청은 csrfFetch 로만 보낸다.
+      const res = await csrfFetch(`/api/budgets/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { error?: string }).error || "삭제하지 못했습니다");
@@ -362,10 +365,11 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                         <Send className="h-3 w-3 mr-1" />견적 보기
                       </Button>
                     </Link>
-                    {/* §11.162: PO list canonical = /dashboard/purchase-orders */}
-                    <Link href="/dashboard/purchase-orders">
+                    {/* §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 삭제.
+                        옛 링크(/dashboard/purchase-orders)는 이제 404 다. 지출이 실제로 진행되는 화면(입고)으로 보낸다. */}
+                    <Link href="/dashboard/receiving">
                       <Button size="sm" variant="outline" className="h-7 text-[10px] border-bd text-slate-400 hover:text-slate-700">
-                        <FileCheck className="h-3 w-3 mr-1" />발주 보기
+                        <FileCheck className="h-3 w-3 mr-1" />입고 보기
                       </Button>
                     </Link>
                   </div>
