@@ -1553,6 +1553,27 @@ CSRF 토큰이 실리지 않아 미들웨어가 403 으로 막았다. 저장소 
 em dash 게이트와 같은 모양이다 — 규칙은 있는데 **새로 들어오는 위반을 보는 장치가 없다.**
 별도 트랙으로 권고한다(추가된 줄의 raw fetch 변이를 pre-commit 에서 막는 방식이 가장 싸다).
 
+## 7-R. §raw-fetch-mutation 래칫 · 저장소를 훑자 알림 읽음도 prod 403 이었다 (2026-09-24 · 호영님 승인)
+
+**판별기** `__tests__/_helpers/raw-fetch-scan.ts`: `fetch(` 중 첫 인자가 `/api/` 리터럴이고 method 가 변이인 것.
+csrfFetch · GET · 주석 · 외부 URL 은 제외. **exempt 판정은 CSRF registry(`resolveCsrfConfig`) 를 그대로 쓴다**
+(공개 토큰 페이지 3곳은 exempt 라 raw fetch 가 맞다. 두 벌로 두면 갈라진다).
+한계: URL 이나 init 을 변수로 넘기면 판별하지 못한다.
+
+**저장소 전량 실측** (서버 라우트 · 테스트 제외 1,719파일): 리터럴 변이 5건 → exempt 3 · **비exempt 2**.
+비exempt 2건 = `components/dashboard/Header.tsx:83 · :216` 알림 읽음(개별 · 모두 읽음).
+prod 확인: `POST /api/notifications/<없는 id>/read` (raw) → **403 「보안 검증이 완료되지 않아…」**.
+알림을 눌러도 읽음이 안 됐고, 「모두 읽음」 은 fetch 가 403 에 reject 하지 않아 **조용히 끝났다**.
+
+**고친 것**
+- Header.tsx 2곳 → `csrfFetch`. 개별은 `onError` 토스트, 모두 읽음은 실패 건수를 세서 토스트.
+- `meta/raw-fetch-mutation.test.ts` ①~⑧ 판별기 계약 · ⑨ 저장소 전량 0건 · ⑩ Header 명제. 10/10 GREEN.
+  Header 를 HEAD 로 되돌리면 ⑨⑩ RED (`Header.tsx:83 · :216 POST /api/notifications/x/read`), 복원 후 GREEN.
+- pre-commit **1-C** + `scripts/check-raw-fetch-added-lines.ts`: 신규·수정 파일의 **추가된 줄**에 걸친 raw fetch 변이 차단.
+  실측: 수정본 diff → exit 0 · raw POST 한 줄 주입 → `655 fetch POST /api/budgets` exit 1.
+
+레거시가 0이 됐으므로 ⑨ 가 전량을 잠그고, 훅은 커밋 시점에 먼저 막는다.
+
 ---
 
 ## 8. Optional Addenda

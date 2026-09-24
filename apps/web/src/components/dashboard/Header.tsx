@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import { Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, BookOpen, Headphones, Settings, CreditCard, LogOut, ShieldAlert, Clock, CheckCircle2, ClipboardCheck, Menu, Package, ScanLine } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { csrfFetch } from "@/lib/api-client";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 // §11.271 — DashboardShell 의 fixed FAB 에서 헤더 inline 으로 이동 (운영 브리핑 FAB
@@ -80,11 +81,16 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   // §11.209d-notification-inapp-web-bell-ui — 개별 read mutation
   const markRead = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/notifications/${id}/read`, { method: "POST" });
+      // 🛑 §notification-read-csrf (2026-09-24 prod 실측) · raw fetch 는 CSRF 토큰을 안 싣는다.
+      //   prod full_enforce 에서 403 이었다. 알림을 눌러도 읽음이 안 됐고 아무 표시도 없었다.
+      const res = await csrfFetch(`/api/notifications/${id}/read`, { method: "POST" });
       if (!res.ok) throw new Error("읽음 처리 실패");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: () => {
+      toast.error("알림을 읽음으로 바꾸지 못했습니다. 잠시 후 다시 시도해 주세요.");
     },
   });
 
@@ -211,11 +217,19 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     const unread = notifications.filter((n) => n.readAt === null);
     if (unread.length === 0) return;
     try {
-      await Promise.all(
+      // 🛑 §notification-read-csrf · fetch 는 403 이어도 reject 하지 않는다.
+      //   그래서 「모두 읽음」 이 전부 실패해도 조용히 끝났다. 실패 건수를 세서 알린다.
+      const results = await Promise.all(
         unread.map((n) =>
-          fetch(`/api/notifications/${n.id}/read`, { method: "POST" }),
+          csrfFetch(`/api/notifications/${n.id}/read`, { method: "POST" }),
         ),
       );
+      const failed = results.filter((r) => !r.ok).length;
+      if (failed > 0) {
+        toast.error(`알림 ${failed}건을 읽음으로 바꾸지 못했습니다. 잠시 후 다시 시도해 주세요.`);
+      }
+    } catch {
+      toast.error("알림을 읽음으로 바꾸지 못했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }

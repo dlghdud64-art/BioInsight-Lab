@@ -57,6 +57,16 @@ if [ -n "$modified" ]; then
   npx tsx scripts/check-em-dash-added-lines.ts || exit 1
 fi
 
+# ── 1-C. §raw-fetch-mutation (호영님 승인 2026-09-24) · **추가된 줄의 raw fetch 변이** ──
+#   raw fetch 는 CSRF 토큰을 싣지 않는다. 예산 삭제 버튼이 prod 에서 403 이었고
+#   게이트·빌드·원장을 전부 통과했다. 이번 커밋이 추가한 줄만 본다 (신규 + 수정 파일).
+changed_src=$(git diff --cached --name-only --diff-filter=AM -- apps/web/src \
+                | grep -E '\.(ts|tsx)$' | grep -vE '/app/api/|/__tests__/|\.(test|spec)\.tsx?$' || true)
+if [ -n "$changed_src" ]; then
+  echo "── 파일 $(echo "$changed_src" | grep -c .)개 · 추가된 줄 raw fetch 변이 검사 (pre-commit)"
+  npx tsx scripts/check-raw-fetch-added-lines.ts || exit 1
+fi
+
 # ── 2. dashboard 표면 inline hex 배경 (§11.49) ──
 DASHBOARD_STAGED=$(git diff --cached --name-only --diff-filter=ACMRTUXB \
   | grep -E '^apps/web/src/app/dashboard/.*\.(ts|tsx)$' || true)
