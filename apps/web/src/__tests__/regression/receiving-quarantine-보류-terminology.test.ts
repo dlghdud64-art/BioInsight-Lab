@@ -17,14 +17,14 @@ const CORE = [
   "lib/ops-console/dashboard-adapter.ts",
   "lib/ops-console/entity-operational-state.ts",
   "lib/ops-console/ops-adapters.ts",
-  "lib/ops-console/ops-store.tsx",
+  // 제거됨: "lib/ops-console/ops-store.tsx" — §po-seed-cutoff 2차(2026-09-24) · 시드 스토어 삭제
   "lib/ops-console/ownership-adapter.ts",
 ];
 
 // batch-2 (호영님 2026-07-05, operator) — 나머지 입고 surface 일괄 격리→보류.
 const BATCH2 = [
   "lib/ops-console/receiving-detail-adapter.ts",
-  "lib/ops-console/seed-data.ts",
+  // 제거됨: "lib/ops-console/seed-data.ts" — §po-seed-cutoff 2차(2026-09-24) · 시드 데이터 삭제
   "lib/ops-console/command-adapters.ts",
   "lib/ops-console/phase1-execution-prompts.ts",
   "lib/review-queue/receiving-inbound-contract.ts",
@@ -58,8 +58,14 @@ describe("입고 quarantine 용어 — 카드 공급 레이어 격리→보류",
     const gov = R("lib/ai/governance-grammar-registry.ts");
     expect(gov).toMatch(/보류 보관/);
     expect(gov).toMatch(/status: "quarantined"/); // English status key 보존
-    const inbox = R("lib/ops-console/inbox-adapter.ts");
-    expect(inbox).toMatch(/보류 품목/);
-    expect(inbox).toMatch(/quarantineStatus|quarantineLines|quarantine_constrained/); // English 식별자 보존
+    /* 🔁 앵커 이동 (§po-seed-cutoff 2차 · 2026-09-24)
+     *    구 앵커는 inbox-adapter 의 **시드 전용 입고 빌더**(buildInboxFromReceiving) 안의 「보류 품목」 제목이었다.
+     *    시드 군집이 삭제되며 그 빌더가 사라졌다 — 라벨 정책은 그대로이고, 그 정책을 쓰는 **살아 있는 자리**로 옮긴다.
+     *    (blocker-adapter · entity-operational-state · ownership-adapter 는 같은 라벨을 계속 쓴다.) */
+    expect(R("lib/ops-console/blocker-adapter.ts")).toMatch(/보류 품목/);
+    expect(R("lib/ops-console/entity-operational-state.ts")).toMatch(/보류 품목/);
+    expect(R("lib/ops-console/ownership-adapter.ts")).toMatch(/보류 품목/);
+    // English 식별자 보존 — 같은 이동(구 앵커는 삭제된 시드 빌더였다). 살아 있는 자리에서 단언한다.
+    expect(R("lib/ai/receiving-execution-workbench-engine.ts")).toMatch(/quarantineLines|quarantineFlag/);
   });
 });

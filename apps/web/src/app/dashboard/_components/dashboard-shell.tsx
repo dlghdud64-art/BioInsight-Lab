@@ -6,7 +6,6 @@ import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 // §11.271 — BarcodeScanFab 은 DashboardHeader 모바일 inline 으로 이동 (운영 브리핑 FAB
 // 좌표 충돌 해소). 본 shell 에서 mount 제거 + import 제거 (dead import 차단).
-import { OpsStoreProvider } from "@/lib/ops-console/ops-store";
 import { OntologyContextLayer } from "@/components/ontology-context-layer/ontology-context-layer";
 import { NotificationSonnerBridge } from "@/components/notifications/notification-sonner-bridge";
 import { OrderCandidatePeekDrawer } from "@/components/orders/order-candidate-peek-drawer";
@@ -22,8 +21,10 @@ import { useOverlayKeyboard } from "@/hooks/use-overlay-keyboard";
 /**
  * DashboardShell — baseline shell wrapper.
  *
- * OpsStoreProvider는 sidebar/bottom-nav badge 카운트 전용.
- * dashboard page 자체는 OpsStore를 사용하지 않는다.
+ * §po-seed-cutoff 2차 (2026-09-24 · 호영님 판정) — OpsStoreProvider 마운트 제거.
+ * 주석은 「sidebar/bottom-nav badge 카운트 전용」 이라고 적혀 있었지만 **그 배지들은 이미 시드를 읽지 않는다**
+ * (bottom-nav-badge-p1 이 useOpsStore·seed-data 0 을 단언한다). 읽는 화면 0 인 시드 그래프를
+ * 매 대시보드 마운트마다 만들고 있었다.
  *
  * ⚠ 계약 작업 주의:
  * - 이 shell을 계약형 shell로 교체하지 마라
@@ -38,8 +39,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   useOverlayKeyboard();
 
   return (
-    <OpsStoreProvider>
-      <OperationalBriefPopupProvider>
+    <OperationalBriefPopupProvider>
       {/* §11.272e — skip-link 완전 삭제 (호영님 P0 5차 결정). §11.125 /
           §11.272a-redo / §11.272a-redo-2 / §11.272d (sr-only + focus:
           not-sr-only) 모든 hot fix 후에도 호영님 데스크탑 환경 좌상단에
@@ -98,6 +98,5 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             여기 남기면 `/dashboard/*` 에서 렌더러가 둘이 된다(store 하나 · 모달 2개). */}
       </div>
       </OperationalBriefPopupProvider>
-    </OpsStoreProvider>
   );
 }

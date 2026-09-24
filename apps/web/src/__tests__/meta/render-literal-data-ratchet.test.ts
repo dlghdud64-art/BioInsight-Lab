@@ -54,15 +54,16 @@ const LEGACY = [
   "app/dashboard/page.tsx",
   "app/dashboard/safety/page.tsx",
   "components/approval/quote-chain-progress-strip.tsx",
-  "components/approval/quote-chain-workbenches.tsx",
+  // 제거됨: "components/approval/quote-chain-workbenches.tsx" — §po-seed-cutoff 2차(2026-09-24) ·
+  //   발주 발송 워크벤치(오버레이·dispatch 화면)가 마지막 소비자였다. 파일은 남아 있으나 렌더 도달 0.
   "components/inventory/LabelPrintModal.tsx",
   "components/inventory/priority-action-queue.tsx",
   "components/layout/barcode-scan-fab.tsx",
-  "lib/ai/governance-grammar-registry.ts",
+  // 제거됨: "lib/ai/governance-grammar-registry.ts" — §po-seed-cutoff 2차(2026-09-24) · 같은 이유로 렌더 도달 0
   "lib/ai/quote-approval-governance-engine.ts",
   "lib/db.ts",
   "lib/layout-system/work-window-system.ts",
-  "lib/ops-console/seed-data.ts",
+  // 제거됨: "lib/ops-console/seed-data.ts" — §po-seed-cutoff 2차(2026-09-24) · 시드 파일 삭제
   "lib/organization/default-name.ts",
   // 제거됨: "lib/review-queue/operator-console-contract.ts" — §inbox-seed-cutoff(2026-09-22) ·
   //   INBOX_ITEMS·스토어 레거시 인박스 삭제로 렌더 도달 경로가 끊겼다(유령 경로 방지)
@@ -70,8 +71,8 @@ const LEGACY = [
   // 제거됨: "lib/vendor-portal/vendor-portal-store.ts" — §vendor-portal-seed-retired(2026-09-22) · 포털 라우트·시드 삭제
 ];
 
-/** 기준선 총계. 올리지 않는다. 37(2026-09-21) → 36(09-22 알림 센터) → 34(09-22 팀별 보기) → 33(09-22 월별 상세) → 29(09-22 벤더 포털 시드 · 로컬 operator-shell 실측 · 도달 693파일). */
-const CEILING = 29;
+/** 기준선 총계. 올리지 않는다. 37(2026-09-21) → 36(09-22 알림 센터) → 34(09-22 팀별 보기) → 33(09-22 월별 상세) → 29(09-22 벤더 포털 시드) → 24(09-24 ops 시드 파일 삭제 · 로컬 operator-shell 실측 · 도달 648파일). */
+const CEILING = 24;
 
 const reachable = renderReachableSources(SRC);
 const perFile = [...reachable]

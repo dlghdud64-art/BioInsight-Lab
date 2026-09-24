@@ -17,7 +17,6 @@ import {
   calculateInboxPriority,
   sortInboxItems,
 } from './inbox-adapter';
-import type { EntityGraph } from './scenario-transition-runner';
 import {
   buildStockRiskReentryContext,
   buildExpiryReentryContext,
@@ -487,87 +486,6 @@ export function buildReadyActions(items: UnifiedInboxItem[]): ReadyAction[] {
 
 // ---------------------------------------------------------------------------
 // 18. buildRecoveryEntries
-// ---------------------------------------------------------------------------
-
-export function buildRecoveryEntries(graph: EntityGraph): RecoveryEntry[] {
-  const entries: RecoveryEntry[] = [];
-
-  // Stock risk reorder recovery
-  for (const rr of graph.reorderRecommendations) {
-    if (rr.status === 'blocked' || rr.urgency === 'urgent' || (rr.urgency as string) === 'critical') {
-      const sp = graph.stockPositions.find((p) => p.id === rr.supportingStockPositionId);
-      const ctx = buildStockRiskReentryContext(rr, sp);
-      const cmd = buildReentryCommand(ctx);
-      const urgencyLabel = URGENCY_LABELS[ctx.urgency];
-
-      entries.push({
-        entityId: rr.id,
-        sourceContext: `${SOURCE_TYPE_LABELS[ctx.sourceType]} (${urgencyLabel})`,
-        whyReentry: ctx.sourceSummary,
-        recommendedEntryPath: ENTRY_PATH_LABELS[cmd.entryPath],
-        nextOwner: ctx.urgency === 'critical' ? '구매 담당자' : undefined,
-        returnRoute: ctx.returnRoute ?? '/dashboard/stock-risk',
-        entryHref: cmd.href,
-        sourceModule: 'stock_risk',
-      });
-    }
-  }
-
-  // Expiry replacement recovery
-  for (const ea of graph.expiryActions) {
-    if (ea.status === 'completed' || ea.status === 'dismissed') continue;
-    if (ea.actionType === 'replace_order' || ea.actionType === 'dispose') {
-      const sp = graph.stockPositions.find((p) => p.inventoryItemId === ea.inventoryItemId);
-      const ctx = buildExpiryReentryContext(ea, sp);
-      const cmd = buildReentryCommand(ctx);
-      const urgencyLabel = URGENCY_LABELS[ctx.urgency];
-
-      entries.push({
-        entityId: ea.id,
-        sourceContext: `${SOURCE_TYPE_LABELS[ctx.sourceType]} (${urgencyLabel})`,
-        whyReentry: ctx.sourceSummary,
-        recommendedEntryPath: ENTRY_PATH_LABELS[cmd.entryPath],
-        nextOwner: ctx.urgency === 'critical' ? '구매 담당자' : undefined,
-        returnRoute: ctx.returnRoute ?? '/dashboard/stock-risk',
-        entryHref: cmd.href,
-        sourceModule: 'stock_risk',
-      });
-    }
-  }
-
-  // Receiving exception recovery
-  for (const rb of graph.receivingBatches) {
-    if (rb.status === 'posted' || rb.status === 'closed' || rb.status === 'cancelled') continue;
-
-    const hasIssue = rb.lineReceipts.some(
-      (l) =>
-        l.conditionStatus !== 'ok' ||
-        l.documentStatus !== 'complete' ||
-        l.lotRecords.some((lot) => lot.quarantineStatus === 'quarantined'),
-    );
-
-    if (hasIssue) {
-      const ctx = buildReceivingExceptionReentryContext(rb);
-      const cmd = buildReentryCommand(ctx);
-      const urgencyLabel = URGENCY_LABELS[ctx.urgency];
-
-      entries.push({
-        entityId: rb.id,
-        sourceContext: `${SOURCE_TYPE_LABELS[ctx.sourceType]} (${urgencyLabel})`,
-        whyReentry: ctx.sourceSummary,
-        recommendedEntryPath: ENTRY_PATH_LABELS[cmd.entryPath],
-        returnRoute: ctx.returnRoute ?? `/dashboard/receiving/${rb.id}`,
-        entryHref: cmd.href,
-        sourceModule: 'receiving',
-      });
-    }
-  }
-
-  return entries;
-}
-
-// ---------------------------------------------------------------------------
-// 19. Dashboard Group Metadata
 // ---------------------------------------------------------------------------
 
 export const DASHBOARD_GROUP_META: Record<

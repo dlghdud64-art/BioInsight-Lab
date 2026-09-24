@@ -26,7 +26,7 @@
  *   3. 같은 형태(내부 키 노출)가 블로커 문구·명령 라벨·재진입 요약·중복 사유에 남아 있다 — 커밋 4.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
@@ -93,13 +93,17 @@ describe("§inbox-seed-cutoff · 운영 작업함은 실데이터를 읽는다",
     expect(code("lib/review-queue/reorder-expiry-stock-risk-contract.ts")).toMatch(/itemDisplayName\?: string;/);
   });
 
-  it("⑥ 가상 인박스 상수·레거시 생성기 0 (역계약)", () => {
-    for (const rel of [SEED, STORE]) {
-      const src = code(rel);
-      expect(src, `${rel}: INBOX_ITEMS`).not.toMatch(/\bINBOX_ITEMS\b/);
-      expect(src, `${rel}: inboxItems`).not.toMatch(/\binboxItems\b/);
+  it("⑥ 가상 인박스 상수·시드 파일 0 (역계약 · §po-seed-cutoff 2차로 강화)", () => {
+    /* 2026-09-22 판본은 두 시드 파일을 **읽어서** INBOX_ITEMS 부재를 단언했다.
+     * 2026-09-24(§po-seed-cutoff 2차)에 시드 소비자가 0 이 되며 파일 자체가 삭제됐다 —
+     * 읽을 파일이 없으니 그 단언은 ENOENT 로 죽는다. 명제를 한 층 위로 올린다: **파일이 없다.**
+     * 파일이 돌아오면(시드 부활) 이 단언이 그 자리에서 RED 다. */
+    for (const rel of [SEED, STORE, "lib/ops-console/scenario-transition-runner.ts"]) {
+      expect(existsSync(join(SRC, rel)), `${rel}: 시드 파일 부활`).toBe(false);
     }
-    expect(code(STORE)).not.toMatch(/generateLegacyInboxItems/);
-    expect(code(SEED)).not.toMatch(/이현우|inbox-001/);
+    // 인박스 화면·훅에도 가상 인박스 흔적 0
+    for (const rel of [PAGE, "lib/notifications/use-in-app-notifications.ts"]) {
+      expect(code(rel), `${rel}: INBOX_ITEMS`).not.toMatch(/\bINBOX_ITEMS\b/);
+    }
   });
 });

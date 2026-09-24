@@ -16,6 +16,14 @@
  *   ④ 파생기는 순수함수 — nowIso 주입 · 새 truth 저장 0
  *   ⑤ 표시 번호는 발주번호다(입고안에 RCV 채번이 없다 · 데스크톱과 같은 값)
  *
+ * ── 승계 (§po-seed-cutoff 2차 · 2026-09-24) ──
+ * 시드 파일이 삭제되며 `lib/ops-console/__tests__/mobile-receiving-view-model.test.ts`(시드 빌더 단위 테스트 12건)가
+ * 검사할 구현을 잃었다. 🔑 지우기 전에 그 파일이 단언하던 명제를 여기로 옮긴다:
+ *   · blocker 전무 → ready · blockers 순서(문서 → 보류 → 검수) · 검수 줄의 dependsOnUnresolved 선행 의존
+ *   · 종결 상태(도착 전·반영 완료·취소) 목록 제외 · 정렬(차단 → 지연 → 오래된 순) · KPI = cards 동일 소스
+ * 아래 ④가 정본 축(ReceivingCaseRow)에서 같은 명제를 단언한다. 시드 축이던 항목(보류 blocker ·
+ * missingDocs 프리셋)은 입고안 계약에 그 필드가 없어 승계 대상이 아니다(자기 한계 3 참조).
+ *
  * ── 자기 한계 ──
  *   1. 발주 목록·상세는 아직 시드를 읽는다 — 커밋 2(호영님 순서). 이 파일은 안 본다.
  *   2. 옛 시드 뷰모델(mobile-receiving-view-model.ts 의 buildMobileReceivingSummary)은 **앱 소비자 0** 이 됐다.

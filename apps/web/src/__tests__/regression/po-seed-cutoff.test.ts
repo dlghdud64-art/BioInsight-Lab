@@ -21,13 +21,14 @@
  * ── 자기 한계 ──
  *   1. 실제 발주 조회는 **구현하지 않았다**(기능 개발 · 발주는 ENABLE_PURCHASING=false 로 꺼진 미완 기능 · 호영님).
  *      이 파일은 "시드를 안 읽는다" 만 본다. 실데이터가 붙으면 ②의 문구 계약을 그때 다시 판정한다.
- *   2. 🛑 시드 잔존 경로 1건 — `components/dashboard/overlay/workbench-full-overlay.tsx` 가 같은 시드 훅을 쓴다.
- *      진행 오버레이에서 「확장」 을 눌러야 도달하고, 시드 id 를 넘기던 표면(발주 목록 행)이 비었으므로
- *      실무상 시드 내용은 뜨지 않는다. 측정만 하고 별건 큐(커밋 4 계열)로 넘겼다 — 여기서 고치지 않는다.
- *   3. ops-console 시드 파일 자체는 남아 있다(quotes 상세·today-hub-strip 등 다른 소비자 확인 전).
+ *   2. (닫힘 2026-09-24 · §po-seed-cutoff 2차 → 아래 ⑥) 시드 잔존 경로였던 `workbench-full-overlay` 를 끊었다.
+ *      🛑 내가 처음 적은 사유 「시드 id 를 넘기던 표면이 비었으므로 실무상 시드 내용은 뜨지 않는다」 는
+ *         호영님이 기각했다 — 앞서 기각된 「플래그로 꺼져 있으니 괜찮다」 와 같은 모양이다.
+ *         오늘 입력이 없을 뿐 읽기 경로는 살아 있었다.
+ *   3. (닫힘 2026-09-24) ops-console 시드 파일 자체를 삭제했다 — 아래 ⑥ 참조.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
@@ -84,6 +85,28 @@ describe("§po-seed-cutoff · 발주 화면은 지어낸 발주를 그리지 않
     }
     expect(code(RECV_LIST)).toMatch(/<span className="font-mono">\{row\.displayNumber\}<\/span>/);
     expect(code(RECV_DETAIL)).toMatch(/<span className="font-mono">\{draft\.order\.orderNumber\}<\/span>/);
+  });
+
+  it("⑥ ops 시드 군집이 없다 · 오버레이도 시드를 읽지 않는다 (§po-seed-cutoff 2차)", () => {
+    /* 발주 목록·상세·발송을 끊은 뒤 `workbench-full-overlay` 가 시드 그래프의 **마지막 읽기 경로**였다.
+     * 그것까지 끊자 시드 군집(데이터·스토어·전이 러너·발송 훅·미렌더 스트립) 전체가 소비자 0 이 됐고 삭제됐다.
+     * 명제를 파일 존재 축으로 둔다 — 하나라도 돌아오면 그 자리에서 RED. */
+    for (const rel of [
+      "lib/ops-console/seed-data.ts",
+      "lib/ops-console/ops-store.tsx",
+      "lib/ops-console/scenario-transition-runner.ts",
+      "hooks/use-dispatch-workbench-data.ts",
+      "app/dashboard/_components/today-hub-strip.tsx",
+    ]) {
+      expect(existsSync(join(SRC, rel)), `${rel}: 시드 군집 부활`).toBe(false);
+    }
+    const overlay = code("components/dashboard/overlay/workbench-full-overlay.tsx");
+    expect(overlay).not.toMatch(/useDispatchWorkbenchData|useOpsStore|QuoteChainWorkbench/);
+    expect(overlay).toMatch(/발주 발송 데이터 없음/);
+    // 시드 그래프를 마운트하던 provider 도 없다
+    for (const rel of ["app/dashboard/_components/dashboard-shell.tsx", "app/contract-preview/layout.tsx"]) {
+      expect(code(rel), `${rel}: provider`).not.toMatch(/OpsStoreProvider/);
+    }
   });
 
   it("⑤ 조건부 훅 0 · 상세·발송은 훅이 아예 없고, 목록은 파생 앞에 early return 이 없다", () => {
