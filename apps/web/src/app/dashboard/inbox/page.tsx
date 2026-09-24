@@ -123,16 +123,22 @@ export default function InboxPage() {
     staleTime: 60_000,
   });
 
-  // Initialize state from URL searchParams
-  const [moduleFilter, setModuleFilter] = useState<string>(
-    searchParams.get("filter_module") || "all",
-  );
+  /* Initialize state from URL searchParams.
+   * §inbox-unconnected-filters (2026-09-24) — 지워진 필터 키가 옛 북마크·링크에 남아 있을 수 있다.
+   *   그대로 복원하면 0건 화면에 **그 필터를 끌 알약이 없는** 막다른 길이 된다 → 목록에 없으면 전체로 떨어뜨린다. */
+  const [moduleFilter, setModuleFilter] = useState<string>(() => {
+    const p = searchParams.get("filter_module");
+    return p && MODULE_FILTER_OPTIONS.some((o) => o.key === p) ? p : "all";
+  });
   const [stateFilter, setStateFilter] = useState<string>(
     searchParams.get("filter_state") || "all",
   );
-  const [ownerFilter, setOwnerFilter] = useState<OwnerFilterKey>(
-    (searchParams.get("filter_owner") as OwnerFilterKey) || "all",
-  );
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilterKey>(() => {
+    const p = searchParams.get("filter_owner");
+    return p && OWNER_FILTER_OPTIONS.some((o) => o.key === p)
+      ? (p as OwnerFilterKey)
+      : "all";
+  });
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
     new Set(),
@@ -176,7 +182,7 @@ export default function InboxPage() {
     if (ownerFilter !== "all") {
       const stateMap: Record<string, string[]> = {
         my_work: ["owned_by_me"],
-        team_work: ["owned_by_team"],
+        // §inbox-unconnected-filters (2026-09-24 · 호영님 판정) — team_work 제거.
         unassigned: ["unassigned"],
         waiting_external: ["waiting_external"],
         escalated: ["escalated", "blocked_by_role"],
@@ -361,25 +367,29 @@ export default function InboxPage() {
 
       {/* ── 필터 바 ── */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        {/* Module pills */}
-        <div className="flex items-center gap-1">
-          {MODULE_FILTER_OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => setModuleFilter(opt.key)}
-              className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
-                moduleFilter === opt.key
-                  ? "bg-blue-500/20 text-blue-400"
-                  : "bg-el text-slate-400 hover:text-slate-600",
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="w-px h-5 bg-bd mx-1 hidden md:block" />
+        {/* Module pills — §inbox-unconnected-filters: 연결된 모듈이 2개 이상일 때만 뜬다.
+            오늘은 견적 하나뿐이라 목록이 비고, 이 블록 자체가 렌더되지 않는다. */}
+        {MODULE_FILTER_OPTIONS.length > 0 && (
+          <>
+            <div className="flex items-center gap-1">
+              {MODULE_FILTER_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setModuleFilter(opt.key)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
+                    moduleFilter === opt.key
+                      ? "bg-blue-500/20 text-blue-400"
+                      : "bg-el text-slate-400 hover:text-slate-600",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div className="w-px h-5 bg-bd mx-1 hidden md:block" />
+          </>
+        )}
 
         {/* State pills */}
         <div className="flex items-center gap-1">

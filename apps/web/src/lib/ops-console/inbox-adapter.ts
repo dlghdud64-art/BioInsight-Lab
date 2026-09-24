@@ -439,13 +439,38 @@ export const TRIAGE_GROUP_META: Record<
   due_soon: { label: '기한 임박', order: 4 },
 };
 
-export const MODULE_FILTER_OPTIONS = [
-  { key: 'all', label: '전체' },
-  { key: 'quote', label: '견적' },
-  { key: 'po', label: '발주' },
-  { key: 'receiving', label: '입고' },
-  { key: 'stock_risk', label: '재고위험' },
-] as const;
+/**
+ * §inbox-unconnected-filters (2026-09-24 · 호영님 판정) — 작업함에 **실제로 연결된** 소스 모듈.
+ *
+ * 🛑 연결되지 않은 소스는 카운트·필터로 0을 보여주지 않는다. **표시 자체를 하지 않는다.**
+ *    눌러서 나온 0은 「재봤는데 없다」 로 읽히는데, 실제로는 **재본 적이 없다.**
+ *    구 목록은 po·receiving·stock_risk 알약을 띄웠고 셋 다 항상 0 이었다.
+ *
+ * 실측 2026-09-24: 이 화면의 유일한 생산자는 `lib/operational-brief/real-quote-inbox.ts` 이고
+ *   `sourceModule` 대입은 그 한 곳뿐이다(값 'quote' 고정). 시드 폴백은 §inbox-seed-cutoff 에서 끊겼다.
+ * 🔑 모듈을 새로 연결하면 그 생산자와 **같은 커밋에서** 이 목록에 추가한다
+ *    (CLAUDE.md §인프라를 만들면 같은 커밋에서 배선한다).
+ */
+export const CONNECTED_INBOX_MODULES: readonly InboxSourceModule[] = ['quote'];
+
+const INBOX_MODULE_LABELS: Record<InboxSourceModule, string> = {
+  quote: '견적',
+  po: '발주',
+  receiving: '입고',
+  stock_risk: '재고위험',
+};
+
+/**
+ * 연결 모듈이 1개뿐이면 목록을 **비운다.** 「전체 / 견적」 두 알약은 같은 집합을 내므로
+ * 눌러도 아무 일이 없는 컨트롤이다 — dead button 금지(CLAUDE.md Product Constraints).
+ */
+export const MODULE_FILTER_OPTIONS: ReadonlyArray<{ key: string; label: string }> =
+  CONNECTED_INBOX_MODULES.length > 1
+    ? [
+        { key: 'all', label: '전체' },
+        ...CONNECTED_INBOX_MODULES.map((m) => ({ key: m, label: INBOX_MODULE_LABELS[m] })),
+      ]
+    : [];
 
 export const STATE_FILTER_OPTIONS = [
   { key: 'all', label: '전체' },

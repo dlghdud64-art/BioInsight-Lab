@@ -118,9 +118,18 @@ describe("§11.162 dashboard/orders inbound rewire", () => {
     expect(tracked).toEqual([]);
   });
 
-  it("회귀 0: /dashboard/purchase-orders 페이지 보존 (PO landing canonical)", () => {
-    const tracked = gitTrackedFiles("apps/web/src/app/dashboard/purchase-orders/page.tsx");
-    expect(tracked).toContain("apps/web/src/app/dashboard/purchase-orders/page.tsx");
+  /* 🛑 은퇴 §po-ui-removed(2026-09-24 · 호영님 판정) — 「회귀 0: /dashboard/purchase-orders 페이지 보존」.
+   *    세 번째 뒤집힌 명제다(앞의 둘: 사이드바 NavItem 보존 · more-sheet 발주 라우트 보존).
+   *    그 화면을 보존하라는 전제가 철회됐고, 이제 **git tree 에 없어야** 한다.
+   *    반대 명제는 regression/po-ui-removed.test.ts ① 이 파일시스템 축으로 든다.
+   *
+   * ⚠️ 이 단언은 **커밋 전 게이트에 안 보였다.** `git ls-tree` 는 워킹트리가 아니라 **HEAD** 를 읽는다 —
+   *    `git rm` 으로 스테이징만 된 상태에서는 HEAD 에 파일이 그대로 있어 GREEN 이었고,
+   *    커밋이 HEAD 를 옮긴 **뒤에야** RED 가 됐다. 파일 삭제를 게이트로 재려면
+   *    파일시스템 축(existsSync)과 git 축을 **둘 다** 봐야 한다. */
+  it("회귀 0: git tree 축도 발주 landing 이 사라진 것을 본다", () => {
+    const tracked = gitTrackedFiles("apps/web/src/app/dashboard/purchase-orders");
+    expect(tracked).toEqual([]);
   });
 });
 

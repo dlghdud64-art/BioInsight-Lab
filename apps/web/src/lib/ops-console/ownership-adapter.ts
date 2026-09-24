@@ -408,10 +408,15 @@ export const SLA_STATE_TONES: Record<SlaState, string> = {
 // 11. Inbox Owner Filter Options
 // ---------------------------------------------------------------------------
 
+/**
+ * 🛑 §inbox-unconnected-filters (2026-09-24 · 호영님 판정) — 「팀 작업」 제거.
+ *    호영님 근거는 「prod 팀 0개」 였는데, 실측해 보니 **그보다 강하다**:
+ *    `buildInboxItemOwnership`(이 파일 아래)에 `owned_by_team` 을 내는 분기가 **아예 없다.**
+ *    팀이 몇 개든 이 필터는 항상 0 이다. 팀 소유 배선이 생기면 그 커밋에서 같이 되살린다.
+ */
 export const OWNER_FILTER_OPTIONS = [
   { key: 'all', label: '전체' },
   { key: 'my_work', label: '내 작업' },
-  { key: 'team_work', label: '팀 작업' },
   { key: 'unassigned', label: '미할당' },
   { key: 'waiting_external', label: '외부 대기' },
   { key: 'escalated', label: '에스컬레이션' },
@@ -427,7 +432,7 @@ export function filterByOwnerState(
   if (filter === 'all') return items;
   const stateMap: Record<string, AssignmentState[]> = {
     my_work: ['owned_by_me'],
-    team_work: ['owned_by_team'],
+    // §inbox-unconnected-filters — team_work 제거(위 OWNER_FILTER_OPTIONS 주석 참조).
     unassigned: ['unassigned'],
     waiting_external: ['waiting_external'],
     escalated: ['escalated', 'blocked_by_role'],
