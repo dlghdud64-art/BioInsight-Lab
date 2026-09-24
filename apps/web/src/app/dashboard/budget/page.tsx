@@ -653,9 +653,10 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
           <Button onClick={onCreateClick} className="bg-blue-600 hover:bg-blue-500 text-white">
             <Plus className="h-4 w-4 mr-1.5" />첫 예산 풀 만들기
           </Button>
-          <Link href="/dashboard/purchases">
+          {/* §purchases-ui-removed (2026-09-24 · 호영님 판정) — 구매 운영 화면 삭제. 예산을 연결할 요청은 견적에서 출발한다. */}
+          <Link href="/dashboard/quotes">
             <Button variant="outline" className="w-full sm:w-auto border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white">
-              기존 요청과 연결
+              기존 견적과 연결
             </Button>
           </Link>
         </div>
@@ -696,9 +697,10 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
               <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center">3</span>
               <h4 className="text-sm font-semibold text-slate-900">구매 흐름 연결</h4>
             </div>
-            <p className="text-[12px] text-slate-500 leading-relaxed mb-3">요청·견적·발주에 예산을 연결하면 자동 통제가 켜집니다.</p>
-            <Link href="/dashboard/purchases" className="inline-flex items-center gap-1 text-[12px] font-medium text-blue-600 hover:text-blue-700">
-              요청 연결하기 <ArrowUpRight className="h-3.5 w-3.5" />
+            {/* §purchases-ui-removed (2026-09-24 · 호영님 판정) — 발주는 제품에 없다. 문구에서도 뺀다. */}
+            <p className="text-[12px] text-slate-500 leading-relaxed mb-3">견적과 입고에 예산을 연결하면 자동 통제가 켜집니다.</p>
+            <Link href="/dashboard/quotes" className="inline-flex items-center gap-1 text-[12px] font-medium text-blue-600 hover:text-blue-700">
+              견적 연결하기 <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>

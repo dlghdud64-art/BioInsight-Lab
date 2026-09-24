@@ -94,7 +94,8 @@ export function QueueDetailPanel({
       // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 삭제. ORDER 는 입고에서 추적한다.
       ORDER: "/dashboard/receiving",
       INVENTORY_RESTOCK: "/dashboard/inventory",
-      PURCHASE_REQUEST: "/dashboard/purchases",
+      // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 결재 요청의 출발점인 견적으로.
+      PURCHASE_REQUEST: "/dashboard/quotes",
       COMPARE_SESSION: "/dashboard/compare",
     };
     const basePath = pathMap[relatedEntityType];

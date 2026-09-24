@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 // §11.298b Radix DropdownMenu* import 제거 — §11.295 프로필 패턴 정합
 // plain button + useState + 조건부 backdrop + role="menu".
-import { User, LogOut, Settings, CreditCard, HelpCircle, LayoutDashboard, ClipboardList, ShoppingCart, Package } from "lucide-react";
+import { User, LogOut, Settings, CreditCard, HelpCircle, LayoutDashboard, ClipboardList, Package } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { USER_ROLES } from "@/lib/constants";
@@ -85,10 +85,6 @@ export function UserMenu() {
             <Link href="/dashboard/quotes" role="menuitem" onClick={() => setIsUserMenuOpen(false)} className="flex items-center px-3 py-2 text-sm hover:bg-slate-100">
               <ClipboardList className="mr-2 h-4 w-4" />
               견적 관리
-            </Link>
-            <Link href="/dashboard/purchases" role="menuitem" onClick={() => setIsUserMenuOpen(false)} className="flex items-center px-3 py-2 text-sm hover:bg-slate-100">
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              구매 운영
             </Link>
             <Link href="/dashboard/inventory" role="menuitem" onClick={() => setIsUserMenuOpen(false)} className="flex items-center px-3 py-2 text-sm hover:bg-slate-100">
               <Package className="mr-2 h-4 w-4" />

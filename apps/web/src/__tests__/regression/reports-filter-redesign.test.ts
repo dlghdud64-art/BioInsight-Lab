@@ -69,7 +69,8 @@ describe("#reports-filter-redesign — 무접촉 보존(데이터·쿼리·딥�
     const s = read(PAGE);
     expect(s).toContain("카테고리 검토 →");
     expect(s).toContain("벤더 비교 →");
-    expect(s).toContain("구매내역 필터 →");
+    // 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 목적지가 구매 운영 → 월별 지출 추이로 바뀌며 라벨도 따라갔다.
+    expect(s).toContain("월별 추이 →");
   });
   it("실데이터 파생 보존(하드코딩 0)", () => {
     expect(read(PAGE)).toContain("reportData?.metrics");

@@ -33,14 +33,14 @@ describe("§sidebar-navy — 네이비 테마(§sidebar-navy-top: --sidebar-navy
 });
 
 describe("§sidebar-purchasing-gate — 발주 관리 게이팅", () => {
-  it("ENABLE_PURCHASING off 시 발주 관리 렌더 필터(getFlag + purchase-orders 제외)", () => {
-    // 승계(2026-09-02): 필터가 단일 href 비교 → 목록 포함 검사로 형태 변경(구매 운영 동반 게이팅).
-    //   의도(플래그 off 면 발주 관리가 렌더 목록에서 빠진다)는 불변이므로 그 의도를 다시 잠근다.
-    // 승계 2 (2026-09-24 · §po-ui-removed): 발주 관리 메뉴는 **숨김이 아니라 삭제**됐다.
-    //   플래그 게이팅 자체는 구매 운영(/dashboard/purchases)에 그대로 남으므로 명제는 산다.
-    expect(SRC).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
-    expect(SRC).toMatch(/PURCHASING_HIDDEN_HREFS = \[[^\]]*"\/dashboard\/purchases"/);
-    expect(SRC).toMatch(/purchasingOn \|\| !PURCHASING_HIDDEN_HREFS\.includes\(it\.href\)/);
+  it("purchasing 게이팅이 사이드바에서 사라졌다 (숨길 대상 0)", () => {
+    /* 🔁 승계 3 (2026-09-24 · §purchases-ui-removed (2026-09-24 · 호영님 판정)) — 게이트가 숨기던 두 항목이 **둘 다 삭제**됐다.
+     *   2026-09-02 에 이 게이트를 세운 근거("진입해도 할 일이 없는 표면")가 이번에
+     *   "표면이 없다" 로 바뀌었다. 아무것도 거르지 않는 필터는 남기지 않는다.
+     *   살아 있는 명제는 「사이드바에 구매 운영·발주 항목이 없다」 이고
+     *   §purchases-ui-removed ③ · §po-ui-removed ③ 이 각각 든다. */
+    expect(SRC).not.toMatch(/PURCHASING_HIDDEN_HREFS/);
+    expect(SRC).not.toMatch(/\/dashboard\/purchases/);
     expect(SRC).toMatch(/visibleGroups/);
   });
   /* 🛑 은퇴 (2026-09-24 · §po-ui-removed) — 「회귀 0: 발주 관리 NavItem 정의 보존(rollback)」.

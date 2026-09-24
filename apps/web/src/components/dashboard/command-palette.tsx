@@ -175,7 +175,6 @@ export function CommandPalette() {
     const pages = [
       { label: "대시보드", href: "/dashboard", keywords: ["대시보드", "홈", "dashboard"] },
       { label: "지출 분석", href: "/dashboard/analytics", keywords: ["지출", "분석", "예산", "analytics", "통제"] },
-      { label: "구매 운영", href: "/dashboard/purchases", keywords: ["구매", "발주", "승인", "purchase", "주문"] },
       { label: "견적 관리", href: "/dashboard/quotes", keywords: ["견적", "비교", "quote"] },
       { label: "재고 관리", href: "/dashboard/inventory", keywords: ["재고", "stock", "inventory", "수량"] },
       { label: "예산 관리", href: "/dashboard/budget", keywords: ["예산", "budget", "소진"] },
@@ -241,14 +240,17 @@ export function CommandPalette() {
             selectedEntityType: "purchase_order",
           });
         } else {
+          /* §purchases-ui-removed (2026-09-24 · 호영님 판정) — 목적지였던 구매 운영 화면이 삭제됐다.
+           *   결재(APPROVE/REJECT)의 출발점은 견적이고, 발송(DISPATCH_NOW)의 진행은 입고에서 보인다.
+           *   fallback 은 대시보드 — 갈 곳을 모를 때 없는 화면으로 보내지 않는다. */
           const actionRouteMap: Record<string, string> = {
-            APPROVE: "/dashboard/purchases",
-            REJECT: "/dashboard/purchases",
-            DISPATCH_NOW: "/dashboard/purchases",
+            APPROVE: "/dashboard/quotes",
+            REJECT: "/dashboard/quotes",
+            DISPATCH_NOW: "/dashboard/receiving",
             RECEIVE_ORDER: "/dashboard/inventory",
             TRIGGER_REORDER: "/dashboard/inventory?filter=low",
           };
-          const href = actionRouteMap[primary?.actionType] ?? "/dashboard/purchases";
+          const href = actionRouteMap[primary?.actionType] ?? "/dashboard";
           setOpen(false);
           router.push(href);
         }
@@ -414,7 +416,6 @@ export function CommandPalette() {
                   </div>
                   {[
                     { label: "견적 관리", href: "/dashboard/quotes" },
-                    { label: "구매 운영", href: "/dashboard/purchases" },
                     { label: "예산 현황", href: "/dashboard/analytics" },
                     { label: "재고 부족 품목", href: "/dashboard/inventory?filter=low" },
                   ].map((link) => (

@@ -6,27 +6,22 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
-  ShoppingCart,
   Truck,
   Package,
   MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getFlag } from "@/lib/feature-flags";
 import { useInventoryAlertCount } from "@/hooks/use-inventory-alert-count";
 import { BottomNavMoreSheet } from "./bottom-nav-more-sheet";
 
 const tabs = [
   { label: "대시보드", href: "/dashboard", icon: LayoutDashboard, exact: true },
   { label: "견적", href: "/dashboard/quotes", icon: FileText, exact: false },
-  { label: "구매", href: "/dashboard/purchases", icon: ShoppingCart, exact: false },
+  // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 구매 운영 화면 삭제. 플래그로 스왑하던 자리를 입고로 **고정**한다.
+  { label: "입고", href: "/dashboard/receiving", icon: Truck, exact: false },
   { label: "재고", href: "/dashboard/inventory", icon: Package, exact: false },
 ] as const;
 
-// §purchasing-hide — 발주/구매 off 시 "구매" 탭 자리를 "입고"로 교체(호영님 b안).
-//   nav 4탭 균형 유지 + 단순화 파이프라인(견적→입고→재고)과 정합. 라우트 /dashboard/receiving 실재.
-//   tabs const 는 보존(소스 문자열 유지 = sentinel GREEN), 렌더 목록만 스왑.
-const RECEIVING_TAB = { label: "입고", href: "/dashboard/receiving", icon: Truck, exact: false } as const;
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -36,11 +31,8 @@ export function BottomNav() {
   // 라우트) 만 경유 — seed/ops-store·heavy stats fetch 금지(F8). 로딩·에러 = null = 미렌더.
   const { count } = useInventoryAlertCount();
 
-  // §purchasing-hide — purchasing off 면 "구매"(/dashboard/purchases) 탭을 입고로 스왑.
-  const purchasingOn = getFlag("ENABLE_PURCHASING");
-  const visibleTabs = purchasingOn
-    ? tabs
-    : tabs.map((t) => (t.href === "/dashboard/purchases" ? RECEIVING_TAB : t));
+  // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 스왑 분기 제거. 탭 목록이 곧 렌더 목록이다.
+  const visibleTabs = tabs;
 
   const isActive = (href: string, exact: boolean) => {
     if (exact) return pathname === href;

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera, Menu, LayoutDashboard, ShoppingCart, Settings, ChevronDown, QrCode } from "lucide-react";
+import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera, Menu, LayoutDashboard, Settings, ChevronDown, QrCode } from "lucide-react";
 // §11.254b 햄버거 메뉴는 §11.283b 에서 plain button + useState 으로 swap.
 // §11.298f Radix DropdownMenu import dead — application-wide grep 0 회복.
 import Link from "next/link";
@@ -3562,15 +3562,6 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
                   >
                     <FileText className="h-4 w-4 text-slate-500" />
                     <span>견적 관리</span>
-                  </Link>
-                  <Link
-                    href="/dashboard/purchases"
-                    role="menuitem"
-                    onClick={() => setHamburgerOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
-                  >
-                    <ShoppingCart className="h-4 w-4 text-slate-500" />
-                    <span>구매 운영</span>
                   </Link>
                   <Link
                     href="/dashboard/inventory"

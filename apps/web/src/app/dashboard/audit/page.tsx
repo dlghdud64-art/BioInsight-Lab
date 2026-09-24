@@ -248,7 +248,8 @@ function activityDeepLink(
       // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 삭제. 주문의 진행 상태는 입고에서 추적한다.
       return "/dashboard/receiving";
     case "PURCHASE_REQUEST":
-      return "/dashboard/purchases";
+      // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 구매 운영 화면 삭제. 결재 요청의 출발점은 견적이다.
+      return "/dashboard/quotes";
     case "INVENTORY":
       return "/dashboard/inventory";
     case "VENDOR":

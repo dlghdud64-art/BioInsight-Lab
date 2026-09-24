@@ -29,11 +29,8 @@ function read(rel: string): string {
 }
 
 describe("§11.333 Part A — 운영 화면 wide 정책 정합", () => {
-  it("purchases/page.tsx max-w-7xl 제거 → max-w-full (운영 화면 wide)", () => {
-    const src = read("src/app/dashboard/purchases/page.tsx");
-    expect(src).not.toMatch(/<div className="max-w-7xl mx-auto space-y-4">/);
-    expect(src).toMatch(/<div className="max-w-full mx-auto space-y-4">/);
-  });
+  /* 🛑 은퇴 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 「purchases/page.tsx wide 정책」. 잴 표면이 삭제됐다.
+   *    운영 화면 wide 정책 자체는 아래 safety 등 남은 표면이 계속 든다. */
 
   it("safety/page.tsx max-w-7xl 제거 → max-w-full", () => {
     const src = read("src/app/dashboard/safety/page.tsx");

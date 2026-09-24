@@ -76,22 +76,17 @@ describe("§quote-approval-team · 견적→결재가 팀 귀속을 채운다", 
     expect(src.indexOf("TEAM_ORG_MISMATCH")).not.toBe(src.indexOf("TEAM_FORBIDDEN"));
   });
 
-  it("③ UI 가 팀 선택을 노출한다 · 하나여도 숨기지 않는다", () => {
-    const src = code(UI);
-    expect(src).toMatch(/queryKey: \["my-teams"\]/);
-    expect(src).toMatch(/팀 귀속/);
-    expect(src).toMatch(/setApprovalTeamId\(e\.target\.value\)/);
-    // 하나면 기본 선택 — 그러나 렌더 조건은 length > 0 이다(1개일 때 숨기는 형태면 RED)
-    expect(src).toMatch(/myTeams\.length === 1 && approvalTeamId === "" \) ?\s*setApprovalTeamId|myTeams\.length === 1/);
-    expect(src).toMatch(/myTeams\.length > 0 \?/);
-    expect(src).not.toMatch(/myTeams\.length > 1 \?/);
-    // 전달도 명시적이다
-    expect(src).toMatch(/JSON\.stringify\(approvalTeamId \? \{ teamId: approvalTeamId \} : \{\}\)/);
-  });
-
-  it("④ 팀이 없으면 그 사실을 말한다", () => {
-    const src = code(UI);
-    expect(src).toMatch(/소속된 팀이 없어 조직으로만 귀속됩니다/);
-    expect(src).toMatch(/팀 없음\(조직으로만 귀속\)/);
-  });
+  /* 🛑 은퇴 §purchases-ui-removed (2026-09-24 · 호영님 판정) — ③④(UI 축). 사유 = **진입점 이전 예정**(소멸 아님 · 호영님 ① 판정).
+   *
+   *    이 UI 는 삭제된 구매 운영 화면에 있었다. 그 화면이 `request-approval` 의 유일한 호출자였으므로
+   *    삭제로 결재 요청 생성 경로가 0 이 된다. 호영님 판정: **결재는 버리지 않는다** —
+   *    CTA 를 견적 상세로 옮기고 teamId 지시를 거기서 구현한다.
+   *
+   *    명제 원문(옮길 때 그대로 다시 든다):
+   *      ③ 팀 선택을 노출한다 · 소속 팀이 하나여도 숨기지 않는다(myTeams.length > 0 렌더 ·
+   *        1개면 기본 선택) · 전달은 명시적이다(teamId 있을 때만 본문에 넣는다)
+   *      ④ 팀이 없으면 그 사실을 말한다(「소속된 팀이 없어 조직으로만 귀속됩니다」)
+   *
+   *    🔑 ①②(서버 검증)는 **유지**한다 — `request-approval` 라우트는 살아 있고,
+   *       새 CTA 의 teamId 검증 기반이 그대로 그것이다(호영님 ④ 판정). */
 });

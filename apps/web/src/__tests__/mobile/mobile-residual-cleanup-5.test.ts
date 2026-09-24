@@ -54,7 +54,9 @@ describe("1a — 재고 ⋮ 더보기 = 바텀 시트 (모바일 드롭다운 0)
     expect(src).not.toMatch(/menuId="inv-content-utility-mobile"/);
     expect(src).toMatch(/MobileActionSheet/);
     expect(src).toMatch(/title="재고 작업"/);
-    expect(src).toMatch(/발주 완료 건을 재고로 가져오기/);
+    // 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 「구매 반영 · 발주 완료 건을」 → 「입고 반영 · 입고된 건을」.
+    //   목적지였던 구매 운영이 삭제됐고, 발주도 제품에 없다.
+    expect(src).toMatch(/입고된 건을 재고로 가져오기/);
     expect(src).toMatch(/엑셀·CSV 일괄 등록/);
     expect(src).toMatch(/Lot 조회 · 입출고 처리/);
     expect(src).toMatch(/Lot QR 라벨 출력/);

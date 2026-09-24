@@ -107,10 +107,11 @@ describe("§11.258b — invariant 보존", () => {
     expect(code).toMatch(/href=["']\/app\/search["']/);
   });
 
-  it("§11.254b 햄버거 5 entry 보존 (대시보드 / 견적 / 구매 / 재고 / 설정)", () => {
+  it("§11.254b 햄버거 entry 보존 (대시보드 / 견적 / 재고 / 설정)", () => {
+    /* 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 「구매 운영」 항목이 삭제됐다. **항목 수**는 명제가 아니다. */
     expect(code).toMatch(/href=["']\/dashboard["']/);
     expect(code).toMatch(/href=["']\/dashboard\/quotes["']/);
-    expect(code).toMatch(/href=["']\/dashboard\/purchases["']/);
+    expect(code).not.toMatch(/href=["']\/dashboard\/purchases["']/);
     expect(code).toMatch(/href=["']\/dashboard\/inventory["']/);
     expect(code).toMatch(/href=["']\/dashboard\/settings["']/);
   });

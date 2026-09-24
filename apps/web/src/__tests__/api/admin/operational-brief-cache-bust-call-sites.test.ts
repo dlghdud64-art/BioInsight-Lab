@@ -12,11 +12,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const SURFACES = [
-  {
-    label: "purchases (bulkPo + rationale + selectReply)",
-    path: "../../../app/dashboard/purchases/page.tsx",
-    moduleKey: "purchase_conversion",
-  },
+  // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases (bulkPo + rationale + selectReply) — 표면 삭제. 나머지 surface 의 명제는 무손상.
   {
     label: "work-queue console (executeOps)",
     path: "../../../components/dashboard/work-queue-console.tsx",

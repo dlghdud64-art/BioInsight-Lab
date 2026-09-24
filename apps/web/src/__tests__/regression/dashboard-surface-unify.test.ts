@@ -11,7 +11,7 @@ const rd = (p: string) => readFileSync(join(R, p), "utf8");
 
 const WORK_PAGES = [
   "app/dashboard/quotes/page.tsx",
-  "app/dashboard/purchases/page.tsx",
+  // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases — 표면 삭제. 나머지 작업 페이지의 명제는 무손상.
   "app/dashboard/budget/page.tsx",
   "app/dashboard/organizations/page.tsx",
   "app/dashboard/safety/page.tsx",

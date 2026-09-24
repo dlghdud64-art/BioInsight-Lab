@@ -9,7 +9,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  ClipboardList,
   Package,
   AlertTriangle,
   Settings,
@@ -24,11 +23,11 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getFlag } from "@/lib/feature-flags";
 
-// §purchasing-hide — 발주/구매 off 시 더보기 시트에서 숨길 발주 진입점(소스 보존, 렌더 필터).
-// §po-ui-removed (2026-09-24 · 호영님 판정) — /dashboard/purchase-orders 라우트 삭제로 목록에서 제거.
-const PURCHASING_HREFS = ["/dashboard/orders", "/dashboard/purchases"];
+/* §purchases-ui-removed (2026-09-24 · 호영님 판정) — purchasing 숨김 목록 제거.
+ *   숨기던 진입점이 전부 사라졌다: /dashboard/purchase-orders(§po-ui-removed 삭제) ·
+ *   /dashboard/purchases(이번 삭제) · /dashboard/orders(§11.162 에서 이미 라우트가 없었다 —
+ *   플래그를 켜면 404 로 가는 항목이었다). 거를 대상이 0 인 필터는 남기지 않는다. */
 
 interface MoreSheetProps {
   open: boolean;
@@ -54,7 +53,6 @@ const menuGroups: { title: string; items: MoreMenuItem[] }[] = [
   {
     title: "운영",
     items: [
-      { label: "발주 전환 큐", href: "/dashboard/orders", icon: ClipboardList },
       { label: "입고", href: "/dashboard/receiving", icon: Package },
       { label: "재고 위험", href: "/dashboard/inventory?filter=low", icon: AlertTriangle },
     ],
@@ -92,9 +90,6 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
   const userRole = (session?.user?.role as string) || "";
   const isAdminOrOwner = userRole === "ADMIN" || userRole === "OWNER";
 
-  // §purchasing-hide — 발주/구매 off 시 발주 진입점 렌더 제외(menuGroups const 는 보존).
-  const purchasingOn = getFlag("ENABLE_PURCHASING");
-  const itemVisible = (item: MoreMenuItem) => purchasingOn || !PURCHASING_HREFS.includes(item.href);
 
   const handleNav = (href: string) => {
     onOpenChange(false);
@@ -164,7 +159,8 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
 
         <div className="space-y-4 mt-2">
           {menuGroups.map((group) => {
-            const items = group.items.filter(itemVisible);
+            // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 거를 대상이 0 이라 필터를 뺐다.
+            const items = group.items;
             if (items.length === 0) return null;
             return (
               <div key={group.title}>

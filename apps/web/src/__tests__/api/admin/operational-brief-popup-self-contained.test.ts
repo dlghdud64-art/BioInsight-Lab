@@ -186,7 +186,7 @@ describe("§11.181 7 surface FAB onClick prop 제거", () => {
     // FAB drop 자연스러운 결과 (redirect-only page 17 lines).
     // 제거 2026-09-18 §main-dashboard-p0-honesty: { name: "dashboard", path: "src/app/dashboard/page.tsx" }
     //   사유 = 핸드오프 §0-4 대시보드 FAB 제거. 나머지 surface 는 무손상.
-    { name: "purchases", path: "src/app/dashboard/purchases/page.tsx" },
+    // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases — 표면 삭제.
     { name: "quotes", path: "src/app/dashboard/quotes/page.tsx" },
     { name: "inventory-content", path: "src/app/dashboard/inventory/inventory-content.tsx" },
     { name: "work-queue-console", path: "src/components/dashboard/work-queue-console.tsx" },

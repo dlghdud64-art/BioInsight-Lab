@@ -48,33 +48,11 @@ describe("§11.209b Phase 3 옵션 B — purchases 헤더 카피 Tier 분기", (
     });
   });
 
-  describe("page — Tier 분기 헤더 카피", () => {
-    it("resolveApprovalPolicyForPlan import (single source)", () => {
-      const src = read(PURCHASES);
-      expect(src).toMatch(/resolveApprovalPolicyForPlan[\s\S]*from\s+["']@\/lib\/billing\/plan-descriptor["']|import[\s\S]*resolveApprovalPolicyForPlan[\s\S]*plan-descriptor/);
-    });
-
-    it("workspacePlan 기반 approvalPolicy 결정 (resolveApprovalPolicyForPlan 호출)", () => {
-      const src = read(PURCHASES);
-      expect(src).toMatch(/resolveApprovalPolicyForPlan\s*\(/);
-    });
-
-    it("Lab Team 카피 ('none') — 결재 약속 제거", () => {
-      const src = read(PURCHASES);
-      // Lab Team 카피 — 결재 라인 약속 제거된 단순 카피
-      expect(src).toMatch(/회신 받은 견적을 비교하고 발주로 전환하세요\.(?!\s*결재)/);
-    });
-
-    it("R&D Operations / Enterprise 카피 ('in_app_approval') — 기존 약속 유지", () => {
-      const src = read(PURCHASES);
-      // 결재 라인 약속 카피 잔존 (in_app_approval branch)
-      expect(src).toMatch(/결재가 필요한 항목은 자동으로 결재 라인에 올라갑니다/);
-    });
-
-    it("§11.209b Phase 3 코멘트 명시", () => {
-      const src = read(PURCHASES);
-      // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
-      expect(src).toMatch(/§11\.209b\s+Phase\s+3|§11\.209b/);
-    });
-  });
+  /* 🛑 은퇴 §purchases-ui-removed (2026-09-24 · 호영님 판정) — describe("page — Tier 분기 헤더 카피") 5건.
+   *    잴 화면(app/dashboard/purchases/page.tsx)이 삭제됐다.
+   *    🔑 **API 축(위 describe)은 살아 있다** — /api/work-queue/purchase-conversion 이 workspacePlan 을
+   *       내려주는 계약은 그대로다. 그 위에 얹힌 **헤더 카피**만 갈 곳이 없어졌다.
+   *    명제 원문: 플랜별 결재 약속 카피를 resolveApprovalPolicyForPlan 단일 소스로 분기하고,
+   *      결재가 없는 플랜(none)에는 결재 라인을 약속하지 않는다.
+   *      → 이 명제는 **결재 CTA 를 견적 상세로 옮길 때 그쪽에서 다시 든다**(호영님 ① 판정). */
 });

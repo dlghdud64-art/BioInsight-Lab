@@ -134,14 +134,13 @@ describe("§receiving-list-redesign · 빈 상태 CTA (2026-09-02 호영님)", (
     expect(src).toMatch(/처리 중인 입고가 없습니다[\s\S]{0,500}?openModal\("scan_hub"\)/);
   });
 
-  it("사이드바 · 구매 운영은 purchasing 게이트 아래 (정의는 보존)", () => {
+  it("사이드바에 구매 운영·발주 진입점이 없다", () => {
+    /* 🔁 승계 2 (2026-09-24 · §purchases-ui-removed (2026-09-24 · 호영님 판정)) — 「게이트 아래에 있다」 에서 「없다」 로.
+     *   이 파일의 맥락(입고 빈 상태 CTA)에서 중요한 것은 **입고가 그 자리를 대신한다**는 것이다. */
     const src = stripComments(read(SIDEBAR));
-    /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 발주 관리는 **숨김이 아니라 삭제**됐다.
-     *   게이트 자체는 구매 운영(/dashboard/purchases)에 그대로 남으므로 명제는 산다.
-     *   발주 항목의 부재는 §po-ui-removed ③ 이 든다. */
-    expect(src).toMatch(/href: "\/dashboard\/purchases"/);
-    expect(src).toMatch(/PURCHASING_HIDDEN_HREFS = \["\/dashboard\/purchases"\]/);
-    expect(src).toMatch(/purchasingOn \|\| !PURCHASING_HIDDEN_HREFS\.includes\(it\.href\)/);
+    expect(src).not.toMatch(/\/dashboard\/purchases/);
+    expect(src).not.toMatch(/\/dashboard\/purchase-orders/);
+    expect(src).toMatch(/href: "\/dashboard\/receiving"/);
   });
 });
 

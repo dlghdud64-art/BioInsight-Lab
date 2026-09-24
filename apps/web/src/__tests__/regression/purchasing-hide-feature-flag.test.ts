@@ -15,6 +15,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 function read(rel: string): string {
@@ -31,17 +32,24 @@ describe("§purchasing-hide — flag 정의", () => {
 });
 
 describe("§purchasing-hide — 게이트 강제(A)", () => {
-  it("bottom-nav — 구매 탭을 입고로 스왑(ENABLE_PURCHASING 분기)", () => {
+  it("bottom-nav · 구매 탭 자리가 입고로 **고정**됐다(스왑 분기 없음)", () => {
+    /* 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 구매 운영 화면이 삭제돼 스왑할 대상이 없다.
+     *   명제(모바일 4탭의 그 자리가 입고로 간다)는 불변이고, **플래그 분기**가 사라졌다. */
     const src = read("src/components/layout/bottom-nav.tsx");
-    expect(src).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
-    expect(src).toMatch(/RECEIVING_TAB/);
-    expect(src).toMatch(/\/dashboard\/receiving/);
+    expect(src).toMatch(/label: "입고", href: "\/dashboard\/receiving"/);
+    expect(src).not.toMatch(/RECEIVING_TAB/);
+    expect(src).not.toMatch(/ENABLE_PURCHASING/);
   });
 
-  it("bottom-nav-more-sheet — 발주 진입점 렌더 필터", () => {
-    const src = read("src/components/layout/bottom-nav-more-sheet.tsx");
-    expect(src).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
-    expect(src).toMatch(/PURCHASING_HREFS/);
+  it("bottom-nav-more-sheet · 발주 진입점이 목록에서 사라졌다(필터가 아니라 부재)", () => {
+    /* 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 숨기던 3개가 전부 없어졌다:
+     *   purchase-orders(§po-ui-removed 삭제) · purchases(이번 삭제) ·
+     *   orders(§11.162 에서 이미 라우트가 없었다 — 플래그를 켜면 404 였다). */
+    // · 부정 단언은 **주석 제거본**에 건다(CLAUDE.md) — 삭제 사유 주석에 경로가 적혀 있다.
+    const src = stripComments(read("src/components/layout/bottom-nav-more-sheet.tsx"));
+    expect(src).not.toMatch(/PURCHASING_HREFS/);
+    expect(src).not.toMatch(/\/dashboard\/purchases/);
+    expect(src).not.toMatch(/\/dashboard\/orders/);
   });
 
   it("pipeline — 발주(po) stage 렌더 필터", () => {
@@ -64,11 +72,10 @@ describe("§purchasing-hide — 게이트 강제(A)", () => {
 });
 
 describe("§purchasing-hide — 회귀 0(삭제 아님, 소스/라우트 보존)(B)", () => {
-  it("bottom-nav — 구매 탭 정의 보존", () => {
-    const src = read("src/components/layout/bottom-nav.tsx");
-    expect(src).toMatch(/label: "구매"/);
-    expect(src).toMatch(/\/dashboard\/purchases/);
-  });
+  /* 🛑 은퇴 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 「bottom-nav 구매 탭 정의 보존」.
+   *    네 번째 뒤집힌 명제다(사이드바 NavItem · more-sheet 라우트 · 발주 landing · 이번).
+   *    「숨김이지 삭제가 아니다」 라는 이 파일의 전제가 구매 운영에서도 철회됐다.
+   *    이제 없어야 한다 — 반대 명제는 §purchases-ui-removed ③ 이 든다. */
 
   it("pipeline · 발주 stage 객체 보존(목적지는 입고)", () => {
     /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 이 파일의 전제는 「숨김이지 삭제가 아니다」 였다.

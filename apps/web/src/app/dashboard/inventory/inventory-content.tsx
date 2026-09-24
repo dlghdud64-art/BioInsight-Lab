@@ -1664,7 +1664,7 @@ function InventoryPageContent() {
                 onClose={() => setInvMobileSheetOpen(false)}
                 title="재고 작업"
                 items={[
-                  { label: "구매 반영", description: "발주 완료 건을 재고로 가져오기", accent: true, icon: <PackagePlus />, onClick: () => router.push("/dashboard/purchases") },
+                  { label: "입고 반영", description: "입고된 건을 재고로 가져오기", accent: true, icon: <PackagePlus />, onClick: () => router.push("/dashboard/receiving") },
                   { label: "재고 파일 가져오기", description: "엑셀·CSV 일괄 등록", icon: <Upload />, onClick: () => setIsImportStagingOpen(true) },
                   { label: "QR 스캔", description: "Lot 조회 · 입출고 처리", icon: <QrCode />, onClick: () => router.push("/dashboard/inventory/scan") },
                   { label: "라벨 인쇄", description: "Lot QR 라벨 출력", icon: <Printer />, onClick: () => handleBulkLabelPrint() },
@@ -1811,7 +1811,7 @@ function InventoryPageContent() {
                 onOpenChange={setOpenInvContentMenuId}
                 width="w-52"
                 items={[
-                  { label: "구매 반영", icon: <PackagePlus className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/purchases") },
+                  { label: "입고 반영", icon: <PackagePlus className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/receiving") },
                   { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportStagingOpen(true) },
                   { label: "QR 스캔", icon: <QrCode className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/inventory/scan") },
                   { label: "라벨 데이터 내보내기 (엑셀)", icon: <FileDown className="h-3.5 w-3.5" />, separator: true, onClick: async () => {

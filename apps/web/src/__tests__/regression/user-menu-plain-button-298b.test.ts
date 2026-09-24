@@ -37,7 +37,8 @@ describe("§11.298b — user-menu plain button", () => {
     expect(SRC).toMatch(/role="menu"/);
     expect(SRC).toMatch(/href="\/dashboard"[\s\S]{0,300}대시보드/);
     expect(SRC).toMatch(/href="\/dashboard\/quotes"[\s\S]{0,300}견적 관리/);
-    expect(SRC).toMatch(/href="\/dashboard\/purchases"[\s\S]{0,300}구매 운영/);
+    // 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 「구매 운영」 항목 삭제.
+    expect(SRC).not.toMatch(/href="\/dashboard\/purchases"/);
     expect(SRC).toMatch(/href="\/dashboard\/inventory"[\s\S]{0,300}재고 관리/);
     expect(SRC).toMatch(/href="\/dashboard\/settings"[\s\S]{0,300}설정/);
     expect(SRC).toMatch(/href="\/dashboard\/settings\?tab=billing"[\s\S]{0,300}청구 및 구독/);

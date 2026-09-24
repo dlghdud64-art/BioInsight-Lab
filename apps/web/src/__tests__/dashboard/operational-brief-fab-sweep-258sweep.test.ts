@@ -28,7 +28,7 @@ const SURFACES: { name: string; path: string }[] = [
   { name: "inventory", path: "../../app/dashboard/inventory/inventory-content.tsx" },
   // 제거 2026-09-24 §po-ui-removed(호영님 판정): { name: "purchase-orders", path: ".../purchase-orders/page.tsx" }
   //   사유 = 발주 UI 라우트 전체 삭제. 나머지 surface 는 무손상.
-  { name: "purchases", path: "../../app/dashboard/purchases/page.tsx" },
+  // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases — 표면 삭제.
   { name: "quotes", path: "../../app/dashboard/quotes/page.tsx" },
   { name: "work-queue-console", path: "../../components/dashboard/work-queue-console.tsx" },
 ];

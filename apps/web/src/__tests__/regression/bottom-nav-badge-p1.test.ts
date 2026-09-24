@@ -75,10 +75,11 @@ describe("§bottom-nav-badge P1 — 회귀 0 (BottomNav 기존 계약)", () => {
     expect(src).toMatch(/더보기/);
   });
 
-  it("§purchasing-hide 탭 스왑 게이트 보존", () => {
+  it("모바일 4탭의 세 번째 자리는 입고다 (스왑 게이트 은퇴)", () => {
+    /* 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 구매 운영 삭제로 스왑 대상이 사라졌다. 자리는 그대로, 분기만 없다. */
     const src = read(NAV);
-    expect(src).toMatch(/ENABLE_PURCHASING/);
-    expect(src).toMatch(/RECEIVING_TAB/);
+    expect(src).toMatch(/label: "입고", href: "\/dashboard\/receiving"/);
+    expect(src).not.toMatch(/ENABLE_PURCHASING/);
   });
 
   it("stats route 무접촉 전제 — reorder-need lib 단일화 주석 보존", () => {

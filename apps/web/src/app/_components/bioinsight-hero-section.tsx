@@ -29,7 +29,6 @@ function AccountMenu({ userName }: { userName?: string | null }) {
           <div className="absolute right-0 top-full mt-1 w-52 z-50 rounded-lg border border-white/10 shadow-xl py-1" style={{ backgroundColor: "#0D1A2D" }}>
             <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><LayoutDashboard className="h-3.5 w-3.5 text-slate-400" />대시보드</Link>
             <Link href="/dashboard/quotes" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><ClipboardList className="h-3.5 w-3.5 text-slate-400" />견적 관리</Link>
-            <Link href="/dashboard/purchases" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><ShoppingCart className="h-3.5 w-3.5 text-slate-400" />구매 운영</Link>
             <Link href="/dashboard/inventory" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Package className="h-3.5 w-3.5 text-slate-400" />재고 관리</Link>
             <Link href="/support" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Headset className="h-3.5 w-3.5 text-slate-400" />고객 지원 및 문의</Link>
             <div className="border-t border-white/10 my-1" />
@@ -120,7 +119,6 @@ function MobileMenu() {
                   {([
                     { href: "/dashboard", icon: LayoutDashboard, label: "대시보드", primary: true },
                     { href: "/dashboard/quotes", icon: ClipboardList, label: "견적 관리", primary: false },
-                    { href: "/dashboard/purchases", icon: ShoppingCart, label: "구매 운영", primary: false },
                     { href: "/dashboard/inventory", icon: Package, label: "재고 관리", primary: false },
                     { href: "/support", icon: Headset, label: "고객 지원 및 문의", primary: false },
                   ] as const).map(({ href, icon: Icon, label, primary }) => (

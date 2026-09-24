@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/auth/user-menu";
-import { Menu, X, Info, Phone, Headset, LayoutDashboard, ClipboardList, ShoppingCart, Package } from "lucide-react";
+import { Menu, X, Info, Phone, Headset, LayoutDashboard, ClipboardList, Package } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { resetWorkbenchSessionOnLogout, invalidateWorkbenchQueryCache } from "@/lib/auth/workbench-session-reset";
@@ -182,7 +182,6 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     {([
                       { href: "/dashboard",             icon: LayoutDashboard, label: "대시보드",  primary: false },
                       { href: "/dashboard/quotes",      icon: ClipboardList,   label: "견적 관리", primary: false },
-                      { href: "/dashboard/purchases",   icon: ShoppingCart,    label: "구매 운영", primary: false },
                       { href: "/dashboard/inventory",   icon: Package,         label: "재고 관리", primary: false },
                     ] as const).map(({ href, icon: Icon, label, primary }) => (
                       <Link

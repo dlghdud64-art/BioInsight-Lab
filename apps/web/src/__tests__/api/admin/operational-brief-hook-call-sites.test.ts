@@ -16,12 +16,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const SURFACES = [
-  {
-    label: "purchases",
-    path: "../../../app/dashboard/purchases/page.tsx",
-    moduleKey: "purchase_conversion",
-    fallbackMatch: /selectedItem\.requestTitle|selectedItem\.blockerReason/,
-  },
+  // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases — 표면 삭제. 나머지 surface 의 명제는 무손상.
   {
     label: "quotes",
     path: "../../../app/dashboard/quotes/page.tsx",

@@ -78,15 +78,18 @@ describe("§11.280 — invariant 보존 (canonical truth)", () => {
     expect(PAGE).toMatch(/setHamburgerOpen\(/);
   });
 
-  it("햄버거 5 항목 (대시보드 / 견적 관리 / 구매 운영 / 재고 관리 / 설정) Link 보존", () => {
+  it("햄버거 항목 (대시보드 / 견적 관리 / 재고 관리 / 설정) Link 보존", () => {
+    /* 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 「구매 운영」 항목이 삭제됐다(화면 자체가 없다).
+     * 명제(햄버거가 주요 진입점을 배선한다)는 불변이고, **항목 수**는 명제가 아니다
+     * (CLAUDE.md §개수는 명제가 아니다). 남은 항목을 각각 단언한다. */
     expect(PAGE).toMatch(/href="\/dashboard"/);
     expect(PAGE).toMatch(/href="\/dashboard\/quotes"/);
-    expect(PAGE).toMatch(/href="\/dashboard\/purchases"/);
+    expect(PAGE).not.toMatch(/href="\/dashboard\/purchases"/);
     expect(PAGE).toMatch(/href="\/dashboard\/inventory"/);
     expect(PAGE).toMatch(/href="\/dashboard\/settings"/);
     expect(PAGE).toMatch(/대시보드/);
     expect(PAGE).toMatch(/견적 관리/);
-    expect(PAGE).toMatch(/구매 운영/);
+    expect(PAGE).not.toMatch(/구매 운영/); // §purchases-ui-removed
     expect(PAGE).toMatch(/재고 관리/);
   });
 

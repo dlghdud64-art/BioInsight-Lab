@@ -115,10 +115,13 @@ describe("§11.258a — invariant 보존", () => {
     expect(pageCode).toMatch(/href=["']\/app\/search["']/);
   });
 
-  it("§11.254b 햄버거 DropdownMenu 5 entry 보존 (대시보드 / 견적 / 구매 / 재고 / 설정)", () => {
+  it("§11.254b 햄버거 DropdownMenu entry 보존 (대시보드 / 견적 / 재고 / 설정)", () => {
+    /* 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 「구매 운영」 항목이 삭제됐다(화면 자체가 없다).
+     * 명제(햄버거가 주요 진입점을 배선한다)는 불변이고, **항목 수**는 명제가 아니다
+     * (CLAUDE.md §개수는 명제가 아니다). 남은 항목을 각각 단언한다. */
     expect(pageCode).toMatch(/대시보드/);
     expect(pageCode).toMatch(/견적\s*관리/);
-    expect(pageCode).toMatch(/구매\s*운영/);
+    expect(pageCode).not.toMatch(/href="\/dashboard\/purchases"/);
     expect(pageCode).toMatch(/재고\s*관리/);
     expect(pageCode).toMatch(/href=["']\/dashboard\/settings["']/);
   });

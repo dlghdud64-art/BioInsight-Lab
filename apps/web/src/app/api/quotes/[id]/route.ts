@@ -391,7 +391,6 @@ export async function PATCH(
           }
         }
 
-        revalidatePath("/dashboard/purchases");
         revalidatePath("/dashboard");
         revalidatePath(`/quotes/${id}`);
 
@@ -571,7 +570,6 @@ export async function PATCH(
     // (isCompletingPurchase 여부와 무관하게 모든 PATCH에 적용)
     revalidatePath("/dashboard", "layout");  // 레이아웃 포함 전체 대시보드 캐시 제거
     revalidatePath("/dashboard/quotes");
-    revalidatePath("/dashboard/purchases");
     revalidatePath("/dashboard/budget");
     revalidatePath("/quotes");
     revalidatePath(`/quotes/${id}`);

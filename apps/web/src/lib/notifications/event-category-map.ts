@@ -201,23 +201,34 @@ export function buildNotificationHref(item: NotificationItem): string {
   const meta = (item.event.metadata ?? {}) as Record<string, unknown>;
 
   switch (item.entityType) {
+    /* §purchases-ui-removed (2026-09-24 · 호영님 판정) — 목적지였던 구매 운영 화면이 삭제됐다. 세 자리(결재 요청 fallback · 주문 · 승인)를 옮긴다.
+     * 🛑 같은 자리에서 **죽은 파라미터**도 함께 고친다: 견적 화면이 읽는 것은 `selected` 와 `prepare` 이고
+     *    `focus` 를 읽는 곳은 **소스 전체에 0곳**이다(실측). 지금까지 이 링크들은 상세를 열지 못하고
+     *    목록에만 떨어뜨렸다 — 형제 슬롯이라 함께 고친다(CLAUDE.md §형제 슬롯 전수). */
     case "PURCHASE_REQUEST": {
       const quoteId = meta.quoteId as string | undefined;
       if (quoteId) {
-        return `/dashboard/quotes?focus=${encodeURIComponent(quoteId)}`;
+        return `/dashboard/quotes?selected=${encodeURIComponent(quoteId)}`;
       }
-      return "/dashboard/purchases";
+      return "/dashboard/quotes";
     }
     case "QUOTE":
-      return `/dashboard/quotes?focus=${encodeURIComponent(item.entityId)}`;
+      return `/dashboard/quotes?selected=${encodeURIComponent(item.entityId)}`;
     case "INVENTORY":
       return "/dashboard/inventory";
-    case "ORDER":
-      return "/dashboard/purchases";
+    case "ORDER": {
+      /* 주문을 볼 화면이 없으므로 **주문의 출발점**인 견적 상세로 보낸다(호영님).
+       * prod 실측: ORDER 알림 metadata 에 quoteId 가 있다(2건 전부). */
+      const quoteId = meta.quoteId as string | undefined;
+      if (quoteId) {
+        return `/dashboard/quotes?selected=${encodeURIComponent(quoteId)}`;
+      }
+      return "/dashboard/quotes";
+    }
     case "COMPARE":
       return `/dashboard/analytics`;
     case "APPROVAL":
-      return "/dashboard/purchases";
+      return "/dashboard/quotes";
     case "ESCALATION":
       return "/dashboard/notifications";
     case "BUDGET":

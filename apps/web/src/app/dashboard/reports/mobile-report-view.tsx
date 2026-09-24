@@ -358,7 +358,8 @@ export function MobileReportView(props: MobileReportViewProps) {
             <div className="py-3.5">
               <div className="flex items-center justify-between mb-2.5">
                 <p className="text-[13px] font-bold text-slate-800">카테고리별 분석</p>
-                <Link href="/dashboard/purchases" className="text-[12px] font-semibold text-blue-600 min-h-[44px] inline-flex items-center">
+                {/* §purchases-ui-removed (2026-09-24 · 호영님 판정) — 구매 운영 삭제. 카테고리 드릴다운은 지출 분석이 canonical 이다. */}
+                <Link href="/dashboard/analytics/category" className="text-[12px] font-semibold text-blue-600 min-h-[44px] inline-flex items-center">
                   카테고리 검토 ›
                 </Link>
               </div>
@@ -424,8 +425,8 @@ export function MobileReportView(props: MobileReportViewProps) {
             <div className="py-3.5">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-[13px] font-bold text-slate-800">월별 지출 추이</p>
-                <Link href="/dashboard/purchases" className="text-[12px] font-semibold text-blue-600 min-h-[44px] inline-flex items-center">
-                  구매내역 ›
+                <Link href="/dashboard/analytics/monthly" className="text-[12px] font-semibold text-blue-600 min-h-[44px] inline-flex items-center">
+                  월별 추이 ›
                 </Link>
               </div>
               {/* 당월 값 헤더 통합 한 줄 — 막대 위 숫자 금지 */}

@@ -48,10 +48,7 @@ const FILES = {
     resolve(__dirname, "../../app/dashboard/_components/operational-detail-shell.tsx"),
     "utf8",
   ),
-  purchasesPage: readFileSync(
-    resolve(__dirname, "../../app/dashboard/purchases/page.tsx"),
-    "utf8",
-  ),
+  // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchasesPage — 표면 삭제.
   quotesPage: readFileSync(
     resolve(__dirname, "../../app/dashboard/quotes/page.tsx"),
     "utf8",
@@ -89,10 +86,6 @@ describe("§11.279c — OPERATIONAL BRIEFING eyebrow 영문 잔존 부재 (7 spo
     expect(FILES.operationalDetailShell).not.toMatch(/OPERATIONAL BRIEFING/);
   });
 
-  it("purchases/page.tsx — \"OPERATIONAL BRIEFING\" 부재", () => {
-    expect(FILES.purchasesPage).not.toMatch(/OPERATIONAL BRIEFING/);
-  });
-
   it("quotes/page.tsx — \"OPERATIONAL BRIEFING\" 부재", () => {
     expect(FILES.quotesPage).not.toMatch(/OPERATIONAL BRIEFING/);
   });
@@ -117,10 +110,6 @@ describe("§11.279c — 한글 \"운영 브리핑\" 정합 (7 spot 한글 라벨
 
   it("operational-detail-shell.tsx — 한글 \"운영 브리핑\" 존재", () => {
     expect(FILES.operationalDetailShell).toMatch(/운영 브리핑/);
-  });
-
-  it("purchases/page.tsx — 한글 \"운영 브리핑\" 존재", () => {
-    expect(FILES.purchasesPage).toMatch(/운영 브리핑/);
   });
 
   it("quotes/page.tsx — 한글 \"운영 브리핑\" 존재", () => {
@@ -151,7 +140,6 @@ describe("§11.279c — visual invariant 보존 (한글 라벨 visual hierarchy)
     expect(FILES.inventoryContextPanel).toMatch(/text-blue-700/);
     expect(FILES.surfaceHeader).toMatch(/text-blue-700/);
     expect(FILES.operationalDetailShell).toMatch(/text-blue-700/);
-    expect(FILES.purchasesPage).toMatch(/text-blue-700/);
     expect(FILES.quotesPage).toMatch(/text-blue-700/);
   });
 });

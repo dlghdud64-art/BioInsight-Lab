@@ -138,22 +138,27 @@ describe("§11.209d-notification-inapp-web-bell-ui — buildNotificationHref", (
     },
   };
 
-  it("PURCHASE_REQUEST entityType + quoteId metadata → /dashboard/quotes?focus=", () => {
+  /* 🛑 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 이 블록이 **죽은 파라미터를 계약으로 잠그고 있었다.**
+   *    `focus` 를 읽는 곳은 소스 전체에 **0곳**이다(견적 화면은 `selected`·`prepare` 를 읽는다).
+   *    즉 검사는 통과하는데 링크는 상세를 못 열었다 — 테스트가 **동작이 아니라 문자열**을 지키고 있었다(호영님).
+   *    지금은 상세를 여는 파라미터(`selected`)를 단언한다. 구매 운영 fallback 도 견적으로 옮겼다. */
+  it("PURCHASE_REQUEST entityType + quoteId metadata → 견적 상세(?selected=)", () => {
     const href = buildNotificationHref(baseItem);
     expect(href).toContain("/dashboard/quotes");
-    expect(href).toContain("focus=q42");
+    expect(href).toContain("selected=q42");
+    expect(href).not.toContain("focus=");
   });
 
-  it("PURCHASE_REQUEST entityType + quoteId 없음 → /dashboard/purchases fallback", () => {
+  it("PURCHASE_REQUEST entityType + quoteId 없음 → 견적 목록 fallback", () => {
     const item = { ...baseItem, event: { ...baseItem.event, metadata: null } };
-    expect(buildNotificationHref(item)).toBe("/dashboard/purchases");
+    expect(buildNotificationHref(item)).toBe("/dashboard/quotes");
   });
 
-  it("QUOTE entityType → /dashboard/quotes?focus=entityId", () => {
+  it("QUOTE entityType → 견적 상세(?selected=entityId)", () => {
     const item = { ...baseItem, entityType: "QUOTE", entityId: "q123" };
     const href = buildNotificationHref(item);
     expect(href).toContain("/dashboard/quotes");
-    expect(href).toContain("focus=q123");
+    expect(href).toContain("selected=q123");
   });
 
   it("INVENTORY entityType → /dashboard/inventory", () => {
@@ -161,9 +166,13 @@ describe("§11.209d-notification-inapp-web-bell-ui — buildNotificationHref", (
     expect(buildNotificationHref(item)).toBe("/dashboard/inventory");
   });
 
-  it("ORDER entityType → /dashboard/purchases", () => {
+  it("ORDER entityType → 주문의 출발점인 견적 상세", () => {
+    /* 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 주문을 볼 화면이 없다(호영님). prod 실측: ORDER 알림 metadata 에 quoteId 가 있다. */
     const item = { ...baseItem, entityType: "ORDER" };
-    expect(buildNotificationHref(item)).toBe("/dashboard/purchases");
+    expect(buildNotificationHref(item)).toBe("/dashboard/quotes?selected=q42");
+    // quoteId 가 없으면 목록으로
+    const bare = { ...item, event: { ...baseItem.event, metadata: null } };
+    expect(buildNotificationHref(bare)).toBe("/dashboard/quotes");
   });
 
   it("unknown entityType → /dashboard/notifications fallback", () => {

@@ -78,7 +78,10 @@ describe("§mobile-reports P1 — 모바일 뷰 계약", () => {
     expect(src).toMatch(/집계된 지출이 생기면 표시돼요/);
     expect(src).toMatch(/발주 공급사 비중을 분석해요/);
     expect(src).toMatch(/2개월 이상 쌓이면 추이가 그려져요/);
-    expect(src).toMatch(/\/dashboard\/purchases/);
+    // 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 딥링크 목적지가 구매 운영 → 지출 분석(카테고리/월별)으로.
+    //   명제(빈 상태 카피가 **실경로**로 이어진다)는 불변이다.
+    expect(src).toMatch(/\/dashboard\/analytics\/(category|monthly)/);
+    expect(src).not.toMatch(/\/dashboard\/purchases/);
   });
 
   it("의존도 60% 배너 — yellow 토큰(amber 금지) + 권장 카피", () => {

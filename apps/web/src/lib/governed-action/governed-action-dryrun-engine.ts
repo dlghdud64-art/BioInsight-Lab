@@ -221,7 +221,8 @@ export function buildProposal(
       code: "critical_governance_event",
       message: "미처리 긴급 governance 이벤트 존재",
       remediation: "긴급 이벤트를 먼저 확인하세요",
-      remediationPath: "/dashboard/purchases",
+      // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 구매 운영 화면 삭제. 긴급 이벤트 확인은 알림 센터에서 한다.
+      remediationPath: "/dashboard/notifications",
       severity: "hard",
     });
   }

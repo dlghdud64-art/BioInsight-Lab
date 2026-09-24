@@ -902,7 +902,8 @@ export default function ReportsPage() {
             <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리별 분석</p>
-                <Link href="/dashboard/purchases">
+                {/* §purchases-ui-removed (2026-09-24 · 호영님 판정) — 구매 운영 삭제. 카테고리 드릴다운은 지출 분석이 canonical 이다. */}
+                <Link href="/dashboard/analytics/category">
                   <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el h-7 px-2">
                     카테고리 검토 →
                   </Button>
@@ -1009,9 +1010,9 @@ export default function ReportsPage() {
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-bold text-slate-800">월별 지출 추이</p>
-                <Link href="/dashboard/purchases">
+                <Link href="/dashboard/analytics/monthly">
                   <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el h-7 px-2">
-                    구매내역 필터 →
+                    월별 추이 →
                   </Button>
                 </Link>
               </div>

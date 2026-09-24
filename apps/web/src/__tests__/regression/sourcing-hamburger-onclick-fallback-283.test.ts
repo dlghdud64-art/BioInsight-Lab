@@ -56,10 +56,13 @@ describe("§11.283b — 소싱 햄버거 plain button + useState 단순화", () 
     );
   });
 
-  it("기존 menuItem 5종 (대시보드/견적/구매/재고/설정) Link href 보존 — 회귀 0", () => {
+  it("기존 menuItem (대시보드/견적/재고/설정) Link href 보존 · 회귀 0", () => {
+    /* 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 「구매 운영」 항목이 삭제됐다(화면 자체가 없다).
+     * 명제(햄버거가 주요 진입점을 배선한다)는 불변이고, **항목 수**는 명제가 아니다
+     * (CLAUDE.md §개수는 명제가 아니다). 남은 항목을 각각 단언한다. */
     expect(PAGE).toMatch(/href="\/dashboard"[\s\S]{0,500}대시보드/);
     expect(PAGE).toMatch(/href="\/dashboard\/quotes"[\s\S]{0,500}견적 관리/);
-    expect(PAGE).toMatch(/href="\/dashboard\/purchases"[\s\S]{0,500}구매 운영/);
+    expect(PAGE).not.toMatch(/href="\/dashboard\/purchases"/);
     expect(PAGE).toMatch(/href="\/dashboard\/inventory"[\s\S]{0,500}재고 관리/);
     expect(PAGE).toMatch(/href="\/dashboard\/settings"[\s\S]{0,500}설정/);
   });
@@ -67,7 +70,9 @@ describe("§11.283b — 소싱 햄버거 plain button + useState 단순화", () 
   it("각 menuItem onClick 시 setHamburgerOpen(false) — navigate 직후 close", () => {
     // 5개 Link 모두 onClick={() => setHamburgerOpen(false)} 패턴 있는지
     const closeCloses = (PAGE.match(/onClick=\{\(\)\s*=>\s*setHamburgerOpen\(false\)\}/g) || []).length;
-    expect(closeCloses).toBeGreaterThanOrEqual(6); // backdrop 1 + menuItem 5 = 6
+    // 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 구매 운영 항목 삭제로 menuItem 이 하나 줄었다.
+    //   명제는 「**각** 항목이 닫는다」 이지 개수가 아니다 → 하한을 남은 항목 수로 맞춘다.
+    expect(closeCloses).toBeGreaterThanOrEqual(5); // backdrop 1 + menuItem 4 = 5
   });
 
   it("§11.280-2 Menu icon pointer-events-none 보존 (button click target trap 회피)", () => {

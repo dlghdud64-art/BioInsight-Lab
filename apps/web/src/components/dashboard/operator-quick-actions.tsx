@@ -68,7 +68,10 @@ const ACTIONS: QuickAction[] = [
   {
     label: "발주 전환",
     description: "확정된 견적을 발주로 전환합니다",
-    href: "/dashboard/purchases",
+    // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 목적지였던 구매 운영 화면 삭제.
+    //   이 컴포넌트는 **렌더 도달 0** 이라 새 목적지를 추측하지 않고 링크만 끊는다.
+    //   존폐는 「렌더 도달 0 컴포넌트 전수」 큐(호영님 ③ 삭제 판정).
+    href: "",
     icon: ShoppingCart,
     countKey: "purchases",
   },

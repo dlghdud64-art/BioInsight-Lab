@@ -64,7 +64,7 @@ describe("§11.176 floating entry mount (§quotes-brief-suppress: quotes 제외 
   //         (CLAUDE.md 「개수는 명제가 아니다」). 역방향 명제는 main-dashboard-p0-honesty B6 소유.
   const SURFACES: { name: string; path: string }[] = [
     { name: "inbox", path: "src/app/dashboard/inbox/page.tsx" },
-    { name: "purchases", path: "src/app/dashboard/purchases/page.tsx" },
+    // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases — 표면 삭제.
   ];
 
   for (const { name, path } of SURFACES) {
@@ -77,8 +77,9 @@ describe("§11.176 floating entry mount (§quotes-brief-suppress: quotes 제외 
 });
 
 describe("§11.176 surface 별 hydrate handler (§11.181 popup default 로 marshall 됨)", () => {
-  it("§11.181 — purchases FAB 에 onClick prop 없음 (popup context 사용)", () => {
-    const src = read("src/app/dashboard/purchases/page.tsx");
+  it("§11.181 · inbox FAB 에 onClick prop 없음 (popup context 사용)", () => {
+    /* 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — purchases 표면 삭제. 같은 명제를 남은 surface 에서 잠근다. */
+    const src = read("src/app/dashboard/inbox/page.tsx");
     const m = src.match(/<OperationalBriefFloatingEntry[\s\S]*?\/>/);
     expect(m).not.toBeNull();
     expect(m![0]).not.toMatch(/\bonClick\s*=/);

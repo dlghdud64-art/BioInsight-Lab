@@ -132,7 +132,8 @@ const GUIDE_ENTRIES: GuideEntry[] = [
   // ── 견적 요청과 구매 ──
   { id: "qp-1", category: "quote-purchase", icon: FileText, title: "견적 요청", what: "비교에서 선택한 품목이나 직접 입력한 품목 목록으로 견적을 요청합니다.", when: "구매 전 가격·납기를 확인해야 할 때", keyInputs: ["품목 목록", "수량", "희망 납기", "특이사항"], nextAction: "벤더 회신 확인 → 가격 비교", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
   { id: "qp-2", category: "quote-purchase", icon: GitCompareArrows, title: "견적 비교 및 확정", what: "복수 벤더의 회신을 가격·납기·MOQ 기준으로 비교하고 최종 견적을 확정합니다.", when: "벤더 회신이 도착한 후", keyInputs: ["벤더별 회신 내용", "비교 기준"], nextAction: "승인 요청 또는 발주 진행", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
-  { id: "qp-3", category: "quote-purchase", icon: ShoppingCart, title: "발주 및 구매 관리", what: "확정된 견적을 기반으로 발주를 진행하고, 구매 이력·증빙을 관리합니다.", when: "견적 확정 후 발주가 필요할 때", keyInputs: ["발주 수량", "결제 방식", "증빙 파일"], nextAction: "입고 대기 → 재고 반영", link: { label: "구매 운영 보기", href: "/dashboard/purchases" } },
+  // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 카드 qp-3「발주 및 구매 관리」 제거. 설명하던 기능(발주 진행·구매 이력 증빙)이
+  //   제품에 없다. 지원센터가 없는 기능을 안내하면 그 자체가 거짓 약속이다.
   // ── 입고와 재고 운영 ──
   { id: "inv-1", category: "inventory", icon: Package, title: "입고 등록", what: "배송된 품목을 수령 확인하고 실제 입고 수량·Lot 번호·유효기간을 등록합니다.", when: "주문한 시약이나 장비가 도착했을 때", keyInputs: ["입고 수량", "Lot 번호", "유효기간", "보관 위치"], nextAction: "재고 현황 확인", link: { label: "재고 관리 열기", href: "/dashboard/inventory" } },
   { id: "inv-2", category: "inventory", icon: Shield, title: "안전재고·유효기간·재주문", what: "품목별 안전재고 기준을 설정하고, 유효기간 임박 시 자동 알림을 받습니다. 재고 부족 품목은 재주문 요청으로 바로 연결됩니다.", when: "재고 부족이나 기한 만료를 사전에 방지하고 싶을 때", keyInputs: ["안전재고 수량", "알림 기준일", "재주문 수량"], nextAction: "부족 품목 자동 견적 요청", link: { label: "재고 관리 열기", href: "/dashboard/inventory" } },
@@ -301,7 +302,8 @@ const RUNBOOK_ITEMS: RunbookItem[] = [
     possibleCauses: ["CSV 인코딩 문제 (UTF-8 아닌 경우)", "필수 필드 누락", "파일 크기 초과 (50MB 제한)"],
     immediateActions: ["파일을 UTF-8 인코딩으로 저장 후 재업로드", "업로드 전 미리보기에서 필드 매핑 결과 확인", "50MB 초과 시 파일 분할"],
     escalation: "반복 실패 시 오류 메시지와 원본 파일을 첨부하여 지원 티켓 접수",
-    cta: { label: "구매 운영 보기", href: "/dashboard/purchases" },
+    // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 파일 업로드 진입점은 재고(재고 파일 가져오기)가 canonical 이다.
+    cta: { label: "재고 관리 보기", href: "/dashboard/inventory" },
   },
   {
     id: "rb-pi-3", category: "purchase-inventory",

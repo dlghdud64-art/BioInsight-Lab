@@ -191,8 +191,15 @@ export function buildNotificationHref(item: NotificationItem): string {
       return `/quotes/${encodeURIComponent(item.entityId)}`;
     case "INVENTORY":
       return "/(tabs)/inventory";
-    case "ORDER":
-      return "/(tabs)/purchases";
+    case "ORDER": {
+      /* §purchases-ui-removed (2026-09-24 · 호영님 판정) — 주문을 볼 화면이 없다. 주문의 출발점인 견적 상세로 보낸다(웹과 같은 판정).
+       * ⚠️ 모바일 자체 탭(/(tabs)/purchases)은 이번 삭제 범위 밖이라 다른 자리는 건드리지 않았다. */
+      const quoteId = meta.quoteId as string | undefined;
+      if (quoteId) {
+        return `/quotes/${encodeURIComponent(quoteId)}`;
+      }
+      return "/(tabs)/index";
+    }
     case "COMPARE":
       return "/(tabs)/index";
     case "APPROVAL":

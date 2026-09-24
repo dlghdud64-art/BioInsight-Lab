@@ -47,7 +47,7 @@ const _RETIRED_PURCHASE_ORDERS_PATH = resolve(
 
 const route = safeRead(ROUTE_PATH);
 const helper = safeRead(HELPER_PATH);
-const purchases = safeRead(PURCHASES_PATH);
+void PURCHASES_PATH; // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 표면 삭제로 읽지 않는다.
 void _RETIRED_PURCHASE_ORDERS_PATH;
 
 describe("§11.230c (a)-6 #1 — preferences route zod 확장", () => {
@@ -88,19 +88,9 @@ describe("§11.230c (a)-6 #2 — useUserPreferences helper 확장", () => {
   });
 });
 
-describe("§11.230c (a)-6 #3 — purchases/page.tsx server hydration", () => {
-  it("useUserPreferences import", () => {
-    expect(purchases).toMatch(/useUserPreferences/);
-  });
-
-  it("server hydration (preferences.purchasesFilter → setQueueTab)", () => {
-    expect(purchases).toMatch(/preferences[\s\S]{0,1000}purchasesFilter[\s\S]{0,1000}setQueueTab/);
-  });
-
-  it("persistence — updatePurchasesFilter 호출", () => {
-    expect(purchases).toMatch(/updatePurchasesFilter/);
-  });
-});
+/* 🛑 은퇴 §purchases-ui-removed (2026-09-24 · 호영님 판정) — #3 구매 운영 화면 hydration.
+ *    #4(발주)와 같은 이유다: 저장하는 쪽(route zod · useUserPreferences helper)은 #1·#2 가
+ *    계속 잠그고, 읽어서 탭으로 복원하던 **화면**만 사라졌다. */
 
 /* 🛑 은퇴 §po-ui-removed(2026-09-24 · 호영님 판정) — #4 발주 화면 hydration.
  *    purchaseOrdersFilter 를 **저장하는 쪽**(route zod · useUserPreferences helper)은
@@ -126,15 +116,12 @@ describe("§11.230c (a)-6 #5 — invariant 보존", () => {
     expect(helper).toMatch(/updateReceivingFilter/);
   });
 
-  it("purchases QueueTab type / setQueueTab 보존", () => {
-    expect(purchases).toMatch(/QueueTab/);
-    expect(purchases).toMatch(/setQueueTab/);
-  });
+  /* 🛑 은퇴 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 「purchases QueueTab / setQueueTab 보존」. 잴 화면이 삭제됐다. */
 
   /* 🛑 은퇴 §po-ui-removed — 「purchase-orders ModuleBucketKey / setActiveTab 보존」. 잴 화면이 삭제됐다. */
 
   it("§11.230c (a)-6 trace marker", () => {
-    const combined = route + "\n" + helper + "\n" + purchases;
+    const combined = route + "\n" + helper;
     expect(combined).toMatch(/§11\.230c \(a\)-6|11\.230c \(a\)-6|§11\.230c-a-6/);
   });
 });

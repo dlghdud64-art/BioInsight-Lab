@@ -185,10 +185,12 @@ function CategoryCard({ item }: { item: CategorySpendingItem }) {
   const config = STATUS_CONFIG[item.status];
   const IconComponent = item.icon ? ICON_MAP[item.icon] : null;
 
-  // drill-down: 카드 클릭 → 해당 카테고리 필터된 구매 내역
-  const drillDownHref = item.categoryId
-    ? `/dashboard/purchases?category=${encodeURIComponent(item.categoryName)}`
-    : `/dashboard/purchases?filter=unclassified`;
+  /* drill-down: 카드 클릭 → 카테고리 지출 분석.
+   * §purchases-ui-removed (2026-09-24 · 호영님 판정) — 목적지였던 구매 운영 화면이 삭제됐다.
+   * 🛑 실측: 그 화면은 searchParams 를 **아예 읽지 않았다** — ?category= · ?filter=unclassified 는
+   *    처음부터 죽은 파라미터였고 필터가 걸린 적이 없다. 그래서 파라미터를 들고 가지 않는다
+   *    (없는 필터를 약속하지 않는다). 카테고리 지출은 지출 분석이 canonical 이다. */
+  const drillDownHref = "/dashboard/analytics/category";
 
   return (
     <Link
@@ -331,7 +333,7 @@ export default function CategorySpendingWidget({
         <div className="flex items-center gap-3">
           {unclassifiedCount > 0 && (
             <Link
-              href="/dashboard/purchases?filter=unclassified"
+              href="/dashboard/analytics/category"
               className="inline-flex items-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-50 px-2 py-0.5 rounded-full hover:bg-yellow-100 transition-colors"
             >
               <HelpCircle className="w-3 h-3" />

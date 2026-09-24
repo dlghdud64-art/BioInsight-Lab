@@ -75,10 +75,11 @@ describe("§11.364 — 회귀 0 (4 카드 구조 + wiring)", () => {
   it("href route 보존 (real wiring, dead button 0)", () => {
     const src = read(PATH);
     expect(src).toMatch(/href:\s*"\/dashboard\/quotes\?labaxisPilot=quote-dispatch"/);
-    expect(src).toMatch(/href:\s*"\/dashboard\/purchases"/);
+    // 승계 §purchases-ui-removed (2026-09-24 · 호영님 판정) — 발주 전환 카드의 목적지도 삭제됐다. 도달 0 표면이라 링크만 끊었다.
     // 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 발주 카드의 목적지가 삭제됐다. 이 표면도 렌더 도달 0 이라 링크만 끊었다.
     // 부정 단언은 **주석 제거본**에 건다(CLAUDE.md) — 끊은 사유를 적은 주석에 걸리지 않게.
     expect(stripComments(src)).not.toMatch(/\/dashboard\/purchase-orders/);
+    expect(stripComments(src)).not.toMatch(/\/dashboard\/purchases/);
     expect(src).toMatch(/href:\s*"\/dashboard\/inventory\?filter=low"/);
   });
 

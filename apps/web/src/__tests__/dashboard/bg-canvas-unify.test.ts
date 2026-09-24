@@ -45,14 +45,6 @@ describe("§bg-canvas-unify — 회귀 0(카드/칩 내부 톤 보존)", () => {
   });
 });
 
-describe("§bg-canvas-unify §B — 구매운영 빈 KPI 카드 투명도 제거", () => {
-  const purchases = read("app/dashboard/purchases/page.tsx");
-  it("KpiCard 0건 = 숫자 색 톤다운(text-slate-300), 카드 전체 opacity-50 폐지", () => {
-    expect(purchases).toMatch(/text-3xl font-extrabold \$\{isZero \? "text-slate-300" : valueColor\}/);
-    expect(purchases).not.toMatch(/isZero \? "opacity-50 hover:opacity-100"/);
-  });
-  it("KpiCard 흰 카드 + border-slate-200 구획 보존(카드 사라짐 0)", () => {
-    expect(purchases).toMatch(/rounded-xl border bg-white p-5 text-left/);
-    expect(purchases).toMatch(/border-slate-200 hover:border-slate-300/);
-  });
-});
+/* 🛑 은퇴 §purchases-ui-removed (2026-09-24 · 호영님 판정) — §B「구매운영 빈 KPI 카드」. 잴 표면이 삭제됐다.
+ *    명제(0건 카드는 숫자 색만 톤다운하고 카드를 지우지 않는다)는 §zero-state-dashed-unify 가
+ *    남은 표면에서 계속 든다. */

@@ -109,18 +109,22 @@ describe("§po-ui-removed · 발주 UI 는 삭제됐다", () => {
   });
 
   it("③ 네비게이션에 발주 항목 0 (숨김 목록에 넣는 형태도 아니다)", () => {
+    /* 🔁 승계 §purchases-ui-removed(2026-09-24) — 구매 운영도 삭제되면서 **숨김 목록 자체가 사라졌다.**
+     *   원 명제는 「발주가 숨김 목록에 들어가는 형태도 아니다」 였는데, 이제 목록이 없으므로
+     *   더 강한 형태로 단언한다: 그 이름들이 소스에 아예 없다. */
     const sidebar = code("app/_components/dashboard-sidebar.tsx");
     expect(sidebar).not.toMatch(/발주 관리/);
-    expect(sidebar).toMatch(/PURCHASING_HIDDEN_HREFS = \["\/dashboard\/purchases"\]/);
+    expect(sidebar).not.toMatch(/PURCHASING_HIDDEN_HREFS/);
     const sheet = code("components/layout/bottom-nav-more-sheet.tsx");
     expect(sheet).not.toMatch(/label: "발주"/);
-    expect(sheet).toMatch(/PURCHASING_HREFS = \["\/dashboard\/orders", "\/dashboard\/purchases"\]/);
+    expect(sheet).not.toMatch(/PURCHASING_HREFS/);
   });
 
   it("④ 살아 있는 화면의 옛 목적지는 입고로 옮겼다", () => {
     expect(code("app/dashboard/audit/page.tsx")).toMatch(/case "ORDER":\s*return "\/dashboard\/receiving";/);
     expect(code("app/dashboard/budget/[id]/page.tsx")).toMatch(/<Link href="\/dashboard\/receiving">[\s\S]{0,200}?입고 보기/);
-    expect(code("app/dashboard/purchases/page.tsx")).toMatch(/입고 관리에서 진행 추적/);
+    /* 🛑 은퇴 §purchases-ui-removed(2026-09-24) — 「구매 운영 CTA 가 입고로 간다」.
+     *    그 화면도 삭제됐다. 같은 명제의 자리는 §purchases-ui-removed ④ 가 든다. */
     expect(code("components/dashboard/console/queue-detail-panel.tsx")).toMatch(/ORDER: "\/dashboard\/receiving"/);
   });
 

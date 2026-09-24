@@ -48,7 +48,7 @@ describe("§11.179 shared BriefSurfaceHeader 컴포넌트", () => {
 
 describe("§11.179 5 surface eyebrow 일괄 swap", () => {
   const SURFACES: { name: string; path: string }[] = [
-    { name: "purchases", path: "src/app/dashboard/purchases/page.tsx" },
+    // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases — 표면 삭제.
     { name: "quotes", path: "src/app/dashboard/quotes/page.tsx" },
     { name: "inventory-context-panel", path: "src/components/inventory/inventory-context-panel.tsx" },
     { name: "queue-detail-panel", path: "src/components/dashboard/console/queue-detail-panel.tsx" },
@@ -65,10 +65,7 @@ describe("§11.179 5 surface eyebrow 일괄 swap", () => {
 });
 
 describe("§11.179 5 surface 너비 확장 (≥ 480)", () => {
-  it("purchases — w-[480px]", () => {
-    const src = read("src/app/dashboard/purchases/page.tsx");
-    expect(src).toMatch(/w-\[480px\]/);
-  });
+  // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases 너비 — 표면 삭제.
   it("quotes — w-[480px]", () => {
     const src = read("src/app/dashboard/quotes/page.tsx");
     expect(src).toMatch(/w-\[480px\]/);
