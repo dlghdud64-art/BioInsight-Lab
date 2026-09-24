@@ -94,10 +94,17 @@ export function MobileDashboardView({
           <div className="text-[26px] font-extrabold tracking-tight text-slate-900 tabular-nums mt-1">
             {budgetStatDisplay("spend", thisMonthSpend, budget?.isSet ?? false, won).primary}
           </div>
+          {/* §mom-sign-honesty (2026-09-24 · 호영님 P1 · 동료 세션 실측 전달)
+              🛑 옛 문구는 절댓값만 찍었다 — 부호를 지우고 방향을 **아이콘과 색에만** 뒀다.
+                 prod 실측(390px · 이번 달 ₩0 · 초록 하향 아이콘)에서 문구는 「전월 대비 100.0%」 였고,
+                 숫자만 읽으면 「100% 증가」 로 읽힌다. 아이콘을 못 보는 경우(스크린리더·색각·작은 화면)엔
+                 방향 정보가 통째로 사라진다.
+                 → 방향을 **글자에** 넣는다. 색·아이콘은 보조로 남긴다(중복은 해가 없다).
+              ⚠️ 이 주석은 분기 **밖**에 둔다 — 분기 안 단독 child 로 두면 SWC 파서가 깨진다(§11.303-hotfix-e). */}
           {hasMom && (
             <div className={`flex items-center gap-1 text-[12px] font-bold mt-1 ${momDown ? "text-emerald-600" : "text-rose-600"}`}>
-              {momDown ? <TrendingDown className="h-3.5 w-3.5" /> : <TrendingUp className="h-3.5 w-3.5" />}
-              전월 대비 {Math.abs(mom).toFixed(1)}%
+              {momDown ? <TrendingDown className="h-3.5 w-3.5" aria-hidden /> : <TrendingUp className="h-3.5 w-3.5" aria-hidden />}
+              전월 대비 {Math.abs(mom).toFixed(1)}% {momDown ? "감소" : "증가"}
             </div>
           )}
           {spark && (
