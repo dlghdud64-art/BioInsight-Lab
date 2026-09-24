@@ -23,6 +23,7 @@ import {
 } from "@/lib/dashboard/summary-derive";
 import { blockAfter, blockEnclosing, blockFrom } from "../_helpers/block-window";
 import { stripComments } from "../_helpers/em-dash-scan";
+import { pickBudgetCoveringNow } from "@/lib/budget/budget-period";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 function read(rel: string): string {
@@ -335,11 +336,16 @@ describe("§budget-period-axis — 예산 기간 축은 한 곳에서만 굳는�
     expect(lineWith(src, "spend: {")).toContain("thisMonthSpend");
   });
 
-  it("⑥ 폴백 질의에도 결정적 정렬이 있다 — 실제로 쓰이는 경로다", () => {
-    const fb = blockAfter(code(ROUTE), "db.budget.findFirst(");
-    expect(fb).toContain("yearMonth: currentYearMonth");
-    expect(fb, "폴백 질의에 정렬이 없다 — 여러 scopeKey 를 조회하므로 미정이 남는다").toContain("orderBy");
-    expect(fb).toContain("createdAt");
+  it("⑥ 폴백은 yearMonth 로 거르지 않고 기간이 오늘을 포함하는 예산을 고른다 (§budget-pick-by-period)", () => {
+    const src = code(ROUTE);
+    const fb = blockAfter(src, "db.budget.findMany(");
+    expect(fb, "yearMonth 는 만든 달이다. 기간 필터로 쓰면 여러 달짜리 예산이 사라진다").not.toContain("yearMonth");
+    expect(fb).toContain("orderBy");
+    // 타입 인자(<{...}>)는 허용한다 — db 가 any 라 호출부에서 타입을 명시해야 컴파일된다(2026-09-25).
+    // 명제는 「폴백을 pickBudgetCoveringNow 로 고른다」 이지 호출문의 글자 수가 아니다.
+    expect(src).toMatch(
+      /const fallbackBudget = fallbackCandidates\s*\?\s*pickBudgetCoveringNow(?:<[\s\S]*?>)?\(\s*fallbackCandidates,\s*now\s*\)/,
+    );
   });
 
   it("③ 카드의 세 지표가 **같은 now 하나**를 본다 — 자정을 넘기며 어긋나지 않는다", () => {
@@ -410,3 +416,52 @@ function lineWith(scope: string, token: string): string {
   expect(line, `${token} 를 포함한 줄이 없다`).toBeTruthy();
   return line!;
 }
+
+// ── (I) §budget-pick-by-period · 값 단언 (2026-09-24 prod 실측) ─────────────
+//   8월에 만든 하반기 예산이 9월 대시보드에서 「예산 미설정」 으로 떴다. 고르는 규칙을 값으로 잠근다.
+describe("(I) §budget-pick-by-period · 오늘을 포함하는 예산을 고른다", () => {
+  const NOW = new Date("2026-09-24T12:00:00");
+  const halfYear = {
+    id: "half",
+    yearMonth: "2026-08",
+    description: "[2026 하반기 실측 예산] | period:2026-08-18~2026-12-30",
+    createdAt: new Date("2026-08-18T11:12:31Z"),
+  };
+
+  it("① 만든 달(yearMonth)이 지났어도 기간 안이면 고른다", () => {
+    expect(pickBudgetCoveringNow([halfYear], NOW)?.id).toBe("half");
+  });
+
+  it("② 기간이 끝난 예산은 가장 최근에 만들었어도 고르지 않는다", () => {
+    const ended = {
+      id: "ended",
+      yearMonth: "2026-09",
+      description: "| period:2026-09-01~2026-09-10",
+      createdAt: new Date("2026-09-20T00:00:00Z"),
+    };
+    expect(pickBudgetCoveringNow([ended, halfYear], NOW)?.id).toBe("half");
+    expect(pickBudgetCoveringNow([ended], NOW)).toBeNull();
+  });
+
+  it("③ 기간 안인 예산이 여럿이면 최근 생성분 · 입력 순서와 무관", () => {
+    const newer = {
+      id: "newer",
+      yearMonth: "2026-09",
+      description: "| period:2026-09-20~2026-12-30",
+      createdAt: new Date("2026-09-20T00:00:00Z"),
+    };
+    expect(pickBudgetCoveringNow([halfYear, newer], NOW)?.id).toBe("newer");
+    expect(pickBudgetCoveringNow([newer, halfYear], NOW)?.id).toBe("newer");
+  });
+
+  it("④ 기간 표기가 없으면 yearMonth 월 창으로 판정한다", () => {
+    const monthOnly = { id: "m", yearMonth: "2026-09", description: null, createdAt: new Date("2026-09-01T00:00:00Z") };
+    expect(pickBudgetCoveringNow([monthOnly], NOW)?.id).toBe("m");
+    expect(pickBudgetCoveringNow([monthOnly], new Date("2026-10-02T12:00:00"))).toBeNull();
+  });
+
+  it("⑤ 기간 마지막 날 저녁도 기간 안이다", () => {
+    expect(pickBudgetCoveringNow([halfYear], new Date("2026-12-30T20:00:00"))?.id).toBe("half");
+    expect(pickBudgetCoveringNow([halfYear], new Date("2026-12-31T00:00:01"))).toBeNull();
+  });
+});

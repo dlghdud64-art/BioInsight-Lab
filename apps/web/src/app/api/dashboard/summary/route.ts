@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { withDbRetry } from "@/lib/db-retry";
-import { resolveBudgetPeriod } from "@/lib/budget/budget-period";
+import { resolveBudgetPeriod, pickBudgetCoveringNow } from "@/lib/budget/budget-period";
 import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 import {
   deriveDashboardSummary,
@@ -42,7 +42,6 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
     // ── scope 해결 (stats route 와 동일 규칙) ──────────────────────────
     const [activeBudget, memberships, orgMemberships] = await Promise.all([
@@ -80,7 +79,7 @@ export async function GET(request: NextRequest) {
       expiringInventoryCount,
       receivingDraftGroups,
       receivingDraftTotal,
-      fallbackBudget,
+      fallbackCandidates,
     ] = await withDbRetry(() =>
       Promise.all([
         db.quote.findMany({
@@ -130,15 +129,33 @@ export async function GET(request: NextRequest) {
             //   scopeKey 를 여러 개(`user-…` · userId · 조직들) 로 조회하므로 **여러 건이 나올 수 있다**.
             //   정렬이 없으면 어느 것이 뜰지 미정이다 — UserBudget 쪽과 똑같은 결함이고,
             //   2026-09-21 실측 기준 **실제로 쓰이는 것은 이쪽 경로**다.
-            db.budget.findFirst({
+            //
+            // 🛑 §budget-pick-by-period (2026-09-24 prod 실측) · `yearMonth: currentYearMonth` 로 거르면
+            //   8월에 만든 하반기 예산(8.18~12.30)이 9월 대시보드에서 사라진다. yearMonth 는 만든 달이다.
+            //   범위 안의 예산을 가져와 **기간이 오늘을 포함하는 것**을 pickBudgetCoveringNow 로 고른다.
+            db.budget.findMany({
               where: {
                 scopeKey: { in: [`user-${userId}`, userId, ...orgIds] },
-                yearMonth: currentYearMonth,
               },
               orderBy: [{ createdAt: "desc" }],
+              take: 200,
             }),
       ]),
     );
+    // 🛑 타입 인자를 명시한다 — db 가 any 라 fallbackCandidates 도 any 이고,
+    //   그러면 제네릭이 제약(BudgetPeriodInput & { createdAt })으로 떨어져 amount 를 잃는다.
+    //   런타임에는 findMany 가 amount 를 내려주지만 타입 정보가 any 에서 끊긴다(2026-09-25 build exit 1).
+    const fallbackBudget = fallbackCandidates
+      ? pickBudgetCoveringNow<{
+          yearMonth: string;
+          description: string | null;
+          createdAt: Date;
+          amount: number;
+          scopeKey: string;
+          organizationId: string | null;
+          workspaceId: string | null;
+        }>(fallbackCandidates, now)
+      : null;
 
     // ── quote 모듈 ──────────────────────────────────────────────────────
     const qByStatus: Record<string, number> = {};

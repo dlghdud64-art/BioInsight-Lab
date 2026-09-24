@@ -1574,6 +1574,23 @@ prod 확인: `POST /api/notifications/<없는 id>/read` (raw) → **403 「보�
 
 레거시가 0이 됐으므로 ⑨ 가 전량을 잠그고, 훅은 커밋 시점에 먼저 막는다.
 
+## 7-S. 🛑 검증용 예산을 지우자 대시보드가 「예산 미설정」 이 됐다 (2026-09-24 · prod 실측)
+
+호영님이 삭제 확인을 눌렀다. 삭제는 성공했다 (상세 GET 404 · 목록 1건 = 「2026 하반기 실측 예산」).
+기대값은 대시보드 예산이 하반기 예산으로 바뀌는 것이었는데, `/api/dashboard/summary` 는 `budget.isSet=false` 였다.
+
+**원인**: 폴백 질의가 `yearMonth: currentYearMonth` 로 예산을 걸렀다. 하반기 예산은 yearMonth `2026-08`
+(만든 달), 기간 8.18~12.30. 9월에는 기간 안인데 질의에서 빠졌다. 예산 관리 화면은 기간으로 보니 보여 준다.
+**P1-10 에서 기간 해석을 resolveBudgetPeriod 로 옮기면서 "고르는 창" 은 yearMonth 로 남겨 뒀다.**
+검증용 예산이 yearMonth `2026-09` 라서 이 결함을 가리고 있었다. 지우자 드러났다.
+
+**고친 것**
+- `lib/budget/budget-period.ts` `pickBudgetCoveringNow(rows, now)`: 기간이 now 를 포함하는 것 중 최근 생성분.
+- summary route 폴백: `findMany`(yearMonth 필터 없음, scopeKey 범위 그대로) → `pickBudgetCoveringNow`.
+- `summary-contract-p1` ⑥ 명제 교체 + (I) 값 단언 ①~⑤. 37/37 GREEN. route 를 되돌리면 ⑥ RED, 복원 후 GREEN.
+
+**배포 후 확인할 것**: 대시보드 예산 = 「2026 하반기 실측 예산」 · 소진율이 예산 관리 화면의 소진율과 같은지.
+
 ---
 
 ## 8. Optional Addenda

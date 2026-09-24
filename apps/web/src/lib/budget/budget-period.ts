@@ -62,3 +62,25 @@ export function resolveBudgetPeriod(input: BudgetPeriodInput): ResolvedBudgetPer
     endCalendarDate: `${year}-${pad2(month)}-${pad2(lastDay)}`,
   };
 }
+
+/**
+ * §budget-pick-by-period (2026-09-24 prod 실측) · 오늘을 포함하는 예산을 고른다.
+ *
+ * 🛑 대시보드 폴백이 `yearMonth === 이번 달` 로 예산을 골랐다.
+ *   「2026 하반기 실측 예산」 은 yearMonth 가 2026-08 이고 기간은 8.18~12.30 이다.
+ *   9월에는 기간 안인데도 대시보드가 「예산 미설정」 을 띄웠다. 예산 관리 화면은 같은 예산을 보여 준다.
+ *   yearMonth 는 **만든 달**이지 기간이 아니다. 기간은 resolveBudgetPeriod 하나로 읽는다.
+ *   (검증용 예산은 yearMonth 가 2026-09 여서 이 결함을 가리고 있었다.)
+ *
+ * 규칙: 기간(periodStart~periodEnd)이 now 를 포함하는 것 중 가장 최근 생성분. 입력 순서에 기대지 않는다.
+ */
+export function pickBudgetCoveringNow<
+  T extends BudgetPeriodInput & { createdAt: Date | string },
+>(rows: readonly T[], now: Date): T | null {
+  const covering = rows.filter((b) => {
+    const p = resolveBudgetPeriod(b);
+    return p.periodStart <= now && now <= p.periodEnd;
+  });
+  covering.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return covering[0] ?? null;
+}
