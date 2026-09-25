@@ -222,9 +222,16 @@ const PIPELINE_STEPS = [
   { icon: Search, label: "검색", sub: "시약·장비 단일 검색" },
   { icon: GitCompare, label: "비교", sub: "벤더별 스펙 가격 비교" },
   { icon: FileText, label: "견적", sub: "견적 요청 초안 준비" },
-  // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 퍼블릭 랜딩이 **없는 기능**을 광고하고 있었다.
-  //   발주는 제품에 없다(화면·DB 모델 모두). 결재는 유지되므로 「승인 라인」 은 참이다.
-  { icon: ShoppingCart, label: "결재", sub: "승인 라인 및 추적" },
+  /* §purchases-ui-removed (2026-09-24) 에서 발주를 지우고 「결재」 를 남겼다. 그 판단이 뒤집혔다 —
+   * §approval-gate-single-source (2026-09-25 · 호영님 판정):
+   *   결재는 **FREE 에서만 막힌 게 아니라 모든 사용자에게** 막혀 있다.
+   *     FREE = approvalPolicy "none" · 유료는 결제 게이트가 닫힘 · 결제해도 webhook 은 TEAM 만 씀 ·
+   *     거기에 ADMIN 0명이면 또 400.
+   *   로그인 뒤 표면은 판정 함수(canRequestApproval) 뒤에 두면 되지만, **방문자는 워크스페이스가 없어
+   *   그 함수를 부를 수 없다.** 그래서 퍼블릭에서는 지운다.
+   *   복원 조건은 결제 게이트 문서에 의존 항목으로 걸었다(CLAUDE.md §유료 결제 오픈 전 게이트):
+   *      「BUSINESS SKU 결제 → in_app_approval 도달이 prod 에서 확인된 뒤 퍼블릭에 결재 문구 복원」. */
+  { icon: ShoppingCart, label: "회신 추적", sub: "공급사 회신 도착 현황" },
   { icon: PackageCheck, label: "입고/재고", sub: "재고 연동 추적" },
 ];
 

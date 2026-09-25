@@ -51,7 +51,7 @@ const SUPPORT = "app/dashboard/support-center/page.tsx";
 const INTRO = "app/intro/page.tsx";
 
 describe("§purchasing-copy-honesty · 없는 기능을 설명으로 광고하지 않는다", () => {
-  it("① 퍼블릭 랜딩 파이프라인이 발주를 단계로 걸지 않는다 · 결재로 말한다", () => {
+  it("① 퍼블릭 랜딩 파이프라인이 발주도 결재도 단계로 걸지 않는다", () => {
     /* 창은 파이프라인 배열 **블록**으로 연다 — 파일 전체로 열면 다른 문맥의 글자에 걸린다
      * (CLAUDE.md 4원칙 ⑤ · 고정 폭 슬라이스 금지). */
     const src = code(HERO);
@@ -60,9 +60,15 @@ describe("§purchasing-copy-honesty · 없는 기능을 설명으로 광고하�
     const end = src.indexOf("];", start);
     const block = src.slice(start, end);
     expect(block, "파이프라인에 발주 단계 잔존").not.toMatch(/label: "발주"/);
-    expect(block).toMatch(/label: "결재"/);
-    // ③ 결재 주장은 남는다 — 「승인 라인」 은 참이다
-    expect(block).toMatch(/승인 라인/);
+    /* 승계 §approval-gate-single-source (2026-09-25 · 호영님 판정) — 이 파일의 ③(「결재는 남는다」)가
+       **퍼블릭 축에서만** 뒤집혔다. 결재는 FREE 에서만 막힌 게 아니라 모든 사용자에게 막혀 있고,
+       방문자는 워크스페이스가 없어 판정 함수(canRequestApproval)를 부를 수 없어 **가릴 수가 없다.**
+       로그인 뒤 표면의 ③ 는 그대로다(아래 그대로 유지). 판정축은
+       regression/approval-gate-single-source.test.ts ④ 가 든다. */
+    expect(block).not.toMatch(/label: "결재"/);
+    expect(block).not.toMatch(/승인 라인/);
+    // 지운 자리에 참인 것이 들어갔는지까지 본다 — 「없는 척」 이 되면 안 된다.
+    expect(block).toMatch(/label: "회신 추적"/);
   });
 
   it("② 지원센터가 발주를 수행 기능으로 말하지 않는다", () => {

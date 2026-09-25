@@ -25,9 +25,10 @@ import {
 // §11.209d-mobile-request-approval-cta — workspace.plan 기반 approvalPolicy
 // 매핑 (request-approval route 와 동일 source). canRequestApproval computed
 // 정합 위해.
-import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
 // §approver-axis (나)-2 — 승인 권한 판정 정본.
 import { isOrgApprover } from "@/lib/permissions/org-approver-roles";
+// §approval-gate-single-source (2026-09-25 · 호영님 판정) — 화면 조건 = 라우트 조건.
+import { resolveApprovalCapability } from "@/lib/approval/approval-capability.server";
 
 const logger = createLogger("quotes/[id]");
 
@@ -197,24 +198,16 @@ export async function GET(
     //   (c) workspace.plan 의 approvalPolicy === "in_app_approval"
     // canonical 권한은 server validation 8-step (request-approval route) — 본
     // field 는 dead button 0 visibility 만 보장.
-    let canRequestApproval = false;
+    /* §approval-gate-single-source (2026-09-25 · 호영님 판정) — 구 판본은 **정책만** 봤다. 라우트는 결재자 부재로도 400 을 낸다
+       → prod(ADMIN 0)에서 화면이 CTA 를 보여주고 누르면 400 이 나는 자리였다.
+       이제 두 조건을 한 함수가 판정한다(§화면이 보여주는 수와 게이트가 판정하는 수는 같은 함수에서). */
+    let canRequestApprovalFlag = false;
     if (
       internalApprovalStatus === "NOT_REQUIRED" &&
       quote.userId === session.user.id
     ) {
-      const requesterWorkspaceMember = await db.workspaceMember.findFirst({
-        where: { userId: session.user.id },
-        select: {
-          workspace: { select: { plan: true, stripePriceId: true } },
-        },
-      });
-      const approvalPolicy = resolveApprovalPolicyForPlan(
-        requesterWorkspaceMember?.workspace?.plan ?? null,
-        requesterWorkspaceMember?.workspace?.stripePriceId ?? null,
-      );
-      if (approvalPolicy === "in_app_approval") {
-        canRequestApproval = true;
-      }
+      const capability = await resolveApprovalCapability(session.user.id);
+      canRequestApprovalFlag = capability.enabled;
     }
 
     return NextResponse.json({
@@ -238,7 +231,7 @@ export async function GET(
         // §11.209d-mobile-mutation — current user CTA visibility
         canApprove,
         // §11.209d-mobile-request-approval-cta — 결재 요청 CTA visibility
-        canRequestApproval,
+        canRequestApproval: canRequestApprovalFlag,
       },
     });
   } catch (error) {

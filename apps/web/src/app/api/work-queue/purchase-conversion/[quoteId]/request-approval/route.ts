@@ -29,10 +29,16 @@ import {
   enforceAction,
   type InlineEnforcementHandle,
 } from "@/lib/security/server-enforcement-middleware";
-import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
 // §11.209d-approver-routing — 결재자 자동 매핑 매트릭스 (금액 임계치).
 //   < 1,000만원 → workspace ADMIN, >= 1,000만원 → org OWNER escalation.
 import { selectApproverByAmount } from "@/lib/billing/approver-routing";
+/* §approval-gate-single-source (2026-09-25 · 호영님 판정) — 이 라우트의 400 두 개가 **판정의 정본**이다. 화면이 같은 조건을 다시 쓰지 않도록
+   판정을 lib/approval/approval-capability 로 꺼냈다. 라우트도 거기만 부른다. */
+import {
+  isApprovalPolicyEnabled,
+  hasApproverCandidate,
+  APPROVAL_BLOCK_MESSAGE,
+} from "@/lib/approval/approval-capability";
 // §11.209d-notification — approver 에게 결재 요청 email 발송 (best effort).
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseApprovalRequestEmail } from "@/lib/email/templates";
@@ -155,19 +161,18 @@ export async function POST(
         },
       },
     });
-    const approvalPolicy = resolveApprovalPolicyForPlan(
-      member?.workspace?.plan ?? null,
-      member?.workspace?.stripePriceId ?? null,
-    );
-
-    // in_app_approval 외 → 400 (Lab Team / Starter 의 dead promise 차단)
-    if (approvalPolicy !== "in_app_approval") {
+    // §approval-gate-single-source (2026-09-25 · 호영님 판정) — 판정도 문구도 공용 모듈에서. 여기 인라인 비교를 두면 화면과 갈린다.
+    if (
+      !isApprovalPolicyEnabled(
+        member?.workspace?.plan ?? null,
+        member?.workspace?.stripePriceId ?? null,
+      )
+    ) {
       enforcement.fail();
       return NextResponse.json(
         {
           error: "APPROVAL_POLICY_NOT_ENABLED",
-          message:
-            "결재 정책이 활성화되지 않은 플랜입니다. R&D Operations 또는 Enterprise 플랜으로 업그레이드 후 사용 가능합니다.",
+          message: APPROVAL_BLOCK_MESSAGE.policy_not_enabled,
         },
         { status: 400 },
       );
@@ -250,13 +255,13 @@ export async function POST(
     const approverEmail = candidate?.email ?? null;
     const approverName = candidate?.name ?? "관리자";
 
-    if (!approverId || !candidate) {
+    // §approval-gate-single-source (2026-09-25 · 호영님 판정) — 금액 tier 로 좁힌 결과가 0명인가. 화면 축(hasApproverCandidate)과 같은 술어다.
+    if (!approverId || !candidate || !hasApproverCandidate(candidate ? 1 : 0)) {
       enforcement.fail();
       return NextResponse.json(
         {
           error: "APPROVER_NOT_FOUND",
-          message:
-            "결재자가 미설정 상태입니다. 워크스페이스에 ADMIN 권한 사용자를 추가해 주세요.",
+          message: APPROVAL_BLOCK_MESSAGE.no_approver,
         },
         { status: 400 },
       );

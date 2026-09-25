@@ -20,6 +20,8 @@ import { join } from "node:path";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
 const ROUTE = "src/app/api/quotes/[id]/route.ts";
+// 승계 §approval-gate-single-source (2026-09-25 · 호영님 판정) — 판정이 공용 모듈로 내려갔다.
+const CAPABILITY = "src/lib/approval/approval-capability.server.ts";
 
 function read(rel: string): string {
   return readFileSync(join(REPO_ROOT, rel), "utf8");
@@ -31,19 +33,27 @@ describe("§11.209d-mobile-request-approval-cta Phase 1 — server canRequestApp
     expect(src).toMatch(/canRequestApproval/);
   });
 
-  it("workspaceMember 또는 workspace.plan 조회 (approvalPolicy 결정 위해)", () => {
-    const src = read(ROUTE);
-    expect(src).toMatch(/workspaceMember|workspace.*plan/);
+  it("workspace.plan 조회는 판정 모듈이 한다 (approvalPolicy 결정 위해)", () => {
+    /* 승계 §approval-gate-single-source — 라우트가 직접 캐던 것을 공용 서버 축으로 옮겼다.
+       명제(서버가 plan 을 읽어 판정한다)는 불변 · 읽는 자리만 바뀌었다. */
+    const src = read(CAPABILITY);
+    expect(src).toMatch(/workspaceMember|workspace[^]{0,40}plan/);
   });
 
-  it("resolveApprovalPolicyForPlan import + 호출", () => {
+  it("판정 함수 import + 호출 (라우트가 직접 정책을 비교하지 않는다)", () => {
+    /* 승계 §approval-gate-single-source — 구 판본은 **정책만** 봤고, 라우트는 결재자 부재로도 400 을 낸다.
+       prod(ADMIN 0)에서 화면이 CTA 를 보여주고 누르면 400 이 나는 자리였다.
+       명제(서버가 계산해서 내려준다)는 불변이고, 판정이 라우트와 **같은 함수**가 됐다.
+       판정축 전량은 regression/approval-gate-single-source.test.ts 가 든다. */
     const src = read(ROUTE);
-    expect(src).toMatch(/resolveApprovalPolicyForPlan/);
+    expect(src).toMatch(/resolveApprovalCapability\(session\.user\.id\)/);
+    expect(src).not.toMatch(/resolveApprovalPolicyForPlan\(/);
   });
 
-  it("approvalPolicy === 'in_app_approval' 검사 명시 (3 조건 중 하나)", () => {
-    const src = read(ROUTE);
-    expect(src).toMatch(/approvalPolicy\s*===?\s*["']in_app_approval["']|["']in_app_approval["']/);
+  it("in_app_approval 검사는 판정 모듈이 한다 (조건 중 하나)", () => {
+    // 승계 §approval-gate-single-source — 검사 자체는 살아 있다. 사는 곳이 바뀌었다.
+    const src = read("src/lib/approval/approval-capability.ts");
+    expect(src).toMatch(/===[^]{0,20}"in_app_approval"/);
   });
 
   it("internalApprovalStatus === 'NOT_REQUIRED' 검사 명시 (3 조건 중 하나)", () => {

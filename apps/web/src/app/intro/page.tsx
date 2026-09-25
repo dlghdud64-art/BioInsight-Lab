@@ -541,7 +541,9 @@ export default function IntroPage() {
               <Reveal delay={0.15} className="order-2 lg:order-1">
                 <div className="flex flex-col gap-4">
                   {[
-                    { icon: Shield, title: "승인 기준과 권한", desc: "조직 구조에 맞는 승인 흐름과 역할별 권한을 정리" },
+                    // §approval-gate-single-source (2026-09-25 · 호영님 판정) — 「승인 흐름」 은 오늘 모든 사용자에게 도달 불가다(퍼블릭이라 판정 함수도 못 부른다).
+                    //   역할·권한은 실재하므로 그것만 남긴다.
+                    { icon: Shield, title: "역할과 권한", desc: "조직 구조에 맞는 역할별 권한을 정리" },
                     { icon: Wallet, title: "예산 기준 연결", desc: "과제별 예산과 구매 이력을 연결해 기준 이탈을 빠르게 감지" },
                   ].map((card) => (
                     <div key={card.title} className="rounded-xl p-5 flex items-start gap-4" style={{ backgroundColor: L.bg, border: `1px solid ${L.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
@@ -567,7 +569,7 @@ export default function IntroPage() {
                   조직 기준이<br />뒤에서 자연스럽게 붙습니다
                 </h3>
                 <p className="text-base leading-relaxed" style={{ color: L.text2 }}>
-                  구매 흐름을 막지 않으면서 승인 기준, 활동 기록, 예산 기준을 유지합니다. 운영 데이터가 쌓이면서 다음 판단 근거가 됩니다.
+                  구매 흐름을 막지 않으면서 활동 기록, 예산 기준을 유지합니다. 운영 데이터가 쌓이면서 다음 판단 근거가 됩니다.
                 </p>
               </Reveal>
             </div>
