@@ -45,8 +45,7 @@ import { useEffect, useState } from "react";
 // §reorder-quote-handoff CSRF 교정 — raw fetch 는 x-labaxis-csrf-token 미부착으로
 // POST /api/quotes 403("보안 검증이 완료되지 않아…"). §support-csrf-fix 패턴 승계.
 import { csrfFetch } from "@/lib/api-client";
-// §inventory-reorder-surface-unify P3b — 바로 발주(PO)는 ENABLE_PURCHASING off 시 정직 disabled+사유(§purchasing-hide 일관).
-import { getFlag } from "@/lib/feature-flags";
+// §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 「바로 발주」 와 그 게이트는 은퇴했다. 이 시트의 살아 있는 액션은 견적 요청이다.
 
 /** 추천 벤더 (PurchaseRecord 집계, 최근 3개월 해당 품목). */
 export interface VendorSuggestion {
@@ -123,8 +122,6 @@ export function ReorderReviewSheet({
   const primaryVendor = data.vendors[0];
   const estimatedAmount = primaryVendor ? qty * primaryVendor.unitPrice : 0;
   const hasVendor = data.vendors.length > 0;
-  // §inventory-reorder-surface-unify P3b — 발주(PO) 라이브 표면 게이팅. off면 바로 발주 disabled+사유, 견적 요청은 live.
-  const purchasingOn = getFlag("ENABLE_PURCHASING");
 
   const shortage =
     safetyStock != null && currentQuantity != null
@@ -194,15 +191,10 @@ export function ReorderReviewSheet({
     }
   };
 
-  /** §11.310 Q31 — 바로 발주.
-   *  🛑 §po-ui-removed (2026-09-24 · 호영님 판정) — 목적지였던 발주 생성 화면(/dashboard/purchase-orders/new)을
-   *     삭제했다. purchasingOn 게이트 뒤라 오늘은 눌리지 않지만, 플래그를 켜면 **404 로 간다.**
-   *     경로를 끊는다 — 이 버튼의 목적지는 발주 UI 가 다시 생길 때 함께 정한다(큐 참조).
-   *     견적 요청 경로(아래 handleQuoteRequest 계열)는 무손상이다. */
-  const handleDirectPurchase = () => {
-    if (!hasVendor || !purchasingOn) return;
-    onClose();
-  };
+  /* 🛑 삭제 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 「바로 발주」 핸들러. 목적지 화면이 없고(§po-ui-removed) 플래그도 은퇴했다.
+   *   누를 수 없는 버튼을 정직 사유와 함께 두는 것이 §purchasing-hide 의 처방이었는데,
+   *   플래그가 켜질 일이 없어졌으므로 그 사유 자체가 영구 문구가 된다 → 버튼과 사유를 함께 지운다.
+   *   견적 요청 경로(handleRequestQuote)는 무손상이다. 되살리는 조건: QUEUE_concierge-purchasing.md */
 
   return (
     <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
@@ -459,24 +451,7 @@ export function ReorderReviewSheet({
                   ? "견적 요청 초안 만들기"
                   : "초안 만들고 공급사 지정 →"}
             </Button>
-            {hasVendor && (
-              <Button
-                type="button"
-                data-testid="reorder-review-direct-purchase-cta"
-                onClick={handleDirectPurchase}
-                disabled={!purchasingOn}
-                className="flex-1 h-11 min-h-[44px] text-sm bg-green-600 hover:bg-green-700 text-white font-semibold disabled:opacity-50"
-              >
-                <ShoppingCart className="h-4 w-4 mr-1.5" />
-                바로 발주
-              </Button>
-            )}
           </div>
-          {!hasVendor && (
-            <p data-testid="reorder-review-direct-purchase-hidden-note" className="text-[11px] text-slate-500">
-              바로 발주는 공급사·단가 확정 후 가능합니다
-            </p>
-          )}
           {/* §inventory-mobile-reorder-gate P2 — 공급사 소싱 진입(§11.381c 기존 배선 재사용, outline 승격). */}
           {onSearchVendors && (
             <Button
@@ -490,15 +465,7 @@ export function ReorderReviewSheet({
               공급사 소싱에서 먼저 찾기
             </Button>
           )}
-          {/* §inventory-reorder-surface-unify P3b — 발주 OFF 정직 사유(dead button 아님, 견적 요청은 live). */}
-          {!purchasingOn && (
-            <p
-              data-testid="reorder-review-purchasing-off"
-              className="pt-1 text-[11px] text-slate-500"
-            >
-              발주 기능은 준비 중입니다. 지금은 견적 요청으로 진행하세요.
-            </p>
-          )}
+          {/* 🛑 삭제 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 「발주 기능은 준비 중입니다」 사유. 플래그가 은퇴해 영구 문구가 됐다. */}
         </div>
       </SheetContent>
     </Sheet>

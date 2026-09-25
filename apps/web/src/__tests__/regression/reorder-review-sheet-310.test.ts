@@ -85,9 +85,14 @@ describe("§11.310 — ReorderReviewSheet 컴포넌트", () => {
     expect(src).toMatch(/specialNotes:[^\n]*\$\{reason\}/); // 경로 ② specialNotes 합성
   });
 
-  it("[바로 발주] CTA — query string + PO draft (Q31 = A)", () => {
+  it("[바로 발주] CTA 은퇴 · 버튼·핸들러가 없다", () => {
+    /* 승계 §purchasing-flag-retired (2026-09-25 · 호영님 판정)
+     명제가 뒤집혔다 — 「off 면 disabled + 정직 사유」 가 §purchasing-hide 의 처방이었는데,
+     플래그가 켜질 일이 없어져 그 사유가 **영구 문구**가 됐다. 목적지 화면도 없다(§po-ui-removed).
+     호영님 판정: 버튼·핸들러·사유를 함께 지운다. 되살리는 절차는 QUEUE_concierge-purchasing.md.
+     반대 명제는 regression/purchasing-hide-feature-flag.test.ts ②(4) 가 든다. */
     const src = read(SHEET_PATH);
-    expect(src).toMatch(/data-testid="reorder-review-direct-purchase-cta"/);
+    expect(src).not.toMatch(/reorder-review-direct-purchase-cta/);
     /* 승계 §po-ui-removed(2026-09-24 · 호영님 판정) — 목적지였던 발주 생성 화면이 삭제됐다.
      *   버튼(과 아래의 렌더 게이트)은 그대로 두되 **404 로 보내지 않는다** 가 남는 명제다.
      *   목적지는 발주 UI 가 다시 생길 때 함께 정한다(별건 큐). */
@@ -106,12 +111,13 @@ describe("§11.310 — ReorderReviewSheet 컴포넌트", () => {
      *      그러면 dead button 이 다시 생긴다. 아래 not.toMatch 가 그 경로를 막는다. */
     expect(src).toMatch(/\{hasVendor && \(/); // 렌더 게이트 — 공급사 0건이면 미생성
     expect(src).not.toMatch(/disabled=\{[^}]*hasVendor/); // 역계약 — disabled 로 되돌리면 RED
-    expect(src).toMatch(/disabled=\{!purchasingOn\}/); // purchasing-off 는 disabled 가 맞다(권한 축)
+    expect(src).not.toMatch(/purchasingOn/);
   });
 
-  it("색상 — green-600 (실행 가능 액션 — 호영님 spec)", () => {
+  it("색상 계약 은퇴 · green-600 버튼이 없다 (Sticky CTA 쪽은 별 it 에서 본다)", () => {
+    /* 승계 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 그 색이 붙어 있던 버튼이 사라졌다. */
     const src = read(SHEET_PATH);
-    expect(src).toMatch(/bg-green-600 hover:bg-green-700/);
+    expect(src).not.toMatch(/bg-green-600 hover:bg-green-700/);
   });
 
   it("amber/orange 0 (§11.310 scope 정합)", () => {

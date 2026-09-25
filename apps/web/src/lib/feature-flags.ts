@@ -31,13 +31,14 @@ export interface FeatureFlags {
   ENABLE_CONTRACT_INBOX: boolean;
   /** Sourcing flow strip */
   ENABLE_SOURCING_FLOW_STRIP: boolean;
-  /**
-   * §purchasing-hide (호영님 P1 2026-06-23) — 발주/구매 라이브 표면 노출.
-   * 기본 false = 진입점 숨김(hide, not delete). 도메인(구매담당자 ≠ 직접구매자)
-   * 미정의 stage 가 거짓 흐름을 보이지 않도록 차단. DB/orders/procurement/API 라우트는
-   * 존치. 되살리기: false→true flip 또는 NEXT_PUBLIC_FF_PURCHASING="true".
-   */
-  ENABLE_PURCHASING: boolean;
+  /* 🛑 은퇴 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — ENABLE_PURCHASING.
+   *   §purchasing-hide(2026-06-23)가 「진입점 숨김(hide, not delete)」 으로 도입한 플래그다.
+   *   그 뒤 발주 표면이 **차례로 삭제**됐다(§po-ui-removed · §purchases-ui-removed ·
+   *   §order-entry-removed · §admin-order-create-removed · §funnel-s5-removed).
+   *   숨길 대상이 0 이 되자 플래그의 on 가지는 **켜면 404 로 가는 코드**가 됐다 —
+   *   보존이 아니라 잔재였다. 소비자 4곳(파이프라인 단계·재무 KPI·재고 바로 발주·대시보드 라벨)의
+   *   on 가지를 지우고 플래그를 뺀다.
+   *   🔑 API·DB 는 그대로다. 되살리는 절차는 docs/plans/QUEUE_concierge-purchasing.md 에 있다. */
 }
 
 // ===========================================================================
@@ -52,8 +53,6 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   ENABLE_CONTRACT_EXECUTION_CONSOLE: false,
   ENABLE_CONTRACT_INBOX: false,
   ENABLE_SOURCING_FLOW_STRIP: false,
-  // §purchasing-hide — 발주/구매 표면 기본 숨김.
-  ENABLE_PURCHASING: false,
 };
 
 // ===========================================================================
@@ -68,9 +67,6 @@ export const PREVIEW_FLAGS: FeatureFlags = {
   ENABLE_CONTRACT_EXECUTION_CONSOLE: true,
   ENABLE_CONTRACT_INBOX: true,
   ENABLE_SOURCING_FLOW_STRIP: true,
-  // §purchasing-hide — preview route 에서도 발주/구매는 숨김 유지(계약 preview 와 무관).
-  //   되살리기는 DEFAULT flip 또는 env override 로만.
-  ENABLE_PURCHASING: false,
 };
 
 // ===========================================================================
@@ -117,10 +113,6 @@ export function loadEnvFlags(): Partial<FeatureFlags> {
   }
   if (process.env.NEXT_PUBLIC_FF_TODAY_HUB_STRIP === 'true') {
     env.ENABLE_TODAY_HUB_STRIP = true;
-  }
-  // §purchasing-hide — 발주/구매 표면 되살리기 env override.
-  if (process.env.NEXT_PUBLIC_FF_PURCHASING === 'true') {
-    env.ENABLE_PURCHASING = true;
   }
   return env;
 }

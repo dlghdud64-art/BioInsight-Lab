@@ -19,10 +19,9 @@
  * presentational — fetch=P2 useDashboardSection 주입(별도 탑재). page 미배선(고립 빌드).
  */
 
-import { FileText, ClipboardList, PackageCheck, Boxes, RotateCw, ChevronRight } from "lucide-react";
+import { FileText, PackageCheck, Boxes, RotateCw, ChevronRight } from "lucide-react";
 import type { SectionState } from "@/lib/dashboard/section-state";
 import type { DashboardSummary } from "@/lib/dashboard/summary-derive";
-import { getFlag } from "@/lib/feature-flags";
 // §main-dashboard-p0-honesty T4 — 게이지(.pbar) 폐지 → 상태 칩(핸드오프 §4).
 //   게이지 분모(단계 최대 건수)는 도메인 의미가 없었다(견적 8건=100% · 재고 4건=50%).
 //   ★ 그 식별자를 주석에도 남기지 않는다 — B4 단언이 파일 전체를 보므로 언급 자체가 위반이다.
@@ -61,17 +60,11 @@ function buildStages(s: DashboardSummary | undefined): PipelineStage[] {
       attentionLabel: "열린 견적",
       href: "/dashboard/quotes",
     },
-    {
-      key: "po",
-      label: "발주",
-      icon: <ClipboardList className="h-4 w-4" />,
-      total: po?.total ?? 0,
-      attention: po?.ordered ?? 0,
-      attentionLabel: "미확정",
-      // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 삭제. 수는 summary 가 계속 내지만
-      //   눌렀을 때 갈 화면이 없다 → 진행이 실제로 보이는 입고로 보낸다.
-      href: "/dashboard/receiving",
-    },
+    /* 🛑 삭제 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — po 단계.
+     *   발주 UI 가 없고(§po-ui-removed) 견적을 PURCHASED 로 옮기는 UI 경로도 0이다
+     *   (§admin-order-create-removed). summary 는 수를 계속 내지만 **사용자가 만들 수 없는 값**이다.
+     *   구 판본은 플래그로 렌더만 걸렀는데, 플래그가 켜질 일이 없으므로 소스 보존이 잔재가 됐다.
+     *   되살리는 조건: docs/plans/QUEUE_concierge-purchasing.md */
     {
       key: "receive",
       label: "입고",
@@ -140,9 +133,8 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
     );
   }
 
-  // §purchasing-hide — 발주 stage 미정의 도메인 → off 시 파이프라인에서 제외(견적 → 입고 → 재고).
-  //   buildStages 의 po 객체는 보존(소스 문자열 = sentinel GREEN), 렌더 목록만 필터.
-  const stages = buildStages(summary).filter((s) => getFlag("ENABLE_PURCHASING") || s.key !== "po");
+  // §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 거를 대상이 0 이라 필터를 남기지 않는다(아무것도 안 거르는 필터는 오해만 만든다).
+  const stages = buildStages(summary);
   // §main-dashboard-p0-honesty Smoke C (2026-09-20) — 핸드오프 §6 미구현분 보완.
   //   "모바일(<768px): 파이프라인 3카드 → 1열" 인데 grid-cols-3 이 모바일에도 걸려 있었다.
   //   375px 에서 카드 폭 ~110px 인데 T4 가 붙인 상태 칩(`안전재고 미달 1`)이 그 폭을 넘는다.
@@ -156,8 +148,8 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
     <div className={`grid gap-2 ${gridColsClass}`}>
       {stages.map((stage, i) => {
         const active = stage.total > 0;
-        const chips: PipelineChip[] =
-          stage.key === "po" ? [] : (chipsByStage[stage.key as PipelineStageKey] ?? []);
+        // §purchasing-flag-retired (2026-09-25 · 호영님 판정) — po 단계가 없어졌으므로 그 예외 분기도 없다.
+        const chips: PipelineChip[] = chipsByStage[stage.key as PipelineStageKey] ?? [];
         return (
           // §main-dashboard-p0-honesty T4 — 카드 래퍼가 <a> 에서 <div> 로 바뀐다.
           //   칩이 각자 딥링크를 가지므로 카드 전체 링크 안에 링크를 넣으면 중첩 interactive 가 된다.

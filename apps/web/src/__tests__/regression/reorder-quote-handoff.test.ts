@@ -106,13 +106,18 @@ describe("§reorder-quote-handoff P3 1a — 모바일 재고 KPI de-red", () => 
 });
 
 describe("§reorder-quote-handoff P3 1b — 공급사 0 CTA 정직화", () => {
-  it("공급사 0 → 바로 발주 버튼 미노출 (disabled 아님 — hide)", () => {
+  it("바로 발주 버튼 자체가 없다 (hide 가 아니라 부재)", () => {
+    /* 승계 §purchasing-flag-retired (2026-09-25 · 호영님 판정)
+     명제가 뒤집혔다 — 「off 면 disabled + 정직 사유」 가 §purchasing-hide 의 처방이었는데,
+     플래그가 켜질 일이 없어져 그 사유가 **영구 문구**가 됐다. 목적지 화면도 없다(§po-ui-removed).
+     호영님 판정: 버튼·핸들러·사유를 함께 지운다. 되살리는 절차는 QUEUE_concierge-purchasing.md.
+     반대 명제는 regression/purchasing-hide-feature-flag.test.ts ②(4) 가 든다. */
     // hasVendor 조건부 렌더 안으로 이동
-    expect(SHEET).toMatch(/hasVendor\s*&&[\s\S]{0,400}reorder-review-direct-purchase-cta/);
+    expect(SHEET).not.toMatch(/reorder-review-direct-purchase-cta/);
   });
 
   it("공급사 0 → 대체 안내 1줄", () => {
-    expect(SHEET).toMatch(/바로 발주는 공급사·단가 확정 후 가능합니다/);
+    expect(SHEET).not.toMatch(/바로 발주는 공급사·단가 확정 후 가능합니다/);
   });
 
   it("공급사 0 → 주 CTA 라벨 '초안 만들고 공급사 지정' (다음 화면 예고)", () => {

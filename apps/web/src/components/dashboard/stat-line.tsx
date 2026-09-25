@@ -16,13 +16,12 @@
  *   page 미배선(고립 빌드, 호영님 2026-06-15) → 탑재는 별도 커밋.
  */
 
-import { TrendingDown, Wallet, ClipboardCheck, RotateCw } from "lucide-react";
+import { TrendingDown, Wallet, RotateCw } from "lucide-react";
 import type { SectionState } from "@/lib/dashboard/section-state";
 import { won, type DashboardSummary } from "@/lib/dashboard/summary-derive";
 // §main-dashboard-p0-honesty T1 — 예산 미설정 시 ₩0 대신 정직 문구(핸드오프 §0-1).
 //   금액을 "안 그리는" 것이 아니라 "안 만드는" 것 — won() 자체를 부르지 않는다.
 import { budgetStatDisplay } from "@/lib/dashboard/p0-display";
-import { getFlag } from "@/lib/feature-flags";
 
 interface StatItem {
   key: string;
@@ -58,19 +57,16 @@ const CHIP_TONE: Record<string, string> = {
 };
 
 export function StatLine({ state, summary, onRetry }: StatLineProps) {
-  // §purchasing-hide — 발주/구매 off 시 "확정 발주액" KPI 제외(2 KPI). 0건 표기가 "미완 기능"으로
-  //   읽히는 문제 차단. items 의 confirmed 객체는 보존(소스 = sentinel GREEN), 렌더만 필터.
-  const purchasingOn = getFlag("ENABLE_PURCHASING");
-  // §purchasing-hide — purchasing on=3 KPI(md:grid-cols-3, §dashboard-mobile-format 보존),
-  //   off=2 KPI(확정 발주액 제외, md:grid-cols-2). 연속 className 리터럴 유지(sentinel GREEN).
-  const kpiGridClass = purchasingOn
-    ? "grid grid-cols-1 md:grid-cols-3 gap-2"
-    : "grid grid-cols-1 md:grid-cols-2 gap-2";
+  /* §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 「확정 발주액」 KPI 는 **UI 만** 지운다(호영님).
+   *   금액의 근거는 Order 이고 그 수는 /api/dashboard/summary 가 계속 낸다 — 데이터 축은 건드리지 않았다.
+   *   지우는 이유: 발주를 만들 UI 경로가 0이라(§admin-order-create-removed) 이 금액은
+   *   사용자가 움직일 수 없는 숫자다. 되살리는 조건은 QUEUE_concierge-purchasing.md 에 있다. */
+  const kpiGridClass = "grid grid-cols-1 md:grid-cols-2 gap-2";
 
   if (state === "loading") {
     return (
       <div className={kpiGridClass} aria-busy="true" aria-label="KPI 로딩 중">
-        {(purchasingOn ? [0, 1, 2] : [0, 1]).map((i) => (
+        {[0, 1].map((i) => (
           <div
             key={i}
             className="h-[76px] rounded-xl border border-slate-200 bg-slate-50 p-3 md:p-4 animate-pulse"
@@ -115,15 +111,7 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
       value: s?.budget.remaining ?? 0,
       href: "/dashboard/budget",
     },
-    {
-      key: "confirmed",
-      label: "확정 발주액",
-      icon: <ClipboardCheck className="h-3.5 w-3.5" />,
-      value: s?.modules.po.confirmedAmount ?? 0,
-      // §po-ui-removed (2026-09-24 · 호영님 판정) — 발주 UI 삭제. 금액의 근거는 주문이고,
-      //   그 진행은 입고에서 추적된다.
-      href: "/dashboard/receiving",
-    },
+    /* 🛑 삭제 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 「확정 발주액」 KPI 카드(UI 만). summary.modules.po.confirmedAmount 는 그대로다. */
   ];
 
   // §kpi-status-chip — KPI 우측 상태칩(canonical summary.budget 단일 진실, 가짜 0).
@@ -140,24 +128,21 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
     if (key === "remaining") {
       return isSet ? { label: "추적 중", tone: "ok" } : { label: "설정 필요", tone: "idle" };
     }
-    return (s?.modules.po.confirmedAmount ?? 0) > 0
-      ? { label: "추적 중", tone: "ok" }
-      : { label: "발주 0건", tone: "idle" };
+    // §purchasing-flag-retired (2026-09-25 · 호영님 판정) — confirmed 카드가 없어졌으므로 이 분기에 도달하지 않는다. 기본값만 남긴다.
+    return { label: "추적 중", tone: "ok" };
   };
 
   // §main-dashboard-p0-honesty T1 — KPI 표시 파생.
   //   예산 축(지출·잔여)은 미설정 시 pending(집계 전/설정 전). 확정 발주액은 예산과 무관하므로 항상 금액.
   const displayFor = (key: string, value: number) =>
-    key === "confirmed"
-      ? { mode: "amount" as const, primary: won(value), helper: null }
-      : budgetStatDisplay(key === "spend" ? "spend" : "remaining", value, isSet, won);
+    budgetStatDisplay(key === "spend" ? "spend" : "remaining", value, isSet, won);
 
   return (
     // §dashboard-mobile-kpi — ₩ 금액이 모바일 grid-cols-3 폭을 넘쳐 잘림(정확값 위반).
     //   모바일=가로 스크롤(카드가 금액 길이만큼 확장 → 잘림 0, §11.311 compact 1줄·first-fold 보존),
     //   md+=기존 grid-cols-3.
     <div className={kpiGridClass}>
-      {items.filter((it) => purchasingOn || it.key !== "confirmed").map((it) => {
+      {items.map((it) => {
         const disp = displayFor(it.key, it.value);
         // pending 은 "아직 집계 전" 이라 0건 비활성 톤과 같은 취급(가짜 활성 0).
         const active = disp.mode === "amount" && it.value > 0;

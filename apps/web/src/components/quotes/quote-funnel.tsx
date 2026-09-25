@@ -9,7 +9,7 @@
  *   - 현재 집중 = 케이스 존재하는 가장 앞 단계 → accent-weak bg + inset ring + "현재 집중" 배지.
  *   - 값 0 단계 흐리게(dim). 단계 클릭 = 테이블 필터(케이스 있을 때만; 0건 disabled, dead button 0).
  *   - 색: §11.302 정합(회신추적=yellow, amber/orange 미사용). accent=#244e9e/#eaf1fd(시안).
- *   - 발주 전환(s5)은 ENABLE_PURCHASING off 시 제외(발주 hide 결정 일관).
+ *   - s5(발주 전환)는 §funnel-s5-removed 로 삭제됐다(생산자 0).
  *   - ★ 가짜 데이터 0: quotes(실데이터)에서만 집계.
  */
 

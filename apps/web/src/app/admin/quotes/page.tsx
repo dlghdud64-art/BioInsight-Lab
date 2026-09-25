@@ -41,7 +41,6 @@ import {
   Search,
   Flame,
   Clock,
-  CheckCircle2,
   Send,
   FileText,
   AlertTriangle,
@@ -93,7 +92,9 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; order: n
   SENT:       { label: "공급사 문의중",   className: "bg-indigo-50 text-indigo-700 border-0",  order: 2 },
   RESPONDED:  { label: "고객 회신 대기",  className: "bg-purple-50 text-purple-700 border-0",  order: 3 },
   COMPLETED:  { label: "견적 발송 완료",  className: "bg-emerald-50 text-emerald-700 border-0",order: 4 },
-  PURCHASED:  { label: "주문 전환",       className: "bg-green-50 text-green-700 border-0",    order: 5 },
+  // §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 「주문 전환」 칩(상태 뱃지·KPI·필터) 삭제. 만들 경로가 0이라 이 칩은 영구 0이다.
+  //   ⚠️ 상태 자체는 DB 에 남는다 — 라벨만 중립으로 둔다(과거 행이 생기면 뱃지가 비지 않게).
+  PURCHASED:  { label: "구매 완료",       className: "bg-slate-100 text-slate-600 border-0",    order: 5 },
   CANCELLED:  { label: "종료",            className: "bg-el text-slate-500 border-0",   order: 6 },
 };
 
@@ -181,7 +182,7 @@ export default function AdminQuotesPage() {
       if (q.status === "COMPLETED" || q.status === "PURCHASED" || q.status === "CANCELLED") return false;
       return (Date.now() - new Date(q.createdAt).getTime()) / 3600000 > 24;
     }).length,
-    converted: allQuotes.filter((q) => q.status === "PURCHASED").length,
+    // §purchasing-flag-retired (2026-09-25 · 호영님 판정) — converted KPI 삭제에 따라 집계도 지운다(쓰는 곳 0).
   };
 
   // 선택 관리
@@ -237,7 +238,7 @@ export default function AdminQuotesPage() {
             <MiniKPI icon={FileText} label="신규 요청" count={kpi.newReq} color="blue" onClick={() => setStatusFilter("PENDING")} />
             <MiniKPI icon={Clock} label="검토 중" count={kpi.reviewing} color="amber" onClick={() => setStatusFilter("PARSED")} />
             <MiniKPI icon={AlertTriangle} label="응답 지연" count={kpi.delayed} color="red" onClick={() => setStatusFilter("all")} />
-            <MiniKPI icon={CheckCircle2} label="주문 전환" count={kpi.converted} color="green" onClick={() => setStatusFilter("PURCHASED")} />
+            {/* 🛑 삭제 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 「주문 전환」 KPI. prod 0건이고 만들 UI 경로가 0이다. */}
           </div>
 
           {/* ── 필터 바 ── */}
@@ -264,7 +265,7 @@ export default function AdminQuotesPage() {
                 <SelectItem value="SENT">공급사 문의중</SelectItem>
                 <SelectItem value="RESPONDED">고객 회신 대기</SelectItem>
                 <SelectItem value="COMPLETED">견적 발송 완료</SelectItem>
-                <SelectItem value="PURCHASED">주문 전환</SelectItem>
+                {/* 🛑 삭제 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 「주문 전환」 상태 필터. 고를 값이 영구 0이면 dead 컨트롤이다. */}
                 <SelectItem value="CANCELLED">종료</SelectItem>
               </SelectContent>
             </Select>

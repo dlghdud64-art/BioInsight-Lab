@@ -315,7 +315,11 @@ describe("§reorder-handoff 축 C — 1b 재발주안 요약", () => {
 
   it("CTA 3슬롯 — 보조 CTA 는 md 정본 문안", () => {
     expect(hasLabel("1b", "1b.cta.primary").ok).toBe(true);
-    expect(hasLabel("1b", "1b.cta.note").ok).toBe(true);
+    /* 🛑 은퇴 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 슬롯 `1b.cta.note`(「바로 발주는 공급사·단가 확정 후 가능합니다」).
+       그 문구는 「바로 발주 버튼이 있는데 지금은 못 쓴다」 는 안내였다. 버튼이 사라져 대상이 없다.
+       🔑 **fixture 는 고치지 않았다** — fixture 는 그때의 시안 기록이고, 구현을 따라가게 만들면
+          게이트가 스스로 무너진다(§fixture 필드 지위 분리). 바뀐 것은 이 테스트의 주장이다.
+       반대 명제: regression/purchasing-hide-feature-flag.test.ts ②(4). */
     // md 2곳(재발주 견적 핸드오프:22 · 소싱 견적 담기:35) + 시안 일치. 소스에 `먼저` 가 빠져 있었다.
     expect(hasLabel("1b", "1b.cta.secondary").probe).toBe("공급사 소싱에서 먼저 찾기");
     expect(hasLabel("1b", "1b.cta.secondary").ok).toBe(true);

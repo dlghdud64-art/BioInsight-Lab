@@ -160,8 +160,13 @@ describe("§inventory-mobile-reorder-gate — 기존 invariant 보존(회귀 0)"
      *   버튼과 게이팅(아래 3줄)은 그대로 산다 — 목적지는 발주 UI 가 다시 생길 때 함께 정한다. */
     // 부정 단언은 **주석 제거본**에 건다(CLAUDE.md) — 끊은 사유를 적은 주석이 있다.
     expect(stripComments(SHEET)).not.toMatch(/dashboard\/purchase-orders/);
-    expect(SHEET).toMatch(/hasVendor\s*&&[\s\S]{0,400}reorder-review-direct-purchase-cta/);
-    expect(SHEET).toMatch(/disabled=\{!purchasingOn\}/);
-    expect(SHEET).toMatch(/bg-green-600 hover:bg-green-700/);
+    /* 승계 §purchasing-flag-retired (2026-09-25 · 호영님 판정)
+     명제가 뒤집혔다 — 「off 면 disabled + 정직 사유」 가 §purchasing-hide 의 처방이었는데,
+     플래그가 켜질 일이 없어져 그 사유가 **영구 문구**가 됐다. 목적지 화면도 없다(§po-ui-removed).
+     호영님 판정: 버튼·핸들러·사유를 함께 지운다. 되살리는 절차는 QUEUE_concierge-purchasing.md.
+     반대 명제는 regression/purchasing-hide-feature-flag.test.ts ②(4) 가 든다. */
+    expect(SHEET).not.toMatch(/reorder-review-direct-purchase-cta/);
+    expect(SHEET).not.toMatch(/purchasingOn/);
+    expect(SHEET).not.toMatch(/bg-green-600 hover:bg-green-700/);
   });
 });

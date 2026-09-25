@@ -61,8 +61,12 @@ describe("§admin-order-create-removed · 관리자 주문 생성 경로 0", () 
     const src = code(ADMIN_QUOTES);
     // 상태 맵 항목 **그 자리**를 본다 — 파일 어딘가에 글자가 있는 것으로는 지워진 것을 못 잡는다
     //   (프로브 ② 가 잡았다: 항목을 바꿔도 다른 PURCHASED 가 대신 매칭했다 · 4원칙 ④ 대체 매칭).
-    expect(src).toMatch(/PURCHASED:\s+\{\s*label: "주문 전환"/);
-    expect(src).toMatch(/<SelectItem value="PURCHASED">주문 전환<\/SelectItem>/);
+    /* 승계 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 호영님이 관리자 「주문 전환」 칩(뱃지·KPI·필터)까지 지우기로 판정했다.
+       ② 의 명제는 「읽기 축을 없는 척하지 않는다」 이고 그건 불변이다 — 상태값 자체는 남아 있고
+       라벨만 중립(「구매 완료」)으로 바뀌었다. 과거 행이 생기면 뱃지가 비지 않는다. */
+    expect(src).toMatch(/PURCHASED:\s+\{\s*label: "구매 완료"/);
+    expect(src).not.toMatch(/<SelectItem value="PURCHASED">/);
+    expect(src).not.toMatch(/label="주문 전환"/);
   });
 
   it("③ API·DB 는 건드리지 않았다 (구매 대행을 켤 때 다시 쓴다)", () => {

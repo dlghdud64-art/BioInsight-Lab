@@ -11,7 +11,7 @@
  *
  * 지금: 상세·발송 페이지와 같은 처리 — 시드를 읽지 않고 화면이 자기 상태를 사실대로 말한다.
  *   「찾을 수 없음」 이라고 하지 않는다(찾아본 적이 없다). 실제 발주 조회는 별개 기능 개발이다
- *   (발주는 ENABLE_PURCHASING=false 로 꺼져 있는 미완 기능).
+ *   (발주는 §purchasing-flag-retired (2026-09-25 · 호영님 판정) 로 제품에서 사라졌다).
  * 계약: __tests__/regression/po-seed-cutoff.test.ts
  */
 

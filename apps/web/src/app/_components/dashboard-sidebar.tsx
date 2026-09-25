@@ -192,7 +192,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   /* §purchases-ui-removed (2026-09-24 · 호영님 판정) — purchasing 게이팅 제거.
    *   §purchasing-hide 는 「발주 관리」·「구매 운영」 두 항목을 플래그로 **숨기는** 장치였다.
    *   두 표면을 모두 삭제했으므로 숨길 대상이 0 이다 — 아무것도 거르지 않는 필터는 남기지 않는다.
-   *   🔑 플래그(ENABLE_PURCHASING) 자체는 다른 소비자(파이프라인 단계·KPI 등)가 남아 있어 유지한다. */
+   *   🔑 §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 그 남은 소비자들도 정리돼 플래그 자체가 은퇴했다. */
   const visibleGroups = sidebarGroups;
   
   // 외부에서 제어하는 경우와 내부에서 제어하는 경우를 모두 지원

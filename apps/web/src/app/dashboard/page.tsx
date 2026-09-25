@@ -66,7 +66,6 @@ import { RecentActivityCard } from "@/components/dashboard/recent-activity-card"
 import { Pipeline } from "@/components/dashboard/pipeline";
 import { StatLine } from "@/components/dashboard/stat-line";
 // §purchasing-hide — 발주/구매 표면 게이트(파이프라인 subtitle·추후 진입점).
-import { getFlag } from "@/lib/feature-flags";
 // §dashboard-shifan-adopt P1 — ActionInbox("오늘 처리해야 할 일") 가 레거시 우선순위 배너 대체.
 import { ActionInbox, type ActionInboxItem } from "@/components/dashboard/action-inbox";
 // §dashboard-shifan-adopt P2 — NextStepBanner("다음 단계 추천") 가 레거시 "시작하기 3단계" hero 대체.
@@ -679,8 +678,8 @@ function DashboardPageInner() {
           상태 라벨(열린견적/미확정/미완료/재주문·이상없음·데이터없음)은 컴포넌트 내부 정직 노출(갭2). */}
       <section className="space-y-2">
         <h2 className="text-[13px] font-bold text-slate-900">
-          {/* §purchasing-hide — off 시 발주 단계 라벨 제거(견적 → 입고 → 재고). 양 문자열 소스 보존. */}
-          운영 파이프라인 <span className="text-slate-400 font-semibold">· {getFlag("ENABLE_PURCHASING") ? "견적 → 발주 → 입고 → 재고" : "견적 → 입고 → 재고"}</span>
+          {/* §purchasing-flag-retired (2026-09-25 · 호영님 판정) — 발주 가지를 지운다. 플래그가 켜질 일이 없어 「양 문자열 보존」 은 보존이 아니라 잔재였다. */}
+          운영 파이프라인 <span className="text-slate-400 font-semibold">· 견적 → 입고 → 재고</span>
         </h2>
         <Pipeline
           state={summarySection.state}
