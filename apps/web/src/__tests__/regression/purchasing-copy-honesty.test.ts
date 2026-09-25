@@ -24,12 +24,19 @@
  *   ③ 결재 주장은 **남는다** — 없앤 것이 「없는 척」 이 되면 안 된다
  *
  * ── 자기 한계 ──
- *   1. `app/intro/page.tsx` 는 **범위 밖**이다. 「발주 준비」 가 8곳 있고(랜딩 서사 전체),
- *      「발주」 자체가 아니라 「준비까지 연결」 이라는 약한 형태다. 서사 재작성은 제품·마케팅
- *      판정이 필요해 호영님께 올렸다. 판정이 나오면 이 파일의 축을 거기까지 넓힌다.
+ *   ~~1. `app/intro/page.tsx` 범위 밖~~ → **닫힘 §intro-flow-honesty (2026-09-25 · 호영님 판정)**.
+ *      호영님이 흐름을 판정했다: 검색 → 비교 → 견적 요청 → **회신 추적** → 선정 → 입고 → 재고.
+ *      「회신 추적」 이 들어간 이유는 그 숫자(회신 N/M)가 제품이 **지금 실제로 해주는 일**이기 때문이다
+ *      (§quote-reply-denominator 로 분모까지 고쳤다). 아래 ④ 가 그 축을 든다.
  *   2. `support-center` ai-1 의 「발주서 PDF」 는 **입력물 종류**이지 기능 주장이 아니다
  *      (외부에서 받은 발주서를 분석하는 것은 참일 수 있다). 같은 이유로 남겼다 · 판정 대기.
  *   3. 소스 문자열만 본다. 렌더 결과는 보지 않는다.
+ *   4. **결재 축은 아직 안 본다** — 호영님 2026-09-25 라이브 실측으로 목록에 올린다(닫지는 않았다):
+ *      · 견적 관리 상단 KPI 「승인/예외 · 선정·승인 대기」 — 「승인」 은 FREE 에 없는 결재다.
+ *        오늘 참인 이름은 「선정 대기」 다.
+ *      · 이 파일 안 /intro L538 「승인 기준과 권한」 · L564 「승인 기준」 서사
+ *      · ③ 이 지키는 지원센터 결재 주장 — 있는 기능이지만 **FREE 에서는 보이지 않는다**
+ *      다음 트랙(결재 약속 표면 전수)이 이 넷을 한 축으로 판정한다.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -41,6 +48,7 @@ const code = (rel: string) => stripComments(readFileSync(join(SRC, rel), "utf8")
 
 const HERO = "app/_components/bioinsight-hero-section.tsx";
 const SUPPORT = "app/dashboard/support-center/page.tsx";
+const INTRO = "app/intro/page.tsx";
 
 describe("§purchasing-copy-honesty · 없는 기능을 설명으로 광고하지 않는다", () => {
   it("① 퍼블릭 랜딩 파이프라인이 발주를 단계로 걸지 않는다 · 결재로 말한다", () => {
@@ -69,6 +77,24 @@ describe("§purchasing-copy-honesty · 없는 기능을 설명으로 광고하�
     expect(src).not.toMatch(/확정·발주 시/);
     // 삭제된 카드가 되살아나면 RED
     expect(src).not.toMatch(/title: "발주 및 구매 관리"/);
+  });
+
+  it("④ /intro 서사가 「발주 준비」 를 단계로 말하지 않는다 · 회신 추적·선정으로 말한다", () => {
+    /* §intro-flow-honesty (2026-09-25 · 호영님 판정) — 자기 한계 1 이 닫힌 자리다.
+       구 서사는 「발주 준비」 를 8곳에서 흐름의 종착으로 걸고 있었다. 그 화면이 없다. */
+    const src = code(INTRO);
+    expect(src).not.toMatch(/발주/);
+    // 호영님이 준 흐름이 서사에 실제로 들어 있다.
+    expect(src).toMatch(/견적 요청, 회신 추적, 선정까지/);
+    expect(src).toMatch(/label: "견적 요청 → 회신 추적"/);
+    expect(src).toMatch(/label: "선정 → 입고·재고"/);
+    expect(src).toMatch(/title: "회신 추적"/);
+    /* 샘플 지표도 제품이 실제로 재는 구간으로. 구 「요청→발주 추적」 은 잴 수 있는 끝이 없었다. */
+    expect(src).toMatch(/change: "요청→회신"/);
+    /* ⚠️ 「선정」 은 사용자의 **행위**를 가리킨다 — 그 선택을 저장하는 화면은 아직 없다
+       (select-reply API 는 있고 부르는 UI 0 · QuoteReply 0행). 문구가 기록 기능을 약속하면 RED 다. */
+    expect(src).not.toMatch(/선정 기록/);
+    expect(src).not.toMatch(/선정 저장/);
   });
 
   it("③ 결재 주장은 남는다 (없앤 것이 「없는 척」 이 되면 안 된다)", () => {

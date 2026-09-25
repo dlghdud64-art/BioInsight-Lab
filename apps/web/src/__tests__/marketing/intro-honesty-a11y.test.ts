@@ -31,7 +31,10 @@ describe("§intro-honesty-a11y — 4 항목 적용", () => {
   });
 
   it("① KPI 완전 중립화 — 지어낸 증감률 제거(§11.318 fake data 0)", () => {
-    expect(INTRO).toMatch(/value: "리드타임", change: "요청→발주 추적"/);
+    /* 승계 §intro-flow-honesty (2026-09-25 · 호영님 판정) — 「요청→발주 추적」 은 잴 수 있는 끝이 없었다
+       (발주 화면 0). 제품이 지금 실제로 재는 구간은 요청부터 회신까지다(§quote-reply-denominator).
+       명제(KPI 가 지어낸 증감률 없이 중립 라벨을 쓴다)는 불변이고 라벨만 참인 것으로 옮겼다. */
+    expect(INTRO).toMatch(/value: "리드타임", change: "요청→회신"/);
     expect(INTRO).toMatch(/value: "처리량", change: "주차별 흐름"/);
     expect(INTRO).toMatch(/value: "재사용", change: "이전 결정 활용"/);
     expect(INTRO).not.toMatch(/8주 전 대비 −58%/);

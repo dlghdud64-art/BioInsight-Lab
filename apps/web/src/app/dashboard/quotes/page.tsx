@@ -3992,16 +3992,21 @@ function QuotesPageContent() {
                 기반 1줄 상태 안내. 새 추정 없음. */}
             {/* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 구 조건은 `status !== "SENT"` 라 **COMPLETED 에도 「첫 액션이 필요합니다」**가 떴다.
                 선정이 끝났다고 말하면서 첫 액션을 요구하는 자기모순이었다(호영님 라이브 실측).
-                상태를 하나씩 읽어 참인 것만 말한다. */}
-            <p className="text-[11px] font-medium text-slate-600 mt-1">
-              {selectedQuote.status === "COMPLETED"
-                ? (selectedQuote.selectedReplyId ? "구매 후 입고를 등록하세요" : "공급사를 고른 뒤 구매하세요")
-                : selectedQuote.status === "PENDING"
+
+                §intro-flow-honesty (2026-09-25 · 호영님 판정) — 그 자리를 완료용 문구로 채웠더니 **바로 윗줄(urgency)과 같은 말이 두 줄로 쌓였다**:
+                  「공급사를 고른 뒤 구매하고, 입고 관리에서 입고를 등록하세요」
+                  「공급사를 고른 뒤 구매하세요」
+                리드 줄은 urgency 가 못 말하는 것을 말할 때만 뜻이 있다. 완료 상태는 urgency 가 이미
+                끝까지 말하므로 **줄 자체를 내지 않는다**(호영님: 더 완전한 첫 줄을 남긴다). */}
+            {selectedQuote.status !== "COMPLETED" && (
+              <p className="text-[11px] font-medium text-slate-600 mt-1">
+                {selectedQuote.status === "PENDING"
                   ? "첫 액션이 필요합니다"
                   : sqResponseCount < sqReplyTotal
                     ? "회신을 기다리는 중입니다"
                     : "비교할 견적이 모였습니다"}
-            </p>
+              </p>
+            )}
           </div>
 
           {/* Rail scrollable body */}

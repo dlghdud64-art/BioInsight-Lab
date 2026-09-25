@@ -97,11 +97,16 @@ describe("§quote-completed-honesty · 완료 견적이 선정을 단정하지 �
     // 구 판본: status !== "SENT" 면 전부 첫 액션 — COMPLETED 가 그대로 걸렸다.
     expect(pageCode).not.toMatch(/status\s*!==\s*"SENT"[\s\S]{0,80}첫 액션이 필요합니다/);
     // 완료를 **먼저** 가른다.
+    /* 승계 §intro-flow-honesty (2026-09-25 · 호영님 판정) — 완료용 문구를 그 자리에 넣었더니 **바로 윗줄(urgency)과 같은 말이 두 줄**로 쌓였다
+       (호영님 라이브 실측). 리드 줄은 urgency 가 못 말하는 것을 말할 때만 뜻이 있으므로
+       완료 상태에서는 **줄 자체를 내지 않는다**. 명제(「첫 액션」 은 PENDING 에서만 나온다)는 불변. */
+    expect(pageCode).toMatch(/selectedQuote\.status \!== "COMPLETED" && \(/);
     expect(pageCode).toMatch(
-      /selectedQuote\.status\s*===\s*"COMPLETED"[\s\S]{0,200}첫 액션이 필요합니다/,
+      /selectedQuote\.status\s*===\s*"PENDING"[\s\S]{0,80}첫 액션이 필요합니다/,
     );
-    // §quote-selection-recorded (2026-09-25 · 호영님 판정) — 완료 안에서도 선정 기록으로 다시 갈린다.
-    expect(pageCode).toMatch(/selectedQuote\.selectedReplyId \? "구매 후 입고를 등록하세요" : "공급사를 고른 뒤 구매하세요"/);
+    // 중복이던 짧은 문구는 사라졌고, 완전한 문장(urgency)만 남는다.
+    expect(pageCode).not.toMatch(/"공급사를 고른 뒤 구매하세요"/);
+    expect(pageCode).toMatch(/공급사를 고른 뒤 구매하고, 입고 관리에서 입고를 등록하세요/);
   });
 
   it("③ 판단 근거가 완료 견적에 「최적안 선택」 을 요구하지 않는다", () => {

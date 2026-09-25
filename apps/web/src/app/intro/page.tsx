@@ -164,8 +164,10 @@ const ROLE_CARDS = [
     tab: "구매",
     before: "비교 결과를 다시 정리하고 전화·이메일로 수동 요청",
     beforeChips: ["전화·이메일 요청", "재정리 반복"],
-    after: "선택안 기준으로 요청안을 만들고 발주 준비까지 연결",
-    afterChips: ["요청안 자동 초안", "발주 준비 연결"],
+    // §intro-flow-honesty (2026-09-25 · 호영님 판정) — 「발주 준비」 는 제품에 없다(§po-ui-removed · §purchases-ui-removed).
+    //   오늘 실제로 이어지는 곳은 견적 요청 → 회신 추적 → 선정이다.
+    after: "선택안 기준으로 견적을 요청하고 회신 추적·선정까지 연결",
+    afterChips: ["요청안 자동 초안", "회신 추적 · 선정"],
   },
   {
     role: "운영 관리자",
@@ -350,7 +352,7 @@ export default function IntroPage() {
               className="text-base md:text-lg max-w-2xl mx-auto mb-5 leading-relaxed"
               style={{ color: D.text2 }}
             >
-              시약·장비 검색, 후보 정리, 비교·선택, 요청 생성, 발주 준비까지<br className="hidden md:block" />
+              시약·장비 검색, 후보 정리, 비교·선택, 견적 요청, 회신 추적, 선정까지<br className="hidden md:block" />
               분리된 구매 작업을 하나의 운영 흐름으로 정리합니다.
             </motion.p>
 
@@ -429,11 +431,12 @@ export default function IntroPage() {
               }}>
                 <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#E2E8F0" }}>운영 반영 흐름</h3>
                 <p className="text-sm mb-5" style={{ color: "rgba(226,232,240,0.9)" }}>
-                  요청, 발주 준비, 입고, 재고까지 운영 흐름을 이어줍니다.
+                  견적 요청, 회신 추적, 선정, 입고, 재고까지 운영 흐름을 이어줍니다.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
+                  {/* §intro-flow-honesty (2026-09-25 · 호영님 판정) — 「발주 준비」 화면이 없다. 이 칸이 가리킬 수 있는 라이브 표면은 회신 추적(견적 관리)이다. */}
                   {[
-                    { icon: ShoppingCart, title: "발주 준비" },
+                    { icon: ShoppingCart, title: "회신 추적" },
                     { icon: Warehouse, title: "재고 운영" },
                   ].map((s) => (
                     <div key={s.title} className="rounded-xl p-4" style={{ backgroundColor: "rgba(148,163,184,0.15)", border: "1px solid rgba(203,213,225,0.25)" }}>
@@ -466,8 +469,11 @@ export default function IntroPage() {
                 {[
                   { icon: Search, label: "검색 → 후보 정리", desc: "결과에서 후보를 바로 저장" },
                   { icon: GitCompare, label: "비교 → 선택안 확정", desc: "조건 나란히 비교 후 확정" },
-                  { icon: FileText, label: "요청 생성 → 초안 작성", desc: "선택안 기준 요청안 자동 초안" },
-                  { icon: Warehouse, label: "발주 준비 → 입고·재고", desc: "입고 반영 → Lot 기록까지 운영으로 연결" },
+                  { icon: FileText, label: "견적 요청 → 회신 추적", desc: "공급사별 회신 도착 현황을 같은 화면에서 추적" },
+                  /* §intro-flow-honesty (2026-09-25 · 호영님 판정) — 「선정」 은 사용자가 회신을 비교해 고르는 **행위**를 가리킨다.
+                     ⚠️ 그 선택을 저장하는 화면은 아직 없다(select-reply API 는 있고 부르는 UI 가 0).
+                     그래서 문구는 「고른 뒤 입고를 등록한다」 까지만 말하고 기록 기능을 약속하지 않는다. */
+                  { icon: CheckCircle2, label: "선정 → 입고·재고", desc: "회신을 비교해 고른 뒤 입고 반영 → Lot 기록까지 연결" },
                 ].map((item, i, arr) => (
                   <div key={item.label} className="relative py-4" style={i < arr.length - 1 ? { borderBottom: "1px solid #EEF2F7" } : undefined}>
                     <div className="flex items-center gap-3.5">
@@ -514,7 +520,7 @@ export default function IntroPage() {
                 <div className="flex flex-col gap-4">
                   {[
                     { icon: Search, title: "통합 검색", desc: "품목·제조사·카탈로그 기준으로 탐색하고 후보를 바로 저장" },
-                    { icon: FileText, title: "요청 생성", desc: "선택안 기준으로 요청안을 작성하고 발주 준비로 연결" },
+                    { icon: FileText, title: "견적 요청", desc: "선택안 기준으로 요청안을 작성하고 회신 추적으로 연결" },
                   ].map((card) => (
                     <div key={card.title} className="rounded-xl p-5 flex items-start gap-4" style={{ backgroundColor: L.bg, border: `1px solid ${L.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
                       <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: L.blueSoft }}>
@@ -646,7 +652,8 @@ export default function IntroPage() {
                   {/* KPI summary */}
                   <div className="grid grid-cols-3 gap-px" style={{ backgroundColor: L.border }}>
                     {[
-                      { label: "평균 소요 시간", value: "리드타임", change: "요청→발주 추적" },
+                      // §intro-flow-honesty (2026-09-25 · 호영님 판정) — 제품이 지금 실제로 재는 구간은 요청부터 회신까지다(분모도 그 축으로 고쳤다).
+                      { label: "평균 소요 시간", value: "리드타임", change: "요청→회신" },
                       { label: "주간 처리 건수", value: "처리량", change: "주차별 흐름" },
                       { label: "재사용 선택안", value: "재사용", change: "이전 결정 활용" },
                     ].map((kpi) => (
