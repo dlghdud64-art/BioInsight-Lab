@@ -456,7 +456,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                 </div>
                 <ul className="divide-y divide-bd">
                   {visible.map((a) => (
-                    <li key={a.id} className="grid grid-cols-[72px_minmax(0,1fr)_auto] md:grid-cols-[90px_minmax(0,1fr)_120px_130px] items-center gap-x-3 gap-y-1 px-4 py-3">
+                    <li key={a.id} className="grid grid-cols-[52px_minmax(0,1fr)_auto] xl:grid-cols-[60px_minmax(0,1fr)_112px_auto] items-center gap-x-3 gap-y-1 px-4 py-3">
                       <span className={`justify-self-start rounded-full px-2 py-0.5 text-[11px] font-semibold ${STAGE_PILL[a.stage]}`}>{STAGE_LABEL[a.stage]}</span>
                       <div className="min-w-0">
                         <p className="text-sm text-slate-900 truncate">
@@ -471,8 +471,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                           {[...a.meta, a.date ? fmtMd(a.date) : null].filter(Boolean).join(" · ")}
                         </p>
                       </div>
-                      <span className={`hidden md:block text-xs ${a.stage === "actual" ? "text-emerald-700" : "text-slate-500"}`}>{a.nextTransition}</span>
-                      <span className="text-right text-sm font-bold text-slate-900 tabular-nums">{formatAmt(a.amount)}</span>
+                      <span className={`hidden xl:block text-xs ${a.stage === "actual" ? "text-emerald-700" : "text-slate-500"}`}>{a.nextTransition}</span>
+                      <span className="text-right text-sm font-bold text-slate-900 tabular-nums whitespace-nowrap">{formatAmt(a.amount)}</span>
                     </li>
                   ))}
                 </ul>
