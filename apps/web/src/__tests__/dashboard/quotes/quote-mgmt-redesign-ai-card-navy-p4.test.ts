@@ -47,12 +47,16 @@ describe("§quote-management-redesign P4 — 카드 canonical 보존(AI 격상 0
 });
 
 describe("§quote-management-redesign P4 — 퍼널 5단계 현행 가드(호영님 결정)", () => {
-  it("5단계 라벨 보존(발송 대기/회신 추적/비교 검토/승인·예외/발주 전환)", () => {
+  it("5단계 라벨 보존(발송 대기/회신 추적/비교 검토/선정 대기/입고 대기)", () => {
+    /* 승계 §approval-gate-single-source · §funnel-s5-producer (2026-09-25 · 호영님 판정) — 라벨만 참인 것으로 옮겼다.
+       s4 「승인/예외」 는 결재가 열렸을 때만 참이라 판정 함수 뒤로(기본 「선정 대기」).
+       s5 「발주 전환」 은 지운 기능 이름이고 그 버킷은 PURCHASED 라 「입고 대기」 다.
+       명제(5단계 라벨이 보존된다)는 불변. 판정축은 regression/approval-gate-single-source.test.ts ⑥⑦⑧ 가 든다. */
     expect(FUNNEL).toMatch(/label: "발송 대기"/);
     expect(FUNNEL).toMatch(/label: "회신 추적"/);
     expect(FUNNEL).toMatch(/label: "비교 검토"/);
-    expect(FUNNEL).toMatch(/label: "승인\/예외"/);
-    expect(FUNNEL).toMatch(/label: "발주 전환"/);
+    expect(FUNNEL).toMatch(/label: "선정 대기"/);
+    expect(FUNNEL).toMatch(/label: "입고 대기"/);
   });
   it("발주 off 시 s5 hide 게이트 + 0건 흐림 보존", () => {
     expect(FUNNEL).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);

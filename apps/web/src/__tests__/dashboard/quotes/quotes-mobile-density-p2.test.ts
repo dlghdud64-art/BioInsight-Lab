@@ -48,7 +48,11 @@ describe("§quotes-mobile-density P2 — canonical 보존(회귀 0)", () => {
     expect(FUNNEL).toMatch(/진행 중 견적 없음/);
     expect(FUNNEL).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
     expect(FUNNEL).toMatch(/s\.key !== "s5"/);
-    expect(FUNNEL).toMatch(/label: "발주 전환"/);
+    /* 승계 §approval-gate-single-source · §funnel-s5-producer (2026-09-25 · 호영님 판정) — 라벨만 참인 것으로 옮겼다.
+       s4 「승인/예외」 는 결재가 열렸을 때만 참이라 판정 함수 뒤로(기본 「선정 대기」).
+       s5 「발주 전환」 은 지운 기능 이름이고 그 버킷은 PURCHASED 라 「입고 대기」 다.
+       명제(s5 단계 정의가 보존된다)는 불변. 판정축은 regression/approval-gate-single-source.test.ts ⑥⑦⑧ 가 든다. */
+    expect(FUNNEL).toMatch(/label: "입고 대기"/);
   });
   it("§11.302 색 정합 보존(yellow=회신추적, amber/orange 0)", () => {
     expect(FUNNEL).toMatch(/text-yellow-600/);

@@ -1838,6 +1838,19 @@ function QuotesPageContent() {
     };
   }, [selectedQuoteId]);
 
+  /* §approval-gate-single-source (2026-09-25 · 호영님 판정) — 결재 표면을 그릴지 **서버에 묻는다**.
+     화면이 요금제 이름을 직접 읽는 곳은 0이어야 한다. 이 값은 request-approval 라우트의 400 두 개와
+     같은 함수(lib/approval/approval-capability)가 판정한 결과다. 오늘 prod 는 전원 false 다. */
+  const { data: approvalCapability } = useQuery<{ enabled: boolean; reason: string | null }>({
+    queryKey: ["approval-capability"],
+    queryFn: async () => {
+      const res = await fetch("/api/approval/capability");
+      if (!res.ok) return { enabled: false, reason: null };
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: quotesData, isLoading: quotesQueryLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["quotes", statusFilter],
     queryFn: async () => {
@@ -2566,6 +2579,7 @@ function QuotesPageContent() {
       ) : (
       <QuoteFunnel
         quotes={quotesData?.quotes ?? []}
+        approvalEnabled={approvalCapability?.enabled ?? false}
         activeStage={
           (({ PENDING: "s1", PARSED: "s1", SENT: "s2", RESPONDED: "s3", COMPLETED: "s4", PURCHASED: "s5" } as Record<string, Stage>)[statusFilter]) ?? null
         }
@@ -3556,6 +3570,7 @@ function QuotesPageContent() {
       {!isLoading && isMobile && (
         <MobileQuotesView
           quotes={filteredQuotes}
+          approvalEnabled={approvalCapability?.enabled ?? false}
           onPrepare={(id) => {
             // §reorder-quote-handoff 1d — "공급사 지정하고 발송" → 발송 준비 패널 복귀 (재진입은 하이라이트 없음)
             setPrepareJustCreated(false);

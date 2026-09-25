@@ -29,18 +29,35 @@ const STAGES: {
   { key: "s1", label: "발송 대기", sub: "RFQ 작성 완료", icon: Send, tint: { text: "text-blue-600", bg: "bg-blue-50" } },
   { key: "s2", label: "회신 추적", sub: "공급사 응답 대기", icon: Clock, tint: { text: "text-yellow-600", bg: "bg-yellow-50" } },
   { key: "s3", label: "비교 검토", sub: "견적 도착·검토", icon: GitCompare, tint: { text: "text-violet-600", bg: "bg-violet-50" } },
-  { key: "s4", label: "승인/예외", sub: "선정·승인 대기", icon: CheckCircle2, tint: { text: "text-emerald-600", bg: "bg-emerald-50" } },
-  { key: "s5", label: "발주 전환", sub: "발주서 준비", icon: Package, tint: { text: "text-slate-500", bg: "bg-slate-100" } },
+  /* §approval-gate-single-source (2026-09-25 · 호영님 판정) — s4 는 COMPLETED 버킷이다. 「승인/예외」 는 **결재가 열려 있을 때만** 참이다.
+   *   오늘 결재는 모든 사용자에게 막혀 있다(정책 none · 결제 게이트 닫힘 · ADMIN 0 → 400 두 개).
+   *   그래서 이름을 판정 함수 뒤에 둔다 — 거짓이면 오늘 참인 「선정 대기」 다. */
+  { key: "s4", label: "선정 대기", sub: "비교 후 공급사 선정", icon: CheckCircle2, tint: { text: "text-emerald-600", bg: "bg-emerald-50" } },
+  /* §funnel-s5-producer (2026-09-25 · 호영님 판정) — s5 는 PURCHASED 버킷이다. 「발주 전환 · 발주서 준비」 는 지운 기능을 가리키고 있었다.
+   *   생산자 실측 2026-09-25: **관리자 콘솔 1곳**(admin/quotes → POST /api/admin/orders → quote.status = PURCHASED).
+   *     일반 사용자 화면의 생산자는 0이다(주문 접수 제거 · POST /api/orders 호출자 0).
+   *   prod 실측(operator-shell → Supabase xhid… Session Pooler · SELECT 만):
+   *     PURCHASED 견적 **0건** · Order 2건은 **둘 다 CANCELLED** 이고 같은 견적에서 나왔다
+   *     (cancel-restore-quote 가 그 견적을 COMPLETED 로 되돌렸다).
+   *   생산자가 0은 아니므로 단계를 지우지 않고 **참인 이름**으로 바꾼다.
+   *   ⚠️ 이 단계는 아직 ENABLE_PURCHASING(기본 false) 뒤에 있어 prod 에서 렌더되지 않는다. */
+  { key: "s5", label: "입고 대기", sub: "구매 완료 · 입고 등록 전", icon: Package, tint: { text: "text-slate-500", bg: "bg-slate-100" } },
 ];
+
+/** §approval-gate-single-source (2026-09-25 · 호영님 판정) — 결재가 열려 있을 때만 참인 s4 이름. 판정은 화면이 하지 않는다(서버가 내려준다). */
+const S4_APPROVAL_LABEL = { label: "승인/예외", sub: "선정·승인 대기" } as const;
 
 export function QuoteFunnel({
   quotes,
   activeStage,
   onStageClick,
+  approvalEnabled = false,
 }: {
   quotes: { status: string }[];
   activeStage?: Stage | null;
   onStageClick?: (s: Stage) => void;
+  /** §approval-gate-single-source (2026-09-25 · 호영님 판정) — `GET /api/approval/capability` 의 enabled. 라우트의 400 두 개와 같은 함수가 판정한다. */
+  approvalEnabled?: boolean;
 }) {
   const counts: Record<Stage, number> = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 };
   for (const q of quotes) {
@@ -49,7 +66,11 @@ export function QuoteFunnel({
   }
   // §quotes-mobile-redesign — 발주 전환(s5)은 발주 hide 결정과 일관: ENABLE_PURCHASING off 시 제외.
   const purchasingOn = getFlag("ENABLE_PURCHASING");
-  const visibleStages = STAGES.filter((s) => purchasingOn || s.key !== "s5");
+  // §approval-gate-single-source (2026-09-25 · 호영님 판정) — 결재가 열려야 s4 가 결재 이름을 쓴다. 기본값은 오늘 참인 「선정 대기」 다.
+  const stages = STAGES.map((s) =>
+    s.key === "s4" && approvalEnabled ? { ...s, ...S4_APPROVAL_LABEL } : s,
+  );
+  const visibleStages = stages.filter((s) => purchasingOn || s.key !== "s5");
   // 현재 집중 = 케이스 존재하는 가장 앞(보이는) 단계.
   const focus = visibleStages.find((s) => counts[s.key] > 0)?.key ?? null;
   const allZero = visibleStages.every((s) => counts[s.key] === 0);

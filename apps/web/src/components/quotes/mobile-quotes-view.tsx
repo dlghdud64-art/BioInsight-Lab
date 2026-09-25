@@ -55,8 +55,10 @@ const STAGE_META: Record<UiStage, {
   s1: { section: "발송 대기", pill: "발송 대기", pillCls: "bg-blue-50 text-blue-700", dot: "bg-blue-500", act: "발송", actCls: "bg-blue-600 text-white", amountLabel: "예상 금액", mid: "due" },
   s2: { section: "회신 추적", pill: "회신 추적", pillCls: "bg-violet-50 text-violet-700", dot: "bg-violet-500", act: "리마인더", actCls: "bg-white text-slate-700 border border-slate-200", amountLabel: "예상 금액", mid: "reply" },
   s3: { section: "비교 검토", pill: "비교 검토", pillCls: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500", act: "비교", actCls: "bg-blue-600 text-white", amountLabel: "최저 견적", mid: "reply" },
-  s4: { section: "승인 · 입고 준비", pill: "승인 대기", pillCls: "bg-yellow-50 text-yellow-700", dot: "bg-yellow-500", act: "승인", actCls: "bg-emerald-600 text-white", amountLabel: "선정 금액", mid: "due" },
-  s5: { section: "승인 · 입고 준비", pill: "입고 준비", pillCls: "bg-slate-100 text-slate-700", dot: "bg-slate-600", act: "입고", actCls: "bg-slate-800 text-white", amountLabel: "발주 금액", mid: "selected" },
+  /* §approval-gate-single-source (2026-09-25 · 호영님 판정) — s4 의 「승인 대기」·「승인」 은 결재가 열려 있을 때만 참이다(오늘은 모든 사용자에게 거짓).
+   *   §funnel-s5-producer (2026-09-25 · 호영님 판정) — s5 의 「발주 금액」 은 지운 기능의 이름이다. PURCHASED = 구매 완료이므로 「구매 금액」 이다. */
+  s4: { section: "선정 · 입고 준비", pill: "선정 대기", pillCls: "bg-yellow-50 text-yellow-700", dot: "bg-yellow-500", act: "선정", actCls: "bg-emerald-600 text-white", amountLabel: "선정 금액", mid: "due" },
+  s5: { section: "선정 · 입고 준비", pill: "입고 준비", pillCls: "bg-slate-100 text-slate-700", dot: "bg-slate-600", act: "입고", actCls: "bg-slate-800 text-white", amountLabel: "구매 금액", mid: "selected" },
 };
 
 const PRIO = {
@@ -76,7 +78,7 @@ const ACTION_LINE: Record<UiStage, string> = {
 
 const CHIPS: { k: "all" | "s1" | "s2" | "s3" | "s45"; label: string }[] = [
   { k: "all", label: "전체" }, { k: "s1", label: "발송 대기" }, { k: "s2", label: "회신 추적" },
-  { k: "s3", label: "비교 검토" }, { k: "s45", label: "승인·입고" },
+  { k: "s3", label: "비교 검토" }, { k: "s45", label: "선정·입고" },
 ];
 function inChip(stage: UiStage, k: string): boolean {
   if (k === "all") return true;
@@ -135,7 +137,7 @@ function actIcon(stage: UiStage) {
   return <PackageCheck className={cn} />;
 }
 
-function CaseCard({ vm, onSelect, onAction, onPrepare, highlight }: { vm: VM; onSelect: (id: string) => void; onAction: (id: string) => void; onPrepare?: (id: string) => void; highlight?: boolean }) {
+function CaseCard({ vm, onSelect, onAction, onPrepare, highlight, approvalEnabled = false }: { vm: VM; onSelect: (id: string) => void; onAction: (id: string) => void; onPrepare?: (id: string) => void; highlight?: boolean; approvalEnabled?: boolean }) {
   const m = STAGE_META[vm.stage];
   const p = PRIO[vm.level];
   const shown = vm.suppliers.slice(0, 3);
@@ -210,13 +212,17 @@ function CaseCard({ vm, onSelect, onAction, onPrepare, highlight }: { vm: VM; on
               ) : (!needsSupplier && <div className="text-[13px] font-bold text-slate-400">견적 대기</div>)}
             </div>
           )}
+          {/* §approval-gate-single-source (2026-09-25 · 호영님 판정) — s4 액션은 결재가 열려 있을 때만 「승인」 이다. 닫혀 있으면 그 버튼을 **렌더하지 않는다**
+              (호영님). 누를 수 없는 것을 그려 두면 그게 약속이 된다. 나머지 단계는 변경 0. */}
+          {vm.stage === "s4" && !approvalEnabled ? null : (
           <button
             type="button"
             onClick={() => (needsSupplier && onPrepare ? onPrepare(vm.id) : onAction(vm.id))}
             className={`inline-flex items-center gap-1 h-9 px-3.5 rounded-[10px] text-[13px] font-extrabold active:scale-95 ${needsSupplier ? "bg-white text-blue-700 border border-blue-200" : m.actCls}`}
           >
-            {needsSupplier ? <>공급사 지정하고 발송<ChevronRight className="h-3.5 w-3.5" /></> : <>{actIcon(vm.stage)}{m.act}</>}
+            {needsSupplier ? <>공급사 지정하고 발송<ChevronRight className="h-3.5 w-3.5" /></> : <>{actIcon(vm.stage)}{vm.stage === "s4" ? "승인" : m.act}</>}
           </button>
+          )}
         </div>
       </div>
     </div>
@@ -237,10 +243,12 @@ function SumCard({ label, value, tone, bar, ddLabel }: { label: string; value: n
 
 // §quotes-mobile-refine P1 — topReason(대시 연결 문장) 폐지 → ACTION_LINE(품목 다음 줄 분리).
 
-export function MobileQuotesView({ quotes, onSelect, onAction, onPrepare, highlightId }: {
+export function MobileQuotesView({ quotes, onSelect, onAction, onPrepare, highlightId, approvalEnabled = false }: {
   quotes: QuoteLite[];
   onSelect: (id: string) => void;
   onAction: (id: string) => void;
+  /** §approval-gate-single-source (2026-09-25 · 호영님 판정) — 서버가 내려준 결재 가능 여부. 화면이 요금제를 직접 읽지 않는다. */
+  approvalEnabled?: boolean;
   /** §reorder-quote-handoff 1d — 공급사 지정 필요 건 CTA → 발송 준비 패널(?prepare=) 복귀 */
   onPrepare?: (id: string) => void;
   /** 리스트 복귀 직후 2초 하이라이트 대상 (1회) */
@@ -285,7 +293,7 @@ export function MobileQuotesView({ quotes, onSelect, onAction, onPrepare, highli
     push("발송 대기", (v) => v.stage === "s1");
     push("회신 추적", (v) => v.stage === "s2");
     push("비교 검토", (v) => v.stage === "s3");
-    push("승인 · 입고 준비", (v) => v.stage === "s4" || v.stage === "s5");
+    push("선정 · 입고 준비", (v) => v.stage === "s4" || v.stage === "s5");
     return groups;
   }, [filtered]);
 
@@ -364,7 +372,7 @@ export function MobileQuotesView({ quotes, onSelect, onAction, onPrepare, highli
                 <span className="text-[11px] font-bold text-slate-400">{sec.items.length}</span>
                 <span className="flex-1 h-px bg-slate-200" />
               </div>
-              {sec.items.map((vm) => <CaseCard key={vm.id} vm={vm} onSelect={onSelect} onAction={onAction} onPrepare={onPrepare} highlight={vm.id === highlightId} />)}
+              {sec.items.map((vm) => <CaseCard key={vm.id} vm={vm} onSelect={onSelect} onAction={onAction} onPrepare={onPrepare} highlight={vm.id === highlightId} approvalEnabled={approvalEnabled} />)}
             </div>
           ))}
         </div>

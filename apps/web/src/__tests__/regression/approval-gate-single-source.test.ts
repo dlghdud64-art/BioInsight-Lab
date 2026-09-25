@@ -27,8 +27,9 @@
  *      self_admin 을 막는다. 화면은 금액을 모르는 자리(퍼널·지원센터)에서도 판정해야 하므로
  *      「한 명이라도 있는가」 만 본다 → 워크스페이스 ADMIN 이 본인뿐이고 금액이 high tier 면
  *      화면은 보여주고 라우트는 400 이다. 좁히려면 화면에 금액을 들려보내야 한다.
- *   2. 로그인 뒤 **표면 자체**(퍼널 s4 라벨 · 지원센터 결재 설명)의 배선은 이 파일이 아직 안 본다.
- *      다음 커밋에서 이 목록에서 지운다.
+ *   ~~2. 퍼널 s4 라벨 배선~~ → **닫힘**(아래 ⑥⑦⑧). 남은 것은 **지원센터·역할 설명**이다 — 다음 커밋.
+ *   3. 금액 구간(한계 1)은 CLAUDE.md §유료 결제 오픈 전 게이트 「의존 항목」 ③ 에 걸었다 —
+ *      닫는 방법(같은 함수의 두 호출 방식)까지 적어 뒀다.
  *   3. 소스 문자열만 본다. 런타임 응답은 보지 않는다.
  */
 
@@ -48,6 +49,8 @@ const ROUTE =
 const DETAIL = "app/api/quotes/[id]/route.ts";
 const LANDING = "app/_components/bioinsight-hero-section.tsx";
 const INTRO = "app/intro/page.tsx";
+const FUNNEL = "components/quotes/quote-funnel.tsx";
+const MOBILE = "components/quotes/mobile-quotes-view.tsx";
 
 describe("§approval-gate-single-source · 판정은 한 함수에서 나온다", () => {
   it("① 판정 모듈이 라우트의 400 두 개를 그대로 담는다", () => {
@@ -124,5 +127,31 @@ describe("§approval-gate-single-source · 판정은 한 함수에서 나온다"
     expect(src).not.toMatch(/from "@\/lib\/db"/);
     expect(src).not.toMatch(/@prisma\/client/);
     expect(raw(SERVER)).toMatch(/from "@\/lib\/db"/);
+  });
+
+  it("⑥ 퍼널 s4 가 결재 이름을 판정 뒤에 둔다", () => {
+    const src = code(FUNNEL);
+    expect(src).toMatch(/key: "s4", label: "선정 대기", sub: "비교 후 공급사 선정"/);
+    expect(src).toMatch(/S4_APPROVAL_LABEL = { label: "승인\/예외", sub: "선정·승인 대기" }/);
+    expect(src).toMatch(/approvalEnabled\?: boolean;/);
+    expect(src).toMatch(/s\.key === "s4" && approvalEnabled/);
+    expect(src).not.toMatch(/in_app_approval/);
+    expect(src).not.toMatch(/resolveApprovalPolicyForPlan/);
+  });
+
+  it("⑦ 모바일 s4 는 결재가 닫혀 있으면 「승인」 버튼을 렌더하지 않는다", () => {
+    const src = code(MOBILE);
+    expect(src).toMatch(/vm\.stage === "s4" && !approvalEnabled \? null :/);
+    expect(src).toMatch(/s4: {[^}]{0,200}pill: "선정 대기"/);
+    expect(src).not.toMatch(/pill: "승인 대기"/);
+    expect(src).not.toMatch(/section: "승인 · 입고 준비"/);
+    expect(src).not.toMatch(/amountLabel: "발주 금액"/);
+    expect(src).toMatch(/amountLabel: "구매 금액"/);
+  });
+
+  it("⑧ 퍼널 s5 가 지운 기능의 이름을 쓰지 않는다", () => {
+    const src = code(FUNNEL);
+    expect(src).not.toMatch(/발주/);
+    expect(src).toMatch(/key: "s5", label: "입고 대기", sub: "구매 완료 · 입고 등록 전"/);
   });
 });
