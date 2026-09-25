@@ -45,7 +45,9 @@ describe("§budget-delete-ui · 지울 수 있는 화면", () => {
 
   it("② 확인은 React 모달이다 · window.confirm 류 0", () => {
     const src = code(PAGE);
-    expect(src).toContain("ConfirmDialog");
+    // 🔁 §budget-detail-redesign (2026-09-25) — ConfirmDialog → TypeToConfirmDialog(이름 입력 확인 · 핸드오프 §1).
+    //    명제(React 모달 · 전역 대화상자 0)는 그대로다. 부분 문자열 우연 매칭을 피하려고 여는 태그로 묻는다.
+    expect(src).toContain("<TypeToConfirmDialog");
     // 브라우저 전역 대화상자는 자동 검증을 멈춰 세운다. same-canvas 원칙에도 어긋난다.
     expect(src).not.toMatch(/\bwindow\.(confirm|alert|prompt)\s*\(/);
     expect(src).not.toMatch(/(?<!\w)confirm\s*\(\s*["'`]/);
@@ -72,8 +74,9 @@ describe("§budget-delete-ui · 지울 수 있는 화면", () => {
     //    pre-commit 의 em dash 검사는 **신규 추가 파일만** 본다(.husky/pre-commit:39).
     //    이 파일은 수정(M) 이라 검사를 안 받았다 — 화면을 눌러 보고서야 나왔다.
     const src = code(PAGE);
-    const i = src.indexOf("<ConfirmDialog");
-    expect(i, "ConfirmDialog 를 찾지 못했다").toBeGreaterThan(-1);
+    // 🔁 §budget-detail-redesign — 모달이 TypeToConfirmDialog 로 바뀌었다. 창의 여는 태그만 옮긴다.
+    const i = src.indexOf("<TypeToConfirmDialog");
+    expect(i, "TypeToConfirmDialog 를 찾지 못했다").toBeGreaterThan(-1);
     const modal = src.slice(i, src.indexOf("/>", i) + 2);
     expect(modal, "모달 문구에 em dash 가 있다 · 구분자는 · 다").not.toContain("\u2014");
     // 무엇을 지우는지 눈으로 보이게 — 이름과 금액이 문구에 있다.
@@ -115,9 +118,17 @@ describe("§budget-period-axis · 상세 화면도 같은 달력 축", () => {
   });
 
   it("⑥ 남은 일수는 대시보드와 **같은 함수**에서 나온다", () => {
-    const src = code(PAGE);
-    expect(src).toContain("budgetPace(");
-    expect(src).toMatch(/remainingDays\s*=\s*b\.periodEndDate[\s\S]{0,120}?budgetPace\(/);
+    // 🔁 §budget-detail-redesign (2026-09-25) — 판정을 서버로 옮겼다(핸드오프 §4 front-only 금지).
+    //    명제는 그대로: 남은 일수·일평균 여유는 budgetPace 에서 나온다. 자리만 화면 → 서버 파생 모듈.
+    //    화면은 남은 일수를 **스스로 세지 않는다**(두 번째 계산식이 생기면 축이 다시 갈린다).
+    const derive = code("src/lib/budget/budget-detail-derive.ts");
+    expect(derive).toMatch(/from "@\/lib\/dashboard\/p0-display"/);
+    expect(derive).toMatch(/const pace = budgetPace\(available, localToday, input\.endDate\)/);
+    expect(derive).toMatch(/daysLeft = phase === "active" \? pace\.daysLeft/);
+    expect(code(API)).toContain("deriveBudgetDetail(");
+    const page = code(PAGE);
+    expect(page).not.toMatch(/daysLeft\s*=|remainingDays\s*=|budgetPace\(/);
+    expect(page).not.toMatch(/getTime\(\)\s*-/);
   });
 
   it("⑦ API 가 달력 날짜를 내려준다 · 화면이 스스로 만들지 않는다", () => {

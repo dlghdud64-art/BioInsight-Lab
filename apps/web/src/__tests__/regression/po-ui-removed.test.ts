@@ -122,7 +122,12 @@ describe("§po-ui-removed · 발주 UI 는 삭제됐다", () => {
 
   it("④ 살아 있는 화면의 옛 목적지는 입고로 옮겼다", () => {
     expect(code("app/dashboard/audit/page.tsx")).toMatch(/case "ORDER":\s*return "\/dashboard\/receiving";/);
-    expect(code("app/dashboard/budget/[id]/page.tsx")).toMatch(/<Link href="\/dashboard\/receiving">[\s\S]{0,200}?입고 보기/);
+    /* 🔁 승계 §budget-detail-redesign(2026-09-25 · 호영님 핸드오프) — 예산 상세의 빈 카드 3장과
+     *    「견적 보기 · 입고 보기」 버튼 쌍이 할 일 카드 1장으로 바뀌었다. 원 명제 「예산 상세가 삭제된
+     *    발주 화면으로 보내지 않는다」 는 그대로 단언하고, 목적지는 예산에 금액이 잡히는 실제 경로(견적 관리)다. */
+    const budgetDetail = code("app/dashboard/budget/[id]/page.tsx");
+    expect(budgetDetail).not.toMatch(/\/dashboard\/(purchase-orders|orders|purchases)\b/);
+    expect(budgetDetail).toMatch(/<Link href="\/dashboard\/quotes">[\s\S]{0,300}?견적 관리로/);
     /* 🛑 은퇴 §purchases-ui-removed(2026-09-24) — 「구매 운영 CTA 가 입고로 간다」.
      *    그 화면도 삭제됐다. 같은 명제의 자리는 §purchases-ui-removed ④ 가 든다. */
     expect(code("components/dashboard/console/queue-detail-panel.tsx")).toMatch(/ORDER: "\/dashboard\/receiving"/);

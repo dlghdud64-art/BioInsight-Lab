@@ -49,7 +49,7 @@ const LEGACY = [
   // 제거됨: "app/dashboard/analytics/monthly/page.tsx" — §monthly-analytics-no-fabrication(2026-09-22) · 가상 12개월 삭제(1건 ↓)
   "app/dashboard/analytics/page.tsx",
   "app/dashboard/audit/page.tsx",
-  "app/dashboard/budget/[id]/page.tsx",
+  // 제거됨: "app/dashboard/budget/[id]/page.tsx" — §budget-detail-redesign(2026-09-25) · MOCK_LINKED_ACTIVITIES·DEFAULT_POLICY 삭제, 판정은 서버 파생(4건 ↓)
   // 제거됨: "app/dashboard/notifications/page.tsx" — §notifications-single-source(2026-09-22) · 가짜 알림 20건 삭제(1건 ↓)
   "app/dashboard/page.tsx",
   "app/dashboard/safety/page.tsx",
@@ -71,8 +71,8 @@ const LEGACY = [
   // 제거됨: "lib/vendor-portal/vendor-portal-store.ts" — §vendor-portal-seed-retired(2026-09-22) · 포털 라우트·시드 삭제
 ];
 
-/** 기준선 총계. 올리지 않는다. 37(2026-09-21) → 36(09-22 알림 센터) → 34(09-22 팀별 보기) → 33(09-22 월별 상세) → 29(09-22 벤더 포털 시드) → 24(09-24 ops 시드 파일 삭제 · 로컬 operator-shell 실측 · 도달 648파일). */
-const CEILING = 24;
+/** 기준선 총계. 올리지 않는다. 37(2026-09-21) → 36(09-22 알림 센터) → 34(09-22 팀별 보기) → 33(09-22 월별 상세) → 29(09-22 벤더 포털 시드) → 24(09-24 ops 시드 파일 삭제 · 로컬 operator-shell 실측 · 도달 648파일) → 20(09-25 예산 상세 · 4건 · 격리 러너 실측). */
+const CEILING = 20;
 
 const reachable = renderReachableSources(SRC);
 const perFile = [...reachable]

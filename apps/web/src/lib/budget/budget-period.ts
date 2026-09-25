@@ -35,6 +35,12 @@ export interface ResolvedBudgetPeriod {
    *   대시보드 예산 카드(남은 일수 · 기간 라벨)가 이 값을 쓴다.
    */
   endCalendarDate: string;
+  /**
+   * §budget-detail-redesign — `periodStart` 의 **달력 날짜** "YYYY-MM-DD".
+   * endCalendarDate 와 같은 이유로 Date 를 거치지 않고 원문에서 조립한다.
+   * 예산 상세의 경과일·진도 예측·편집 모달 초기값이 이 값을 쓴다.
+   */
+  startCalendarDate: string;
 }
 
 const pad2 = (n: number): string => String(n).padStart(2, "0");
@@ -49,7 +55,7 @@ export function resolveBudgetPeriod(input: BudgetPeriodInput): ResolvedBudgetPer
     const end = new Date(m[2] + "T23:59:59");
     if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start <= end) {
       // 달력 날짜는 매치된 **원문 그대로** — Date 왕복 0.
-      return { periodStart: start, periodEnd: end, source: "description", endCalendarDate: m[2] };
+      return { periodStart: start, periodEnd: end, source: "description", endCalendarDate: m[2], startCalendarDate: m[1] };
     }
   }
   const [year, month] = input.yearMonth.split("-").map(Number);
@@ -60,6 +66,7 @@ export function resolveBudgetPeriod(input: BudgetPeriodInput): ResolvedBudgetPer
     source: "yearMonth",
     // 월 창일 때도 문자열로 조립한다 — 위와 같은 이유(시간대 왕복 0).
     endCalendarDate: `${year}-${pad2(month)}-${pad2(lastDay)}`,
+    startCalendarDate: `${year}-${pad2(month)}-01`,
   };
 }
 

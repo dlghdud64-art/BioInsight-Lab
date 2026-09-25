@@ -4,6 +4,13 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 import { resolveBudgetPeriod } from "@/lib/budget/budget-period";
+import {
+  activeReservedAmount,
+  ORDER_RESERVED,
+  ORDER_RELEASED,
+  ORDER_CONFIRMED,
+} from "@/lib/budget/order-reservation";
+import { deriveBudgetDetail, seoulToday, ORDER_STATUS_LABEL } from "@/lib/budget/budget-detail-derive";
 import { z } from "zod";
 import { OrganizationRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
@@ -117,24 +124,129 @@ export async function GET(
 
     // ⑤ 배선 (P3) — usage 합산 창을 표시 기간과 같은 truth 로: description 명시
     // period 우선, 없으면 yearMonth 월 창 (resolveBudgetPeriod 단일화).
-    const { periodStart, periodEnd, endCalendarDate } = resolveBudgetPeriod(budget);
+    const { periodStart, periodEnd, endCalendarDate, startCalendarDate } = resolveBudgetPeriod(budget);
 
-    // 사용액 계산 (조직 예산인 경우)
-    let totalSpent = 0;
+    // 집행 — PurchaseRecord (조직 예산인 경우)
+    type PurchaseRow = {
+      id: string;
+      amount: number;
+      vendorName: string;
+      itemName: string;
+      qty: number;
+      purchasedAt: Date;
+      quoteId: string | null;
+    };
+    let purchaseRecords: PurchaseRow[] = [];
     if (!budget.scopeKey.startsWith("user-")) {
       // §budget-scope-key-mismatch — 같은 테넌트의 workspace 구매도 함께 집계.
       const purchaseScopeKeys = await resolveBudgetPurchaseScopeKeys(budget);
-      const purchaseRecords = await db.purchaseRecord.findMany({
+      purchaseRecords = await db.purchaseRecord.findMany({
         where: {
           scopeKey: { in: purchaseScopeKeys },
           purchasedAt: { gte: periodStart, lte: periodEnd },
         },
+        select: { id: true, amount: true, vendorName: true, itemName: true, qty: true, purchasedAt: true, quoteId: true },
+        orderBy: { purchasedAt: "desc" },
       });
-      totalSpent = purchaseRecords.reduce(
-        (sum: number, r: any) => sum + (r.amount || 0),
-        0
-      );
     }
+    const totalSpent = purchaseRecords.reduce((sum, r) => sum + (r.amount || 0), 0);
+
+    // 예약 — BudgetEvent 원장. /api/orders 가 잔액 판정에 쓰는 것과 **같은 원장 · 같은 함수**다.
+    //   🛑 §budget-detail-redesign — 구 화면은 예약을 상수 0 으로 두고 사용률을 계산했다.
+    type OrderEventRow = { eventType: string; amount: number; sourceEntityId: string; executedAt: Date };
+    const orderEvents: OrderEventRow[] = await db.budgetEvent.findMany({
+      where: {
+        budgetId: budget.id,
+        eventType: { in: [ORDER_RESERVED, ORDER_RELEASED, ORDER_CONFIRMED] },
+      },
+      select: { eventType: true, amount: true, sourceEntityId: true, executedAt: true },
+    });
+    const reserved = activeReservedAmount(orderEvents);
+    // 주문별 활성 예약 — 같은 함수를 주문 단위로 적용한다(상쇄 규칙을 다시 쓰지 않는다).
+    const eventsByOrder = new Map<string, OrderEventRow[]>();
+    for (const ev of orderEvents) {
+      const list = eventsByOrder.get(ev.sourceEntityId) ?? [];
+      list.push(ev);
+      eventsByOrder.set(ev.sourceEntityId, list);
+    }
+    const activeOrders = [...eventsByOrder.entries()]
+      .map(([orderId, evs]) => ({
+        orderId,
+        amount: activeReservedAmount(evs),
+        reservedAt: evs.filter((e) => e.eventType === ORDER_RESERVED).map((e) => e.executedAt).sort((x, y) => y.getTime() - x.getTime())[0] ?? null,
+      }))
+      .filter((o) => o.amount > 0);
+    type OrderRow = {
+      id: string;
+      orderNumber: string;
+      quoteId: string;
+      status: string;
+      expectedDelivery: Date | null;
+      vendor: { name: string } | null;
+    };
+    const orders: OrderRow[] = activeOrders.length
+      ? await db.order.findMany({
+          where: { id: { in: activeOrders.map((o) => o.orderId) } },
+          select: {
+            id: true,
+            orderNumber: true,
+            quoteId: true,
+            status: true,
+            expectedDelivery: true,
+            vendor: { select: { name: true } },
+          },
+        })
+      : [];
+    const orderById = new Map<string, OrderRow>(orders.map((o) => [o.id, o]));
+
+    const seoulYmd = (d: Date) => {
+      const t = seoulToday(d);
+      return `${t.y}-${String(t.m).padStart(2, "0")}-${String(t.d).padStart(2, "0")}`;
+    };
+
+    // 연결된 활동 — 화면은 이 목록을 그리기만 한다. 단계 문구·다음 전이도 여기서 정한다(영문 enum 노출 0).
+    const activities = [
+      ...activeOrders.map((o) => {
+        const order = orderById.get(o.orderId);
+        return {
+          id: `order:${o.orderId}`,
+          stage: "reserved" as const,
+          domain: "발주",
+          title: order?.orderNumber ?? "발주",
+          mono: true,
+          href: order?.quoteId ? `/quotes/${order.quoteId}` : null,
+          meta: [
+            order?.vendor?.name ?? null,
+            order ? ORDER_STATUS_LABEL[order.status] ?? null : null,
+            order?.expectedDelivery ? `입고 예정 ${seoulYmd(order.expectedDelivery)}` : null,
+          ].filter((x): x is string => !!x),
+          date: o.reservedAt ? seoulYmd(o.reservedAt) : null,
+          nextTransition: "구매 완료 시 집행",
+          amount: o.amount,
+        };
+      }),
+      ...purchaseRecords.map((r) => ({
+        id: `purchase:${r.id}`,
+        stage: "actual" as const,
+        domain: "구매",
+        title: r.qty > 1 ? `${r.itemName} ${r.qty}개` : r.itemName,
+        mono: false,
+        href: r.quoteId ? `/quotes/${r.quoteId}` : null,
+        meta: [r.vendorName].filter((x): x is string => !!x),
+        date: seoulYmd(r.purchasedAt),
+        nextTransition: "완료",
+        amount: r.amount || 0,
+      })),
+    ].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+
+    const control = deriveBudgetDetail({
+      amount: budget.amount,
+      reserved,
+      actual: totalSpent,
+      startDate: startCalendarDate,
+      endDate: endCalendarDate,
+      today: seoulToday(new Date()),
+    });
 
     const usageRate = budget.amount > 0 ? (totalSpent / budget.amount) * 100 : 0;
     const remaining = budget.amount - totalSpent;
@@ -142,6 +254,7 @@ export async function GET(
     // description에서 name, projectName, 정확한 period 날짜 추출
     let name = `${budget.yearMonth} Budget`;
     let projectName: string | null = null;
+    let note: string | null = null;
     let parsedPeriodStart: Date | null = null;
     let parsedPeriodEnd: Date | null = null;
     if (budget.description) {
@@ -154,13 +267,23 @@ export async function GET(
         parsedPeriodStart = new Date(periodMatchGet[1]);
         parsedPeriodEnd = new Date(periodMatchGet[2] + "T23:59:59");
       }
+      // §budget-detail-redesign — 사용자가 쓴 설명만 떼어 낸다. 화면에 원시 합성 문자열(`[…] | period:…`)을 내리지 않는다.
+      //   분해 규칙은 PATCH 의 existingDesc 와 같다.
+      note =
+        budget.description
+          .split(" | ")
+          .find((p: string) => !p.startsWith("[") && !p.startsWith("프로젝트: ") && !p.startsWith("period:")) ?? null;
     }
+
+    // 🛑 §budget-detail-redesign — 원시 description 은 내리지 않는다(스프레드에서 제외).
+    const budgetColumns = { ...budget, description: undefined };
 
     return NextResponse.json({
       budget: {
-        ...budget,
+        ...budgetColumns,
         name,
         projectName,
+        note,
         periodStart: (parsedPeriodStart ?? periodStart).toISOString(),
         periodEnd: (parsedPeriodEnd ?? periodEnd).toISOString(),
         // 🛑 §budget-period-axis — 화면이 표시에 쓸 **달력 날짜**(YYYY-MM-DD).
@@ -169,7 +292,17 @@ export async function GET(
         //   실측 2026-09-22: 원문 12-30 인 예산이 상세 화면에 `2026. 12. 31.` 로 떴다.
         //   대시보드는 이미 이 값(endCalendarDate)을 쓴다 — 두 화면을 같은 축에 올린다.
         periodEndDate: endCalendarDate,
+        periodStartDate: startCalendarDate,
         usage: { totalSpent, usageRate, remaining },
+        // §budget-detail-redesign — 예약·집행·판정은 서버가 정한다. 화면은 그리기만 한다.
+        ledger: {
+          reserved,
+          actual: totalSpent,
+          reservedCount: activeOrders.length,
+          actualCount: purchaseRecords.length,
+        },
+        control,
+        activities,
       },
     });
   } catch (error: any) {
@@ -400,6 +533,22 @@ export async function DELETE(
           { status: 403 }
         );
       }
+    }
+
+    // 🛑 §budget-detail-redesign (핸드오프 §4) — 활성 발주 예약이 걸린 예산은 지우지 않는다.
+    //   BudgetEvent.budgetId 에는 FK 가 없다(원장 보존 우선). 지우면 예약이 **가리킬 예산 없이** 남고,
+    //   그 주문이 구매 완료돼도 소멸시킬 대상이 사라진다. 화면도 같은 판정으로 삭제를 막지만 서버가 정본이다.
+    const reservationEvents = await db.budgetEvent.findMany({
+      where: {
+        budgetId: budget.id,
+        eventType: { in: [ORDER_RESERVED, ORDER_RELEASED, ORDER_CONFIRMED] },
+      },
+      select: { eventType: true, amount: true, sourceEntityId: true },
+    });
+    if (activeReservedAmount(reservationEvents) > 0) {
+      return enforcement.reject(409, {
+        error: "발주 예약이 걸려 있는 예산은 삭제할 수 없습니다. 예약이 구매 완료되거나 해제된 뒤 삭제할 수 있습니다.",
+      });
     }
 
     await db.budget.delete({

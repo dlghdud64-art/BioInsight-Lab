@@ -98,7 +98,10 @@ describe("§11.162 dashboard/orders inbound rewire", () => {
       "utf8",
     );
     expect(budgetSrc).not.toMatch(/href="\/dashboard\/orders"/);
-    expect(budgetSrc).toMatch(/\/dashboard\/receiving/);
+    // 🔁 §budget-detail-redesign(2026-09-25) — 「입고 보기」 버튼이 할 일 카드의 「견적 관리로」 로 바뀌었다.
+    //    명제(레거시 발주 목적지 0)는 유지 · 삭제된 발주 화면 전부로 넓혀 단언한다.
+    expect(budgetSrc).not.toMatch(/\/dashboard\/(purchase-orders|purchases)\b/);
+    expect(budgetSrc).toMatch(/\/dashboard\/quotes/);
   });
 
   it("workbench-progress-overlay fallback 이 /dashboard/receiving 사용", () => {
