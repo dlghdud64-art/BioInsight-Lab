@@ -21,39 +21,19 @@ function stripComments(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-describe("① 발주 경로는 운영 브리핑을 경유하지 않는다 (호영님 판정 2026-08-22 · 범위 정정)", () => {
-  /* 🛑 P1 단언 재조준. 옛 축: 브리핑 전면 은퇴("운영 브리핑 열기" 문자열 0)를 요구했다.
-   * P3-2 착수 실측이 전제를 뒤집었다 — 브리핑 rail(542줄)+모바일 sheet(195줄)은
-   * 발주 전용이 아니라 다른 5개 상태(발송·회신·재요청·비교·조건확인·승인)의 CTA 가
-   * 워크윈도우로 가는 유일한 경유지였다. 전면 삭제는 그 5개를 dead 로 만든다.
-   * 호영님 판정: 발주 경로만 직결 · rail 은 다른 상태에서 무손상 유지.
-   * → "운영 브리핑 열기"(모바일 브리핑 진입 · 다른 상태용) 단언 은퇴.
-   * 대체 잠금(아래 3건): 발주 경로가 rail 을 경유하지 않는다는 사실을 직접 잠근다. */
-  it("행 CTA '발주 실행 준비' 는 rail 을 거치지 않고 주문 접수 창으로 직행한다", () => {
-    const code = stripComments(read(QUOTES_WB));
-    expect(code).toMatch(/ctaLabel === "발주 실행 준비"[\s\S]{0,200}?setActiveWorkWindow\("po_conversion"\)/);
-  });
+/* 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — ①②(발주 경로 직결 · 주문 접수 다이얼로그).
+ *    이 두 describe 는 **주문 접수 경로가 있다**는 전제 위에 서 있었다.
+ *    그 경로를 지웠다 — 성공 토스트가 「주문 내역에서 확인하세요」 였는데 그 화면이 없다.
+ *    명제 원문: ① 발주 경로는 브리핑 rail 을 경유하지 않고 행 CTA 가 작업창으로 직행한다 ·
+ *      po_conversion 중 브리핑 미노출(2곳) · ② 견적 관리 안에 예산 선택 축이 있다.
+ *    🔑 살아 남은 명제는 **브리핑이 작업창을 가리지 않는다** 로, 그 가드(2곳)는
+ *       안정적이므로 아래 ③ 에 남겨 둔다. 나머지는 §order-entry-removed 가 역계약으로 든다. */
 
+describe("③ 브리핑은 작업창을 가리지 않는다 (유지)", () => {
   it("po_conversion 중에는 브리핑 rail·모바일 sheet 가 뜨지 않는다 (2곳 모두)", () => {
     const code = stripComments(read(QUOTES_WB));
     const guarded = code.match(/activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion"/g) ?? [];
     expect(guarded.length).toBe(2);
-  });
-
-  it("⛔ '발주 실행 검토' 재유입 0 — 그 창의 이름은 이제 주문 접수다", () => {
-    const code = stripComments(read(QUOTES_WB));
-    expect(code).not.toMatch(/발주 실행 검토/);
-    expect(code).toMatch(/railCtaLabel: "주문 접수"/);
-  });
-});
-
-describe("② 행 CTA → 주문 접수 다이얼로그 직접", () => {
-  it("견적 관리 안에 주문 접수 다이얼로그(예산 선택 축)가 있다", () => {
-    const src = read(QUOTES_WB);
-    expect(src).toMatch(/주문 접수/);
-    expect(src).toMatch(/결제할 과제/);
-    /* 금액 축 — vendorRequestId 없이 보내면 totalAmount 0 (금일 실측). 이식 필수 축 */
-    expect(src).toMatch(/vendorRequestId/);
   });
 });
 

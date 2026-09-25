@@ -105,16 +105,7 @@ describe("④ /api/budgets/[id] — ⑤ usage 창 배선", () => {
   });
 });
 
-describe("⑤ 발주 다이얼로그 — 선택지 정직성", () => {
-  it("연구비(UserBudget) 행은 선택 불가 + 사유 표기 — 고르면 실패할 것을 고르게 두지 않는다", () => {
-    const src = read(QUOTE_PAGE);
-    expect(src).toMatch(/disabled=\{budget\._source === "user-budget"\}/);
-    expect(src).toMatch(/발주 미지원/);
-  });
-
-  it("주문 접수 성공 시 예산 잔액을 invalidate — 예약이 화면 잔액에 반영된다", () => {
-    const createOrderBlock = read(QUOTE_PAGE).match(/createOrderMutation = useMutation[\s\S]{0,1600}?onError/);
-    expect(createOrderBlock).not.toBeNull();
-    expect(createOrderBlock![0]).toMatch(/invalidateQueries\(\{ queryKey: \["user-budgets"\] \}\)/);
-  });
-});
+/* 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — ⑤ 발주 다이얼로그.
+ *    명제 원문: 연구비(UserBudget) 행은 선택 불가 + 사유 표기(고르면 실패할 것을 고르게 두지 않는다) ·
+ *    접수 성공 시 예산 잔액 invalidate(예약이 화면 잔액에 반영된다).
+ *    🔑 예약/해제 **서버 축은 무손상**이다 — 이 파일의 나머지 describe 가 계속 든다. */

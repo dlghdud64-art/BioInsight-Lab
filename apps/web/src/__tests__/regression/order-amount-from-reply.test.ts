@@ -48,15 +48,9 @@ describe("§order-amount-from-reply — 서버", () => {
   });
 });
 
-describe("§order-amount-from-reply — 클라이언트", () => {
-  const s = read(PAGE);
-
-  it("주문 생성이 선택 축(effectiveVrId)을 전달한다", () => {
-    expect(s).toMatch(/vendorRequestId: effectiveVrId \|\| undefined/);
-  });
-
-  it("🛑 주문 다이얼로그 금액이 quoteTotal 이 아니라 purchaseTotal 이다", () => {
-    expect(s).toMatch(/주문 금액[\s\S]{0,160}?purchaseTotal\.toLocaleString/);
-    expect(s).toMatch(/const expectedRemaining = selectedBudget \? \(selectedBudget\.remainingAmount \?\? 0\) - purchaseTotal/);
-  });
-});
+/* 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — 클라이언트 2건.
+ *    주문 다이얼로그가 사라졌다. 명제 원문: 주문 생성이 선택 축(effectiveVrId)을 전달하고,
+ *    다이얼로그 금액은 quoteTotal 이 아니라 회신 단가 기반 purchaseTotal 이다.
+ *    🔑 **서버 자체는 무손상**이다 — 위 describe 4건(vendorRequestId 수신 · quoteId 소속 검증 ·
+ *       0원 창작 금지 · 헤더·라인 같은 출처)은 그대로 산다. 진입점이 다시 생기면 그때 이 2건을 되살린다.
+ *    ⚠️ purchaseTotal 은 구매 처리 경로가 계속 쓰므로 소스에 남아 있다. */

@@ -71,7 +71,8 @@ describe("§11.264d #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/\{ id: "summary",\s+label: "상태 요약" \}/);
     expect(page).toMatch(/\{ id: "facts",\s+label: "회신 현황" \}/);
     expect(page).toMatch(/\{ id: "risks",\s+label: "리스크" \}/);
-    expect(page).toMatch(/\{ id: "next",\s+label: "발주 전환" \}/);
+    // 승계 §order-entry-removed (2026-09-25 · 호영님 판정) — chips 는 4개 그대로, 4번째 이름만 참인 것으로.
+    expect(page).toMatch(/\{ id: "next",\s+label: "다음 단계" \}/);
   });
 
   it("summary / facts / risks / next prop 전달 보존", () => {

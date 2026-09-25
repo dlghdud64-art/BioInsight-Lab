@@ -200,16 +200,12 @@ export default function QuoteDetailPage() {
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-  const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [purchaseBudgetId, setPurchaseBudgetId] = useState("");
   const [purchaseVendorRequestId, setPurchaseVendorRequestId] = useState("");
-  const [orderForm, setOrderForm] = useState({
-    expectedDelivery: "",
-    paymentMethod: "",
-    budgetId: "",
-    notes: "",
-  });
+  /* 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — 「주문 접수 요청」 다이얼로그(예산·결제 방식·배송일 폼).
+   *   성공 토스트가 「마이페이지 > 주문 내역에서 확인하세요」 였는데 그 화면이 없다.
+   *   API·DB 무변경 — UI 에서 주문을 만드는 경로만 0 이 된다(호영님). */
   const [itemsExpanded, setItemsExpanded] = useState(false);
   const [messageExpanded, setMessageExpanded] = useState(false);
 
@@ -311,7 +307,6 @@ export default function QuoteDetailPage() {
 
   // ── 파생 값 ──────────────────────────────────────────────────────
   const budgets = budgetsData?.budgets || [];
-  const selectedBudget = budgets.find((b: any) => b.id === orderForm.budgetId);
   const quoteItems = quoteData?.quote?.items || [];
   const computedTotal = (quoteItems as any[]).reduce((sum: number, item: any) => {
     const line = item.lineTotal
@@ -337,9 +332,8 @@ export default function QuoteDetailPage() {
   };
   const effectiveVrId = purchaseVendorRequestId || (respondedVendors.length === 1 ? (respondedVendors[0] as any)?.id : "");
   const purchaseTotal = effectiveVrId ? computeVendorReplyTotal(effectiveVrId) : quoteTotal;
-  // §order-amount-from-reply — 주문 다이얼로그도 회신 단가 기준으로 표시한다.
-  //   quoteTotal 기준이면 회신이 와 있어도 "주문 금액 -₩0" 이 뜬다(실측 2026-08-18).
-  const expectedRemaining = selectedBudget ? (selectedBudget.remainingAmount ?? 0) - purchaseTotal : null;
+  // 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — selectedBudget · expectedRemaining 은 주문 폼 전용이었다.
+  //   purchaseTotal 은 구매 처리 경로가 계속 쓰므로 **유지**한다.
 
   // ── Mutations ─────────────────────────────────────────────────────
   const saveVendorReplyMutation = useMutation({
@@ -418,42 +412,12 @@ export default function QuoteDetailPage() {
     },
   });
 
-  const createOrderMutation = useMutation({
-    mutationFn: async (orderData: { expectedDelivery?: string; paymentMethod?: string; budgetId?: string; notes?: string }) => {
-      const res = await csrfFetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quoteId,
-          // §order-amount-from-reply — 구매 처리 경로와 같은 선택 축을 넘긴다
-          //   (단일 회신이면 자동, 복수면 명시 선택. 서버가 quoteId 소속을 재검증한다).
-          vendorRequestId: effectiveVrId || undefined,
-          expectedDelivery: orderData.expectedDelivery || undefined,
-          budgetId: orderData.budgetId || undefined,
-          notes: orderData.notes || (orderData.paymentMethod
-            ? `결제 방식: ${orderData.paymentMethod}${orderData.notes ? `\n\n전달 사항:\n${orderData.notes}` : ""}`
-            : orderData.notes || undefined),
-        }),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || error.message || "Failed to create order");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["quotes"] });
-      // §order-budget-reservation P3 — 예약이 잔액을 갉으므로 예산 목록도 갱신
-      queryClient.invalidateQueries({ queryKey: ["user-budgets"] });
-      setShowOrderDialog(false);
-      setOrderForm({ expectedDelivery: "", paymentMethod: "", budgetId: "", notes: "" });
-      toast({ title: "주문이 접수되었습니다", description: "마이페이지 > 주문 내역에서 확인하세요" });
-    },
-    onError: (error: Error) => {
-      toast({ title: "주문 생성 실패", description: error.message, variant: "destructive" });
-    },
-  });
+  /* 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — createOrderMutation (POST /api/orders).
+   *   prod 주문 2건이 이 경로와 견적 화면 경로로 생겼고, 그 2건을 볼 화면이 지금 없다.
+   *   결재(request-approval)로 대체하지 않았다 — prod 실측(읽기 전용 2026-09-25):
+   *     Workspace plan="FREE" → approvalPolicy "none" → 400 APPROVAL_POLICY_NOT_ENABLED
+   *     OrganizationMember = OWNER 1 · ADMIN 0 → 결재자 미설정으로 두 번째 400
+   *   두 번 막히는 버튼은 붙이지 않는다(호영님). */
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ status, budgetId, vendorRequestId }: { status: QuoteStatus; budgetId?: string; vendorRequestId?: string }) => {
@@ -1545,80 +1509,16 @@ export default function QuoteDetailPage() {
                   </Button>
                 )}
 
-                {/* COMPLETED: 주문 접수 요청 */}
+                {/* §order-entry-removed (2026-09-25 · 호영님 판정) — 「주문 접수 요청」 다이얼로그 제거.
+                    오늘 사용자가 실제로 하는 일을 그대로 적는다 — 선정하고, 플랫폼 밖에서 사고, 입고로 돌아온다. */}
                 {quoteStatus === "COMPLETED" && !quote.order && isAdmin && (
-                  <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
-                    <DialogTrigger asChild>
-                      <Button className="w-full sm:w-auto text-sm h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                        <ShoppingCart className="h-4 w-4 mr-2 shrink-0" />주문 접수 요청
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
-                      <DialogHeader>
-                        <DialogTitle>주문 접수</DialogTitle>
-                        <DialogDescription>주문 정보를 입력하고 접수해주세요</DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4 overflow-y-auto pr-1 flex-1">
-                        <div className="space-y-2">
-                          <Label>희망 배송일</Label>
-                          <Input type="date" value={orderForm.expectedDelivery} onChange={(e) => setOrderForm({ ...orderForm, expectedDelivery: e.target.value })} min={new Date().toISOString().split("T")[0]} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>결제할 과제 <span className="text-red-500">*</span></Label>
-                          <Select value={orderForm.budgetId} onValueChange={(value) => setOrderForm({ ...orderForm, budgetId: value })}>
-                            <SelectTrigger><SelectValue placeholder="과제를 선택하세요" /></SelectTrigger>
-                            <SelectContent>
-                              {/* §order-budget-reservation P3 — 발주는 canonical Budget 만.
-                                  연구비(UserBudget) 행을 고르면 실패가 예정되므로 선택 불가로 표기한다
-                                  (dead-end 금지 · 숨기지 않고 사유를 보인다).
-                                 🛑 이 주석은 map 콜백 **밖**에 둔다 — `=> (` 뒤는 단일 표현식
-                                    반환 자리라 JSX 주석을 단독으로 두면 객체 리터럴로 파싱돼 깨진다
-                                    (CLAUDE.md §10 삼항 사례와 같은 뿌리 · tsc TS17008/TS1005). */}
-                              {budgets.map((budget: any) => (
-                                <SelectItem key={budget.id} value={budget.id} disabled={budget._source === "user-budget"}>{budget.name} (잔액: ₩ {safeLocaleAmount(budget.remainingAmount)}){budget._source === "user-budget" ? " · 발주 미지원(연구비)" : ""}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {selectedBudget && (
-                            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1 text-sm">
-                              <div className="flex justify-between"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩ {safeLocaleAmount(selectedBudget.remainingAmount)}</span></div>
-                              <div className="flex justify-between"><span className="text-muted-foreground">주문 금액</span><span className="font-semibold text-red-600">- ₩ {purchaseTotal.toLocaleString()}</span></div>
-                              <div className="flex justify-between pt-1.5 border-t border-blue-200"><span className="font-medium">예상 잔액</span>
-                                <span className={cn("font-bold", expectedRemaining !== null && expectedRemaining < 0 ? "text-red-600" : "text-green-600")}>₩ {expectedRemaining !== null ? expectedRemaining.toLocaleString() : "0"}</span>
-                              </div>
-                              {expectedRemaining !== null && expectedRemaining < 0 && <p className="text-xs text-red-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />예산이 부족합니다</p>}
-                            </div>
-                          )}
-                        </div>
-                        <div className="space-y-2">
-                          <Label>결제 방식 <span className="text-muted-foreground text-xs">(선택)</span></Label>
-                          <Select value={orderForm.paymentMethod} onValueChange={(value) => setOrderForm({ ...orderForm, paymentMethod: value })}>
-                            <SelectTrigger><SelectValue placeholder="결제 방식 선택" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="research_card">연구비 카드</SelectItem>
-                              <SelectItem value="tax_invoice">세금계산서</SelectItem>
-                              <SelectItem value="bank_transfer">계좌이체</SelectItem>
-                              <SelectItem value="credit_card">신용카드</SelectItem>
-                              <SelectItem value="other">기타</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>전달 사항 <span className="text-muted-foreground text-xs">(선택)</span></Label>
-                          <Textarea placeholder="추가로 전달할 사항이 있으시면 입력하세요" value={orderForm.notes} onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })} rows={3} />
-                        </div>
-                        <div className="flex gap-2 pt-2">
-                          <Button variant="outline" onClick={() => { setShowOrderDialog(false); setOrderForm({ expectedDelivery: "", paymentMethod: "", budgetId: "", notes: "" }); }} className="flex-1">취소</Button>
-                          <Button onClick={() => {
-                            if (!orderForm.budgetId) { toast({ title: "과제를 선택해주세요", variant: "destructive" }); return; }
-                            createOrderMutation.mutate({ expectedDelivery: orderForm.expectedDelivery || undefined, paymentMethod: orderForm.paymentMethod || undefined, budgetId: orderForm.budgetId, notes: orderForm.notes || undefined });
-                          }} disabled={createOrderMutation.isPending || !orderForm.budgetId} className="flex-1 bg-blue-600 hover:bg-blue-700">
-                            {createOrderMutation.isPending ? "처리 중..." : "주문 접수"}
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <div className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-sm font-semibold text-slate-800">선정 완료</p>
+                    <p className="mt-0.5 text-xs text-slate-500">구매 후 입고 관리에서 입고를 등록하세요</p>
+                    <Link href="/dashboard/receiving" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                      입고 관리로 <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
                 )}
 
                 {/* COMPLETED + 회원사: 승인 요청 */}

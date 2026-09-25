@@ -518,7 +518,8 @@ function DashboardPageInner() {
       label: "승인 대기",
       count: approvalPendingCount,
       severityRank: 5,
-      helper: "견적 응답 검토 후 발주 전환",
+      // §order-entry-removed (2026-09-25 · 호영님 판정) — 발주 전환이라는 다음 단계가 제품에 없다.
+      helper: "견적 응답 검토 후 선정",
       href: "/dashboard/quotes?status=RESPONDED",
       icon: <ClipboardList className="h-4 w-4" />,
     },

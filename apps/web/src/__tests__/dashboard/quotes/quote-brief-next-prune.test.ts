@@ -37,8 +37,11 @@ describe("#quote-brief-next-prune — invariant 보존", () => {
     expect(page).toMatch(/다음 연결[\s\S]{0,200}handoffTarget/);
   });
 
-  it("'전환 상태' (handoffStatus) row 보존", () => {
-    expect(page).toMatch(/전환 상태[\s\S]{0,200}handoffStatus/);
+  it("'진행 상태' (handoffStatus) row 보존", () => {
+    /* 승계 §order-entry-removed (2026-09-25 · 호영님 판정) — 「발주 전환」 은 제품에 없는 다음 단계였다.
+     *   결재로 바꾸지도 않았다(prod FREE → approvalPolicy "none" · ADMIN 0 → 두 번 막힘).
+     *   명제(브리핑이 다음 단계를 한 자리에서 보여준다)는 불변이고 **이름만** 참인 것으로 옮겼다. */
+    expect(page).toMatch(/진행 상태[\s\S]{0,200}handoffStatus/);
   });
 
   it("§11.221 판단 근거 (buildBriefRationale 한 줄 + collapsible) 보존", () => {

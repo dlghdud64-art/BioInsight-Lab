@@ -14,12 +14,15 @@ function readWeb(rel: string): string {
 const QUOTES_PAGE = "src/app/dashboard/quotes/page.tsx";
 
 describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", () => {
-  it("탭 4개 라벨이 모두 존재 (상태 요약 / 회신 현황 / 비교 진행 / 발주 전환)", () => {
+  it("탭 4개 라벨이 모두 존재 (상태 요약 / 회신 현황 / 비교 진행 / 다음 단계)", () => {
+    /* 승계 §order-entry-removed (2026-09-25 · 호영님 판정) — 「발주 전환」 은 제품에 없는 다음 단계였다.
+     *   결재로 바꾸지도 않았다(prod FREE → approvalPolicy "none" · ADMIN 0 → 두 번 막힘).
+     *   명제(브리핑이 다음 단계를 한 자리에서 보여준다)는 불변이고 **이름만** 참인 것으로 옮겼다. */
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/상태 요약/);
     expect(src).toMatch(/회신 현황/);
     expect(src).toMatch(/비교 진행/);
-    expect(src).toMatch(/발주 전환/);
+    expect(src).toMatch(/다음 단계/);
   });
 
   it("탭 id 집합이 summary/reply/compare/order 로 구성", () => {
@@ -27,7 +30,7 @@ describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", ()
     expect(src).toMatch(/\{ id: "summary", label: "상태 요약" \}/);
     expect(src).toMatch(/\{ id: "reply",\s+label: "회신 현황" \}/);
     expect(src).toMatch(/\{ id: "compare", label: "비교 진행" \}/);
-    expect(src).toMatch(/\{ id: "order",\s+label: "발주 전환" \}/);
+    expect(src).toMatch(/\{ id: "order",\s+label: "다음 단계" \}/);
   });
 
   it("탭 selector 가 role=tablist + setActiveChipId 만 호출 (scroll·setBriefDetailExpanded 제거)", () => {

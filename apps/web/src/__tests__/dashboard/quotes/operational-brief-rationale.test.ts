@@ -33,11 +33,14 @@ describe("§11.221 — 운영 브리핑 판단 근거 인과관계 요약", () =
     expect(src).toMatch(/useState[\s<]*(?:boolean)?[\s>]*\(\s*false\s*\)[\s\S]{0,200}(factsExpanded|rationaleExpanded|detailsExpanded)|const\s+\[(factsExpanded|rationaleExpanded|detailsExpanded)/);
   });
 
-  it("4 cell MetricCell grid — collapsed 안에 보존 (현재 상태 / 회신 / 비교 가능 / 발주 전환)", () => {
+  it("4 cell MetricCell grid · collapsed 안에 보존 (현재 상태 / 회신 / 비교 가능 / 선정)", () => {
+    /* 승계 §order-entry-removed (2026-09-25 · 호영님 판정) — 「발주 전환」 은 제품에 없는 다음 단계였다.
+     *   결재로 바꾸지도 않았다(prod FREE → approvalPolicy "none" · ADMIN 0 → 두 번 막힘).
+     *   명제(브리핑이 다음 단계를 한 자리에서 보여준다)는 불변이고 **이름만** 참인 것으로 옮겼다. */
     expect(src).toMatch(/MetricCell[\s\S]{0,200}현재 상태/);
     expect(src).toMatch(/MetricCell[\s\S]{0,200}회신/);
     expect(src).toMatch(/MetricCell[\s\S]{0,200}비교 가능/);
-    expect(src).toMatch(/MetricCell[\s\S]{0,200}발주 전환/);
+    expect(src).toMatch(/MetricCell[\s\S]{0,200}선정/);
   });
 
   it("'상세 보기' 또는 '접기' toggle CTA (한국어)", () => {

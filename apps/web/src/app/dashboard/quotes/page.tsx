@@ -144,7 +144,8 @@ const OP_STATUS: Record<string, { label: string; bg: string; text: string; borde
   회신_대기:      { label: "회신 대기 중",    bg: "bg-yellow-100",  text: "text-yellow-800",   border: "border-yellow-300",   leftBorder: "border-l-yellow-500",   dotColor: "bg-yellow-500" },
   // §dashboard-mobile #9 — "요청 발송 전"은 위험(red)이 아니라 §12 s1 발송 단계(파랑·중립 대기). red 오독 해소.
   요청_접수:      { label: "발송 대기",    bg: "bg-[#dce8ff]",   text: "text-[#1d4ed8]",    border: "border-[#bcd3fb]",    leftBorder: "border-l-blue-400",    dotColor: "bg-blue-500" },
-  발주_완료:      { label: "발주 전환 가능",  bg: "bg-emerald-100",text: "text-emerald-800", border: "border-emerald-300", leftBorder: "border-l-emerald-500", dotColor: "bg-emerald-500" },
+  // §order-entry-removed (2026-09-25 · 호영님 판정) — 발주·주문 접수 경로가 제품에서 사라졌다. 이 상태가 참으로 말하는 것은 「선정 완료」 다.
+  발주_완료:      { label: "선정 완료",       bg: "bg-emerald-100",text: "text-emerald-800", border: "border-emerald-300", leftBorder: "border-l-emerald-500", dotColor: "bg-emerald-500" },
   취소됨:         { label: "취소됨",          bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-300",   leftBorder: "border-l-slate-300",   dotColor: "bg-slate-400" },
 };
 
@@ -283,7 +284,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     badge: "조건 확인 필요", headerSummary: "문서 또는 조건 이슈가 남아 있어 확정이 불가합니다", urgency: "확인 완료 전에는 다음 단계 진행이 제한됩니다",
     status: "확정 전 조건 확인", blocker: "SDS/CoA/MOQ/납기 조건 확인 필요", nextAction: "조건 확인", compareReady: "가능", poReady: "불가 · 조건 해소 전",
     snapshotNote: "비교 결과는 있으나 문서 또는 조건 확인 전에는 확정할 수 없습니다",
-    handoffTarget: "조건 확인 / 문서 정리", handoffStatus: "해소 후 주문 접수 가능",
+    handoffTarget: "조건 확인 / 문서 정리", handoffStatus: "해소 후 선정 가능",
     aiRecommendation: "우선 추천: 문서나 조건 이슈를 해소하면 바로 다음 단계로 넘길 수 있습니다",
     ctaLabel: "조건 확인", railCtaLabel: "조건 검토 시작", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
     actionKey: "compare_review",
@@ -297,15 +298,19 @@ const RAIL_STATE_MAP: Record<RailState, {
     ctaLabel: "승인 증빙 연결", railCtaLabel: "승인 검토 시작", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
     actionKey: "approval_prep",
   },
+  /* §order-entry-removed (2026-09-25 · 호영님 판정) — 이 상태의 문구 전량이 **제품에 없는 발주**를 약속하고 있었다.
+   *   「주문 접수」는 POST /api/orders 로 Order 를 만들고 「주문 내역에서 확인하세요」 라고 했는데
+   *   그 주문 내역 화면이 없다(§po-ui-removed · §purchases-ui-removed).
+   *   🛑 결재로 바꾸지도 않았다 — prod 실측상 결재는 요금제(FREE → approvalPolicy "none")와
+   *      결재자 부재(ADMIN 0)로 **두 번 막힌다**. 켜지지 않는 경로를 가리키는 문장은 쓰지 않는다(호영님).
+   *   오늘 사용자가 실제로 하는 일을 그대로 적는다: 선정하고, 플랫폼 밖에서 사서, 입고로 돌아온다. */
   ready_for_po_conversion: {
-    badge: "전환 가능", headerSummary: "차단 없이 발주 전환 준비가 가능한 상태입니다", urgency: "지금 전환하면 다음 처리로 바로 이어집니다",
-    status: "실행 준비 완료", blocker: "차단 없음", nextAction: "발주 실행 준비", compareReady: "완료", poReady: "가능",
-    snapshotNote: "현재 케이스는 비교와 확인 단계를 통과해 발주 실행 준비가 가능합니다",
-    handoffTarget: "발주 실행 워크벤치", handoffStatus: "즉시 실행 가능",
-    aiRecommendation: "우선 추천: 현재 케이스는 추가 검토보다 발주 실행 준비를 우선해도 됩니다",
-    // §order-entry-rewire P3-2 — railCtaLabel 은 이제 주문 접수 창의 제목이다
-    //   (발주 경로는 브리핑 rail 을 경유하지 않는다 · 호영님 판정 2026-08-22).
-    ctaLabel: "발주 실행 준비", railCtaLabel: "주문 접수", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
+    badge: "선정 완료", headerSummary: "비교와 조건 확인을 통과해 선정이 끝난 상태입니다", urgency: "구매 후 입고 관리에서 입고를 등록하세요",
+    status: "선정 완료", blocker: "차단 없음", nextAction: "다음 단계", compareReady: "완료", poReady: "선정 완료",
+    snapshotNote: "선정이 끝났습니다 · 구매는 플랫폼 밖에서 진행하고 입고 관리에서 입고를 등록합니다",
+    handoffTarget: "입고 관리", handoffStatus: "입고 등록 대기",
+    aiRecommendation: "",
+    ctaLabel: "다음 단계", railCtaLabel: "다음 단계", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
     actionKey: "po_conversion",
   },
 };
@@ -342,7 +347,8 @@ function shortenActionLabel(ctaLabel: string): string {
     "비교 결과 정리": "비교 정리",
     "조건 확인": "조건 확인",
     "승인 증빙 연결": "승인 연결",
-    "발주 실행 준비": "발주 준비",
+    // §order-entry-removed (2026-09-25 · 호영님 판정) — 행 라벨도 같이. 축약할 것이 없으므로 그대로 쓴다.
+    "다음 단계": "다음 단계",
   };
   return TABLE_ACTION_LABEL_SHORTCUTS[ctaLabel] ?? ctaLabel;
 }
@@ -1208,67 +1214,24 @@ function QuotesPageContent() {
     if (activeWorkWindow === "request_send") closeOverlay();
   }, [activeWorkWindow, closeOverlay]);
 
-  // ═══ §order-entry-rewire P3-1 — 발주 진입 직결 (호영님 판정 2026-08-22) ═══
-  //   운영 브리핑·전체 상세 페이지 은퇴에 따라 주문 접수(예산 선택·예상 잔액)를
-  //   po_conversion 워크윈도우로 이식. same-canvas — 새 페이지 없음.
-  //   금액 축: vendorRequestId 필수 (없으면 서버 totalAmount 0 → INVALID_AMOUNT — 금일 실측).
-  const [orderForm, setOrderForm] = useState<{ budgetId: string; expectedDelivery: string; notes: string }>({ budgetId: "", expectedDelivery: "", notes: "" });
-  const [orderSubmitting, setOrderSubmitting] = useState(false);
-  const poConversionOpen = activeWorkWindow === "po_conversion" && !!selectedQuoteId;
-  const { data: orderBudgetsData } = useQuery({
-    queryKey: ["user-budgets"],
-    queryFn: async ({ signal }: { signal?: AbortSignal }) => {
-      const res = await fetch("/api/user-budgets", { signal });
-      if (!res.ok) throw new Error("예산 목록을 불러오지 못했습니다");
-      return res.json();
-    },
-    enabled: poConversionOpen,
-  });
-  const { data: orderVrData } = useQuery({
-    queryKey: ["vendor-requests", selectedQuoteId],
-    queryFn: async ({ signal }: { signal?: AbortSignal }) => {
-      const res = await fetch(`/api/quotes/${selectedQuoteId}/vendor-requests`, { signal });
-      if (!res.ok) throw new Error("회신 정보를 불러오지 못했습니다");
-      return res.json();
-    },
-    enabled: poConversionOpen,
-  });
-  const orderBudgets: any[] = orderBudgetsData?.budgets ?? [];
-  const orderRespondedVrs: any[] = (orderVrData?.vendorRequests ?? []).filter((vr: any) => vr.status === "RESPONDED");
-  //   단일 회신이면 자동 — 구매 처리 경로(effectiveVrId)와 같은 선택 축
-  const orderVrId: string | undefined = orderRespondedVrs.length === 1 ? orderRespondedVrs[0]?.id : undefined;
-  const submitOrder = async () => {
-    if (orderSubmitting) return; // 연타 직렬화 (§org-policy 동형)
-    if (!selectedQuote) return;
-    if (!orderForm.budgetId) { toast({ title: "결제할 예산을 선택해주세요", variant: "destructive" }); return; }
-    setOrderSubmitting(true);
-    try {
-      const res = await csrfFetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quoteId: selectedQuote.id,
-          vendorRequestId: orderVrId || undefined,
-          budgetId: orderForm.budgetId,
-          expectedDelivery: orderForm.expectedDelivery || undefined,
-          notes: orderForm.notes || undefined,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => null);
-        throw new Error(err?.error || err?.message || "주문 생성에 실패했습니다");
-      }
-      toast({ title: "주문이 접수되었습니다", description: "주문 내역에서 확인하세요" });
-      queryClient.invalidateQueries({ queryKey: ["user-budgets"] });
-      refetch();
-      setOrderForm({ budgetId: "", expectedDelivery: "", notes: "" });
-      setActiveWorkWindow(null);
-    } catch (e) {
-      toast({ title: "주문 생성 실패", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
-    } finally {
-      setOrderSubmitting(false);
-    }
-  };
+  /* 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — 「주문 접수」 배선(예산 선택 폼 · 예상 잔액 · POST /api/orders).
+   *
+   *   성공 토스트가 「주문이 접수되었습니다 · **주문 내역에서 확인하세요**」 였는데
+   *   그 주문 내역 화면이 없다(§po-ui-removed · §purchases-ui-removed 로 삭제).
+   *   prod 주문 2건이 이 경로로 생겼고, 그 2건을 볼 화면이 지금 제품에 없다.
+   *
+   *   🔑 API·DB 는 **건드리지 않았다**(호영님) — /api/orders 와 Order 테이블은 그대로다.
+   *      UI 에서 주문을 만드는 경로가 0 이 될 뿐이다. 알림은 계속 그 주문을 가리킨다
+   *      (§order-notif-identifier — 목적지는 주문의 출발점인 견적 상세다).
+   *
+   *   결재(request-approval)로 바꾸지 않은 이유 — prod 실측 2026-09-25(읽기 전용):
+   *     Workspace plan="FREE" · stripePriceId=null → resolveApprovalPolicyForPlan → "none"
+   *       → 라우트가 400 APPROVAL_POLICY_NOT_ENABLED
+   *     OrganizationMember 역할 = OWNER 1명 · ADMIN 0 → 두 번째 400(결재자 미설정)
+   *     ⚠️ 정책 출처는 **조직 설정이 아니라 워크스페이스 요금제**다. Organization 에는
+   *        approvalPolicy 필드 자체가 없다(Prisma 필드 목록 실측).
+   *     요금제 안내조차 오늘은 참이 아니다 — §유료 결제 오픈 전 게이트가 닫혀 있어
+   *     결제해도 in_app_approval 에 닿지 않는다. 켜지지 않는 경로는 가리키지 않는다(호영님). */
   // §quote-management-redesign P2 — 발송 인텐트(2-step) 게이트 대상 caseId. 리스트 1-tap 직접
   //   발송(§11.279d) → ConfirmSendModal 확인 → "발송 검토 계속" 시에만 VendorRequestModal 진입(오발송 방지).
   const [sendIntentQuoteId, setSendIntentQuoteId] = useState<string | null>(null);
@@ -1579,7 +1542,7 @@ function QuotesPageContent() {
     //   종전: 행 "발주 준비" → openQuoteContextRail → 운영 브리핑이 뜨고 그 안에서
     //   한 번 더 눌러야 주문 접수. 브리핑이 발주 흐름에 끼어드는 자리였다.
     //   이제: 행 → 주문 접수 창 직행 (rail 미경유). 다른 상태의 rail 경유는 불변.
-    if (ctaLabel === "발주 실행 준비") {
+    if (ctaLabel === "다음 단계") {
       setSelectedQuoteId(quoteId);
       setActiveWorkWindow("po_conversion");
       return;
@@ -2026,18 +1989,8 @@ function QuotesPageContent() {
   const today = new Date().toDateString();
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) : null;
 
-  // §order-entry-rewire P3-1 정정 (게이트 TDZ 검출) — 아래 파생 3건은 selectedQuote 를
-  // 즉시 실행 자리에서 읽으므로 선언 뒤에 있어야 한다 (위에 두면 렌더 자체가 ReferenceError).
-  const orderAmount = (() => {
-    if (!selectedQuote || !orderVrId) return 0;
-    const vr = orderRespondedVrs[0];
-    return (selectedQuote.items ?? []).reduce((sum: number, item: any) => {
-      const ri = vr?.responseItems?.find((r: any) => r.quoteItemId === item.id);
-      return sum + Math.round(Number(ri?.unitPrice ?? 0)) * (item.quantity || 1);
-    }, 0);
-  })();
-  const selectedOrderBudget = orderBudgets.find((b: any) => b.id === orderForm.budgetId);
-  const orderExpectedRemaining = selectedOrderBudget ? (selectedOrderBudget.remainingAmount ?? 0) - orderAmount : null;
+  // 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — orderAmount · selectedOrderBudget · orderExpectedRemaining.
+  //   예산 잔액 미리보기는 주문 접수 폼 전용이었다.
 
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
   const selectedDispatchPreflight = useMemo(
@@ -3656,7 +3609,7 @@ function QuotesPageContent() {
                 <Package className="h-6 w-6" />
               </div>
               <h2 className="text-base font-bold text-slate-900 break-keep">첫 견적 케이스를 만들어 파이프라인을 시작하세요</h2>
-              <p className="mt-1 text-xs text-slate-500 break-keep">요청 발송 → 회신 비교 → 발주 전환까지 한 흐름으로 추적합니다.</p>
+              <p className="mt-1 text-xs text-slate-500 break-keep">요청 발송 → 회신 비교 → 선정까지 한 흐름으로 추적합니다.</p>
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 text-left">
                 {[
                   { n: 1, t: "견적 케이스 생성", d: "필요한 품목을 묶어 RFQ 케이스를 만듭니다." },
@@ -3936,7 +3889,9 @@ function QuotesPageContent() {
               { id: "summary", label: "상태 요약" },
               { id: "reply",   label: "회신 현황" },
               { id: "compare", label: "비교 진행" },
-              { id: "order",   label: "발주 전환" },
+              // §order-entry-removed (2026-09-25 · 호영님 판정) — 발주가 제품에 없다. FREE 에서는 결재도 없으므로
+              //   탭 이름이 결재를 약속해서도 안 된다(호영님). 중립적으로 적는다.
+              { id: "order",   label: "다음 단계" },
             ].map((c) => (
               <button
                 key={c.id}
@@ -4096,7 +4051,7 @@ function QuotesPageContent() {
                       <MetricCell label="현재 상태" value={selectedSignals.status} tone="neutral" />
                       <MetricCell label="회신" value={replyValue} tone={replyTone} />
                       <MetricCell label="비교 가능" value={selectedSignals.compareReady} tone={compareTone} />
-                      <MetricCell label="발주 전환" value={selectedSignals.poReady} tone={poTone} />
+                      <MetricCell label="선정" value={selectedSignals.poReady} tone={poTone} />
                     </div>
                   );
                 })()}
@@ -4341,7 +4296,7 @@ function QuotesPageContent() {
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-700">{selectedSignals.handoffTarget}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">전환 상태</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-yellow-600"}>{selectedSignals.handoffStatus}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">진행 상태</span><span className={selectedSignals.poReady === "선정 완료" ? "text-emerald-400" : "text-yellow-600"}>{selectedSignals.handoffStatus}</span></div>
             </div>
           </section>
           )}
@@ -4468,7 +4423,7 @@ function QuotesPageContent() {
             { id: "summary", label: "상태 요약" },
             { id: "facts",   label: "회신 현황" },
             { id: "risks",   label: "리스크" },
-            { id: "next",    label: "발주 전환" },
+            { id: "next",    label: "다음 단계" },
           ]}
           summary={<p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>}
           facts={
@@ -4722,7 +4677,8 @@ function QuotesPageContent() {
               : activeWorkWindow === "approval_prep"
               ? "승인 패키지 준비 완료"
               : activeWorkWindow === "po_conversion"
-              ? (orderSubmitting ? "접수 중..." : "주문 접수")
+              // §order-entry-removed (2026-09-25 · 호영님 판정) — 주문 접수 대신 실제로 갈 곳(입고 관리)으로 보낸다.
+              ? "입고 관리 열기"
               : selectedSignals.ctaLabel,
             onClick: () => {
               // §11.363 — "추가 회신 확보"/재요청 = 추가 발송 intent.
@@ -4736,9 +4692,10 @@ function QuotesPageContent() {
                 setActiveWorkWindow("request_send");
                 return;
               }
-              // §order-entry-rewire P3-1 — po_conversion 은 닫기(no-op)가 아니라 실 접수.
+              // §order-entry-removed (2026-09-25 · 호영님 판정) — 접수 대신 입고 관리로 이동한다. 그 화면은 살아 있다.
               if (activeWorkWindow === "po_conversion") {
-                void submitOrder();
+                setActiveWorkWindow(null);
+                router.push("/dashboard/receiving");
                 return;
               }
               setActiveWorkWindow(null);
@@ -4846,7 +4803,7 @@ function QuotesPageContent() {
                     )}
                     <div className="flex justify-between text-xs pt-2 border-t border-bd/50">
                       <span className="text-slate-400">다음 목적지</span>
-                      <span className="text-slate-700">{canConfirm ? "승인 패키지 준비 또는 발주 전환" : "조건 해소 후 확정"}</span>
+                      <span className="text-slate-700">{canConfirm ? "선택안 확정" : "조건 해소 후 확정"}</span>
                     </div>
                   </div>
                 </div>
@@ -4921,7 +4878,7 @@ function QuotesPageContent() {
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">승인 완료 후</span>
-                        <span className="text-slate-700">발주 전환 준비</span>
+                        <span className="text-slate-700">선정 완료</span>
                       </div>
                     </div>
                   </div>
@@ -4929,54 +4886,13 @@ function QuotesPageContent() {
               );
             })()}
             {activeWorkWindow === "po_conversion" && (
-              <div className="rounded-lg border border-bd bg-pn p-4 space-y-4">
-                {/* §order-entry-rewire P3-1 — 주문 접수 (예산 선택·예상 잔액) 이식.
-                    은퇴한 /quotes/[id] 다이얼로그의 계약 승계: vendorRequestId 축 포함. */}
-                <div>
-                  <p className="text-xs font-medium text-slate-700">주문 접수</p>
-                  <p className="text-xs text-slate-400 mt-0.5">품목 {selectedQuote.items.length}건 · 결제할 예산을 선택하고 접수하세요</p>
-                </div>
-                {orderRespondedVrs.length !== 1 && (
-                  <p className="text-xs text-slate-500 rounded border border-slate-200 bg-white p-2">
-                    회신 {orderRespondedVrs.length}건 — 주문 금액은 단일 회신 확정 후 계산됩니다
-                  </p>
-                )}
-                <div className="space-y-2">
-                  <Label className="text-xs">결제할 과제 <span className="text-red-500">*</span></Label>
-                  <Select value={orderForm.budgetId} onValueChange={(v) => setOrderForm((f) => ({ ...f, budgetId: v }))} disabled={orderSubmitting}>
-                    <SelectTrigger className="bg-white"><SelectValue placeholder="과제를 선택하세요" /></SelectTrigger>
-                    <SelectContent>
-                      {orderBudgets.length === 0 && (
-                        <div className="px-2 py-1.5 text-xs text-slate-500">발주에 사용할 예산이 없습니다 · 예산 관리에서 만들어 주세요</div>
-                      )}
-                      {orderBudgets.map((budget: any) => (
-                        <SelectItem key={budget.id} value={budget.id} disabled={budget._source === "user-budget"}>
-                          {budget.name} (잔액: ₩ {(budget.remainingAmount ?? 0).toLocaleString("ko-KR")}){budget._source === "user-budget" ? " · 발주 미지원(연구비)" : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedOrderBudget && (
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1 text-xs">
-                      <div className="flex justify-between"><span className="text-slate-500">현재 잔액</span><span className="font-semibold">₩ {(selectedOrderBudget.remainingAmount ?? 0).toLocaleString("ko-KR")}</span></div>
-                      <div className="flex justify-between"><span className="text-slate-500">주문 금액</span><span className="font-semibold text-red-600">- ₩ {orderAmount.toLocaleString("ko-KR")}</span></div>
-                      <div className="flex justify-between pt-1.5 border-t border-blue-200"><span className="font-medium">예상 잔액</span>
-                        <span className={orderExpectedRemaining !== null && orderExpectedRemaining < 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>₩ {(orderExpectedRemaining ?? 0).toLocaleString("ko-KR")}</span>
-                      </div>
-                      {orderExpectedRemaining !== null && orderExpectedRemaining < 0 && (
-                        <p className="text-[11px] text-red-600">예산이 부족합니다</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">희망 배송일 <span className="text-slate-400">(선택)</span></Label>
-                  <Input type="date" className="bg-white" value={orderForm.expectedDelivery} min={new Date().toISOString().split("T")[0]} onChange={(e) => setOrderForm((f) => ({ ...f, expectedDelivery: e.target.value }))} disabled={orderSubmitting} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">전달 사항 <span className="text-slate-400">(선택)</span></Label>
-                  <Input className="bg-white" placeholder="추가로 전달할 사항" value={orderForm.notes} onChange={(e) => setOrderForm((f) => ({ ...f, notes: e.target.value }))} disabled={orderSubmitting} />
-                </div>
+              /* §order-entry-removed (2026-09-25 · 호영님 판정) — 오늘 사용자가 실제로 하는 일을 그대로 적는다(호영님).
+                 제품이 하지 않는 일(발주·주문 접수·결재)은 약속하지 않는다. */
+              <div className="rounded-lg border border-bd bg-pn p-4 space-y-2">
+                <p className="text-xs font-medium text-slate-700">선정 완료</p>
+                <p className="text-xs text-slate-500">
+                  품목 {selectedQuote.items.length}건의 선정이 끝났습니다 · 구매 후 입고 관리에서 입고를 등록하세요
+                </p>
               </div>
             )}
 

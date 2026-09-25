@@ -95,11 +95,6 @@ describe("§encoding-integrity 축 2 — UTF-16 파일 목록 고정", () => {
 
 });
 
-describe("§encoding-integrity — 복원분 회귀 0 (⑧-1)", () => {
-  it("주문 접수 예산 라벨이 `결제할 과제` 다", () => {
-    /* f088ac28 복원분. 원형은 8adf19fc 판본 바이트에서 확인했다:
-     * EA B2 B0 · EC A0 9C · ED 95 A0 · 20 · EA B3 BC · EC A0 9C */
-    const src = readFileSync(join(ROOT, "app", "quotes", "[id]", "page.tsx"), "utf8");
-    expect(src).toMatch(/<Label>결제할 과제/);
-  });
-});
+/* 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — ⑧-1 「주문 접수 예산 라벨 = 결제할 과제」.
+ *    쟴 라벨이 있는 폼이 사라졌다. 명제는 인코딩 복원분의 회귀 차단이었고,
+ *    그 인코딩 축은 이 파일의 다른 describe 가 계속 든다(복원 원형: f088ac28 · 8adf19fc). */

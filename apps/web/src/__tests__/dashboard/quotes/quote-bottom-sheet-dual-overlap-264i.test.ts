@@ -144,7 +144,8 @@ describe("§11.264i #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/\{ id: "summary",\s+label: "상태 요약" \}/);
     expect(page).toMatch(/\{ id: "facts",\s+label: "회신 현황" \}/);
     expect(page).toMatch(/\{ id: "risks",\s+label: "리스크" \}/);
-    expect(page).toMatch(/\{ id: "next",\s+label: "발주 전환" \}/);
+    // 승계 §order-entry-removed (2026-09-25 · 호영님 판정) — chips 는 4개 그대로, 4번째 이름만 참인 것으로.
+    expect(page).toMatch(/\{ id: "next",\s+label: "다음 단계" \}/);
   });
 
   it("§11.264d objectLabel 동적 결합 보존", () => {
@@ -159,11 +160,12 @@ describe("§11.264i #2 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("KPI 5 카드 라벨 보존: 발송 대기 / 회신 추적 / 비교 검토 필요 / 승인 ・ 예외 처리 / 발주 전환 가능", () => {
+  it("KPI 5 카드 라벨 보존: 발송 대기 / 회신 추적 / 비교 검토 필요 / 승인 ・ 예외 처리 / 선정 완료", () => {
     expect(page).toMatch(/label: "발송 대기"/);
     expect(page).toMatch(/label: "회신 추적"/);
     expect(page).toMatch(/label: "비교 검토 필요"/);
     expect(page).toMatch(/label: "승인 ?\/ ?예외 처리"/);
-    expect(page).toMatch(/label: "발주 전환 가능"/);
+    // 승계 §order-entry-removed (2026-09-25 · 호영님 판정) — KPI 라벨도 「선정 완료」 로. 상태가 참으로 말하는 것은 선정이다.
+    expect(page).toMatch(/label: "선정 완료"/);
   });
 });
