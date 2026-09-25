@@ -118,6 +118,16 @@ function buildBaseResult(
       tone: "blue",
     };
   }
+  /* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 완료된 견적이 이 분기에 먼저 걸려 「최적안 선택이 다음 단계입니다」 를 냈다.
+   *   선정이 끝났다고 말하면서 선택하라고 하는 자기모순이다(호영님 라이브 실측).
+   *   완료 판정을 **앞에** 둔다 — 분기 순서가 곧 우선순위다. */
+  if (poReady === "입고 등록") {
+    return {
+      message: "견적 완료 → 구매는 플랫폼 밖에서 진행합니다. 입고 관리에서 입고 등록이 다음 단계입니다.",
+      case: "po_ready",
+      tone: "emerald",
+    };
+  }
   if (replyCount > 0 && replyCount >= totalItems && (compareReady === "가능" || compareReady === "완료")) {
     return {
       message: "회신 수집 완료 → 비교 검토 가능. 최적안 선택이 다음 단계입니다.",
@@ -125,9 +135,11 @@ function buildBaseResult(
       tone: "blue",
     };
   }
+  /* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 「발주 전환 · 결재 또는 PO 생성」 은 제품에 없는 다음 단계다
+   *   (§po-ui-removed · §purchases-ui-removed · 결재는 요금제로 막힘). 남은 참인 문장으로 바꾼다. */
   if (poReady === "가능") {
     return {
-      message: "비교 완료 → 발주 전환 가능. 결재 또는 PO 생성이 다음 단계입니다.",
+      message: "비교 완료 → 구매 진행 처리가 다음 단계입니다.",
       case: "po_ready",
       tone: "emerald",
     };

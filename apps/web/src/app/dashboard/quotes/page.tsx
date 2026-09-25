@@ -144,8 +144,14 @@ const OP_STATUS: Record<string, { label: string; bg: string; text: string; borde
   회신_대기:      { label: "회신 대기 중",    bg: "bg-yellow-100",  text: "text-yellow-800",   border: "border-yellow-300",   leftBorder: "border-l-yellow-500",   dotColor: "bg-yellow-500" },
   // §dashboard-mobile #9 — "요청 발송 전"은 위험(red)이 아니라 §12 s1 발송 단계(파랑·중립 대기). red 오독 해소.
   요청_접수:      { label: "발송 대기",    bg: "bg-[#dce8ff]",   text: "text-[#1d4ed8]",    border: "border-[#bcd3fb]",    leftBorder: "border-l-blue-400",    dotColor: "bg-blue-500" },
-  // §order-entry-removed (2026-09-25 · 호영님 판정) — 발주·주문 접수 경로가 제품에서 사라졌다. 이 상태가 참으로 말하는 것은 「선정 완료」 다.
-  발주_완료:      { label: "선정 완료",       bg: "bg-emerald-100",text: "text-emerald-800", border: "border-emerald-300", leftBorder: "border-l-emerald-500", dotColor: "bg-emerald-500" },
+  /* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 「선정 완료」 는 **내가 확인 없이 쓴 말**이었다. 실측으로 갈렸다:
+   *   COMPLETED 로 가는 경로가 둘이고 선정·구매 기록이 **경로마다 다르다**.
+   *     사용자 「구매 진행 처리」(PATCH /api/quotes/[id]) → markQuoteAsPurchased → PurchaseRecord 생성(공급사명 포함)
+   *     관리자 (PATCH /api/quotes/[id]/status)            → PurchaseRecord **생성 안 함**
+   *   그리고 두 경로 **어디서도** Quote.selectedReplyId 를 채우지 않는다
+   *   (select-reply 라우트의 UI 호출자 0 · prod QuoteReply 0행 · COMPLETED 1건도 selectedReplyId null).
+   *   → 「선정됐다」 고 단정할 수 없다. 두 경로에서 **모두 참인** 것은 「견적이 완료 처리됐다」 뿐이다. */
+  발주_완료:      { label: "견적 완료",       bg: "bg-emerald-100",text: "text-emerald-800", border: "border-emerald-300", leftBorder: "border-l-emerald-500", dotColor: "bg-emerald-500" },
   취소됨:         { label: "취소됨",          bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-300",   leftBorder: "border-l-slate-300",   dotColor: "bg-slate-400" },
 };
 
@@ -202,6 +208,15 @@ function quoteReadiness(q: Quote): QuoteReadiness {
 
 function deriveRailState(q: Quote): RailState {
   return quoteReadiness(q).uiState;
+}
+
+/* §quote-reply-count-split (2026-09-25 · 호영님 실측) — 「회신 전」 은 **발송 전에만** 참이다.
+ *   구 게이트는 `status === "SENT" || status === "RESPONDED"` 였다. COMPLETED·PURCHASED·CANCELLED 가
+ *   그 밖으로 떨어져 **회신이 도착한 견적에 「회신 전」**이 붙었다(호영님 라이브 실측 · 같은 견적을
+ *   패널은 「회신 1/1」 로 말하고 있었다). 비교식을 하나 더 늘리지 않고 명제에 이름을 준다. */
+const NOT_YET_SENT_STATUSES: ReadonlySet<string> = new Set(["PENDING", "PARSED"]);
+function hasBeenSent(q: { status: string }): boolean {
+  return !NOT_YET_SENT_STATUSES.has(q.status);
 }
 
 // §purchased-falls-through-to-not-sent — **실행 축 분리** (호영님 판정 2026-08-24)
@@ -305,12 +320,13 @@ const RAIL_STATE_MAP: Record<RailState, {
    *      결재자 부재(ADMIN 0)로 **두 번 막힌다**. 켜지지 않는 경로를 가리키는 문장은 쓰지 않는다(호영님).
    *   오늘 사용자가 실제로 하는 일을 그대로 적는다: 선정하고, 플랫폼 밖에서 사서, 입고로 돌아온다. */
   ready_for_po_conversion: {
-    badge: "선정 완료", headerSummary: "비교와 조건 확인을 통과해 선정이 끝난 상태입니다", urgency: "구매 후 입고 관리에서 입고를 등록하세요",
-    status: "선정 완료", blocker: "차단 없음", nextAction: "다음 단계", compareReady: "완료", poReady: "선정 완료",
-    snapshotNote: "선정이 끝났습니다 · 구매는 플랫폼 밖에서 진행하고 입고 관리에서 입고를 등록합니다",
+    badge: "견적 완료", headerSummary: "견적이 완료 처리된 상태입니다", urgency: "구매 후 입고 관리에서 입고를 등록하세요",
+    status: "견적 완료", blocker: "차단 없음", nextAction: "입고 등록", compareReady: "완료", poReady: "입고 등록",
+    snapshotNote: "견적이 완료됐습니다 · 구매는 플랫폼 밖에서 진행하고 입고 관리에서 입고를 등록합니다",
     handoffTarget: "입고 관리", handoffStatus: "입고 등록 대기",
     aiRecommendation: "",
-    ctaLabel: "다음 단계", railCtaLabel: "다음 단계", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
+    // §quote-completed-honesty (2026-09-25 · 호영님 판정) — 클릭 두 번을 한 번으로. 작업창을 거치지 않고 입고 관리로 직행한다(아래 3곳 동일).
+    ctaLabel: "입고 관리 열기", railCtaLabel: "입고 관리 열기", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
     actionKey: "po_conversion",
   },
 };
@@ -347,8 +363,8 @@ function shortenActionLabel(ctaLabel: string): string {
     "비교 결과 정리": "비교 정리",
     "조건 확인": "조건 확인",
     "승인 증빙 연결": "승인 연결",
-    // §order-entry-removed (2026-09-25 · 호영님 판정) — 행 라벨도 같이. 축약할 것이 없으므로 그대로 쓴다.
-    "다음 단계": "다음 단계",
+    // §quote-completed-honesty (2026-09-25 · 호영님 판정) — 행에서도 목적지를 그대로 말한다.
+    "입고 관리 열기": "입고 관리",
   };
   return TABLE_ACTION_LABEL_SHORTCUTS[ctaLabel] ?? ctaLabel;
 }
@@ -667,7 +683,14 @@ function QuoteCard({
   //   확장 시 progress + readiness + 공급사 timeline 노출. 데스크탑 (md+)
   //   변경 0 — wrapper className 의 `hidden md:block` 으로 mutex.
   const [isExpanded, setIsExpanded] = useState(false);
-  const responseCount = quote.responses?.length ?? 0;
+  /* §quote-reply-count-split (2026-09-25 · 호영님 실측) — 회신 축과 가격 축은 **다른 테이블**이다. 섞여 있었다.
+   *   회신 축  quoteReadiness(quote).respondedCount  ← vendorRequests(RESPONDED) + 포털 회신. 패널과 **같은 함수**.
+   *   가격 축  quote.responses                        ← QuoteResponse 행. 가격이 여기 실린다.
+   *   prod 실측 2026-09-25(operator-shell → Supabase xhid… Session Pooler · SELECT 만):
+   *     QuoteResponse **전 견적 0행** · COMPLETED 견적의 vendorRequest RESPONDED 1건.
+   *     즉 목록은 구조적으로 항상 0을 보여주고 패널만 1을 보여주고 있었다.
+   *   §「화면이 보여주는 수와 게이트가 판정하는 수는 같은 함수에서 나와야 한다」 그대로다. */
+  const responseCount = quoteReadiness(quote).respondedCount;
   const prices = (quote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
   const minPrice = prices.length ? Math.min(...prices) : null;
   // §11.223 #quote-card-batch3-price-delivery — 호영님 spec #4: 가격 범위 +
@@ -887,7 +910,8 @@ function QuoteCard({
           PENDING hide (회신 의미 없음) — SENT/RESPONDED 만 노출.
           color: 0% slate, partial blue, 완료(N≥M) emerald.
           §11.264g — 모바일 collapsed 시 hidden (확장 시 표시), 데스크탑 always. */}
-      {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 && (
+      {/* §quote-reply-count-split (2026-09-25 · 호영님 실측) — 완료된 견적에서 진행률이 통째로 사라지던 게이트. 발송 여부로 판정한다. */}
+      {hasBeenSent(quote) && itemCount > 0 && (
         <div className={`mt-2.5 flex items-center gap-2 ${isExpanded ? "" : "hidden md:flex"}`} aria-label="회신 수집 진행률">
           <span className="text-[10px] font-medium text-slate-600 shrink-0 tabular-nums">
             회신 {responseCount}/{itemCount}
@@ -940,7 +964,8 @@ function QuoteCard({
           {/* #quote-card-batch1-density — 현재 단계 라벨만 14px bold(활성 강조). */}
           <span className="text-sm font-bold text-blue-700 whitespace-nowrap">{READINESS_LABELS[signals.readinessStage]}</span>
           <span className="ml-auto text-[11px] text-slate-500 whitespace-nowrap">
-            {quote.status === "PENDING" ? "발송 전" : `회신 ${responseCount}/${quote.vendorRequests?.length ?? itemCount}`}
+            {/* §quote-reply-count-split (2026-09-25 · 호영님 실측) — PARSED 도 발송 전이다. */}
+            {!hasBeenSent(quote) ? "발송 전" : `회신 ${responseCount}/${quote.vendorRequests?.length ?? itemCount}`}
           </span>
         </div>
       </div>
@@ -1542,9 +1567,9 @@ function QuotesPageContent() {
     //   종전: 행 "발주 준비" → openQuoteContextRail → 운영 브리핑이 뜨고 그 안에서
     //   한 번 더 눌러야 주문 접수. 브리핑이 발주 흐름에 끼어드는 자리였다.
     //   이제: 행 → 주문 접수 창 직행 (rail 미경유). 다른 상태의 rail 경유는 불변.
-    if (ctaLabel === "다음 단계") {
-      setSelectedQuoteId(quoteId);
-      setActiveWorkWindow("po_conversion");
+    /* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 작업창을 한 번 더 거치지 않는다. 그 창은 패널에 이미 있는 문장을 반복할 뿐이었다(호영님). */
+    if (ctaLabel === "입고 관리 열기") {
+      router.push("/dashboard/receiving");
       return;
     }
     if (ctaLabel === PO_DETAIL_CTA) {
@@ -3102,7 +3127,8 @@ function QuotesPageContent() {
               {sortedQuotes.map((quote, rowIndex) => {
                 const signals = getOpSignals(quote);
                 const itemCount = quote.items?.length ?? 0;
-                const responseCount = quote.responses?.length ?? 0;
+                // §quote-reply-count-split (2026-09-25 · 호영님 실측) — 카드·패널과 같은 함수. 구 `quote.responses.length` 는 prod 에서 항상 0이었다.
+                const responseCount = quoteReadiness(quote).respondedCount;
                 const railState = deriveRailState(quote);
                 const isSelected = selectedQuoteId === quote.id;
                 // §11.242 #4 — 우선순위 left border tr scope derive (canonical RailState 기반).
@@ -3365,7 +3391,7 @@ function QuotesPageContent() {
                         //   §quote-floating-selbar §5 — 미발송/회신 0 = 의도적 muted "회신 전" 태그(disabled 회색 — 금지, §11.242 #8 가짜 데이터 0).
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
-                            {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 ? (
+                            {hasBeenSent(quote) && itemCount > 0 ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <span className="text-[10px] tabular-nums text-slate-600">
                                   {responseCount}/{itemCount}
@@ -3831,6 +3857,8 @@ function QuotesPageContent() {
                 onClick={() => {
                   if (selectedDispatchBlocked) return;
                   if (selectedSignals.ctaLabel === PO_DETAIL_CTA) { router.push(`/quotes/${selectedQuote.id}`); return; }
+                  // §quote-completed-honesty (2026-09-25 · 호영님 판정) — 완료 견적은 작업창 없이 입고 관리로 직행.
+                  if (selectedSignals.actionKey === "po_conversion") { router.push("/dashboard/receiving"); return; }
                   if (selectedSignals.actionKey) setActiveWorkWindow(selectedSignals.actionKey);
                 }}
                 disabled={!selectedSignals.actionKey || selectedDispatchBlocked}>
@@ -3935,12 +3963,17 @@ function QuotesPageContent() {
             <p className="text-[11px] text-slate-400 mt-0.5">{selectedSignals.urgency}</p>
             {/* §quote-brief-rail-tabs-sian — 시안 lead 줄. canonical truth(status/회신 수)
                 기반 1줄 상태 안내. 새 추정 없음. */}
+            {/* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 구 조건은 `status !== "SENT"` 라 **COMPLETED 에도 「첫 액션이 필요합니다」**가 떴다.
+                선정이 끝났다고 말하면서 첫 액션을 요구하는 자기모순이었다(호영님 라이브 실측).
+                상태를 하나씩 읽어 참인 것만 말한다. */}
             <p className="text-[11px] font-medium text-slate-600 mt-1">
-              {selectedQuote.status !== "SENT"
-                ? "첫 액션이 필요합니다"
-                : sqResponseCount < selectedQuote.items.length
-                  ? "회신을 기다리는 중입니다"
-                  : "비교할 견적이 모였습니다"}
+              {selectedQuote.status === "COMPLETED"
+                ? "구매 후 입고를 등록하세요"
+                : selectedQuote.status === "PENDING"
+                  ? "첫 액션이 필요합니다"
+                  : sqResponseCount < selectedQuote.items.length
+                    ? "회신을 기다리는 중입니다"
+                    : "비교할 견적이 모였습니다"}
             </p>
           </div>
 
@@ -4051,7 +4084,7 @@ function QuotesPageContent() {
                       <MetricCell label="현재 상태" value={selectedSignals.status} tone="neutral" />
                       <MetricCell label="회신" value={replyValue} tone={replyTone} />
                       <MetricCell label="비교 가능" value={selectedSignals.compareReady} tone={compareTone} />
-                      <MetricCell label="선정" value={selectedSignals.poReady} tone={poTone} />
+                      <MetricCell label="다음 단계" value={selectedSignals.poReady} tone={poTone} />
                     </div>
                   );
                 })()}
@@ -4296,7 +4329,7 @@ function QuotesPageContent() {
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-700">{selectedSignals.handoffTarget}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">진행 상태</span><span className={selectedSignals.poReady === "선정 완료" ? "text-emerald-400" : "text-yellow-600"}>{selectedSignals.handoffStatus}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">진행 상태</span><span className={selectedSignals.poReady === "입고 등록" ? "text-emerald-400" : "text-yellow-600"}>{selectedSignals.handoffStatus}</span></div>
             </div>
           </section>
           )}
@@ -4377,6 +4410,8 @@ function QuotesPageContent() {
               onClick={() => {
                 if (selectedDispatchBlocked) return;
                 if (selectedSignals.ctaLabel === PO_DETAIL_CTA) { router.push(`/quotes/${selectedQuote.id}`); return; }
+                // §quote-completed-honesty (2026-09-25 · 호영님 판정) — 완료 견적은 작업창 없이 입고 관리로 직행.
+                if (selectedSignals.actionKey === "po_conversion") { router.push("/dashboard/receiving"); return; }
                 if (selectedSignals.actionKey) {
                   setActiveWorkWindow(selectedSignals.actionKey);
                 }
@@ -4505,7 +4540,11 @@ function QuotesPageContent() {
             onClick: () => { setActiveWorkWindow("request_send"); },
           } : selectedSignals.actionKey ? {
             label: selectedSignals.railCtaLabel,
-            onClick: () => { setActiveWorkWindow(selectedSignals.actionKey); },
+            onClick: () => {
+              // §quote-completed-honesty (2026-09-25 · 호영님 판정) — 완료 견적은 작업창 없이 입고 관리로 직행.
+              if (selectedSignals.actionKey === "po_conversion") { router.push("/dashboard/receiving"); return; }
+              setActiveWorkWindow(selectedSignals.actionKey);
+            },
           } : undefined}
         />
       )}
@@ -4676,9 +4715,6 @@ function QuotesPageContent() {
               ? (quoteReadiness(selectedQuote).respondedCount >= COMPARE_MIN_RESPONSES ? "선택안 확정" : "추가 회신 확보")
               : activeWorkWindow === "approval_prep"
               ? "승인 패키지 준비 완료"
-              : activeWorkWindow === "po_conversion"
-              // §order-entry-removed (2026-09-25 · 호영님 판정) — 주문 접수 대신 실제로 갈 곳(입고 관리)으로 보낸다.
-              ? "입고 관리 열기"
               : selectedSignals.ctaLabel,
             onClick: () => {
               // §11.363 — "추가 회신 확보"/재요청 = 추가 발송 intent.
@@ -4690,12 +4726,6 @@ function QuotesPageContent() {
                 (activeWorkWindow === "compare_review" && quoteReadiness(selectedQuote).respondedCount < COMPARE_MIN_RESPONSES)
               ) {
                 setActiveWorkWindow("request_send");
-                return;
-              }
-              // §order-entry-removed (2026-09-25 · 호영님 판정) — 접수 대신 입고 관리로 이동한다. 그 화면은 살아 있다.
-              if (activeWorkWindow === "po_conversion") {
-                setActiveWorkWindow(null);
-                router.push("/dashboard/receiving");
                 return;
               }
               setActiveWorkWindow(null);
@@ -4878,23 +4908,20 @@ function QuotesPageContent() {
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">승인 완료 후</span>
-                        <span className="text-slate-700">선정 완료</span>
+                        {/* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 상태 이름이 「견적 완료」 로 바뀌었다(선정 기록이 없으므로). */}
+                        <span className="text-slate-700">견적 완료</span>
                       </div>
                     </div>
                   </div>
                 </div>
               );
             })()}
-            {activeWorkWindow === "po_conversion" && (
-              /* §order-entry-removed (2026-09-25 · 호영님 판정) — 오늘 사용자가 실제로 하는 일을 그대로 적는다(호영님).
-                 제품이 하지 않는 일(발주·주문 접수·결재)은 약속하지 않는다. */
-              <div className="rounded-lg border border-bd bg-pn p-4 space-y-2">
-                <p className="text-xs font-medium text-slate-700">선정 완료</p>
-                <p className="text-xs text-slate-500">
-                  품목 {selectedQuote.items.length}건의 선정이 끝났습니다 · 구매 후 입고 관리에서 입고를 등록하세요
-                </p>
-              </div>
-            )}
+            {/* 🛑 삭제 §quote-completed-honesty (2026-09-25 · 호영님 판정) — po_conversion 작업창은 **열리는 경로가 0** 이 됐다.
+                CTA 세 자리(레일 sticky · 모바일 시트 · 하단 시트 primary)와 행 클릭이 전부
+                setActiveWorkWindow 대신 router.push("/dashboard/receiving") 로 직행한다.
+                그 창은 패널에 이미 있는 문장을 한 번 더 보여주고 버튼 하나를 더 누르게 할 뿐이었다(호영님).
+                도달 불가 렌더를 남기면 다음 사람이 배선 없이 되살린다 — 지운다.
+                역계약: __tests__/regression/quote-completed-honesty.test.ts ④ */}
 
             {/* AI recommendation */}
             {selectedSignals.aiRecommendation && (

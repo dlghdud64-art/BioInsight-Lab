@@ -29,9 +29,13 @@ describe("§11.217 Phase 4 — quote card 회신 수집 progress bar", () => {
     expect(src).toMatch(/aria-valuemax=\{\s*itemCount\s*\}/);
   });
 
-  it("SENT/RESPONDED 분기 — PENDING hide", () => {
-    // condition: quote.status === "SENT" || quote.status === "RESPONDED"
-    expect(src).toMatch(/quote\.status\s*===\s*["']SENT["'][\s\S]{0,40}quote\.status\s*===\s*["']RESPONDED["']/);
+  it("발송 전 hide · 발송 후 노출", () => {
+    /* 승계 §quote-reply-count-split (2026-09-25 · 호영님 실측) — 명제는 「발송 전에는 회신 진행률을 보여주지 않는다」 다.
+       구 판본이 상태 목록을 핀하는 바람에 COMPLETED·PURCHASED 가 **발송 전과 같은 취급**을 받았다.
+       판정을 이름 있는 함수로 옮기고, 그 함수가 무엇을 발송 전으로 세는지까지 고정한다. */
+    expect(src).toMatch(/function hasBeenSent\(/);
+    expect(src).toMatch(/NOT_YET_SENT_STATUSES[\s\S]{0,120}new Set\(\["PENDING",\s*"PARSED"\]\)/);
+    expect(src).toMatch(/hasBeenSent\(quote\) && itemCount > 0/);
   });
 
   it("회신 N/M 라벨 (responseCount/itemCount)", () => {

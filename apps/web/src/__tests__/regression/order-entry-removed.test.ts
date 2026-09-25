@@ -74,14 +74,16 @@ describe("§order-entry-removed · 만들 수 없는 다음 단계를 약속하�
 
   it("③ 전환 자리가 오늘 참인 것을 말한다 (선정 완료 · 입고 등록)", () => {
     const list = code(LIST);
-    expect(list).toContain("선정 완료");
+    /* 승계 §quote-completed-honesty (2026-09-25 · 호영님 판정) — 「선정 완료」 는 내가 확인 없이 쓴 말이었고 참이 아니었다.
+       두 경로에서 모두 참인 문장은 「견적 완료」 다. 명제(전환 자리가 오늘 참인 것을 말한다)는 불변. */
+    expect(list).toContain("견적 완료");
     expect(list).toContain("구매 후 입고 관리에서 입고를 등록하세요");
     // 탭 이름은 중립적으로 — 결재를 약속하지 않는다
     expect(list).toMatch(/\{ id: "order",\s+label: "다음 단계" \}/);
     expect(list).not.toMatch(/label: "결재 요청"/);
 
     const detail = code(DETAIL);
-    expect(detail).toContain("선정 완료");
+    expect(detail).toContain("견적 완료");
     expect(detail).toContain("구매 후 입고 관리에서 입고를 등록하세요");
     expect(detail).toMatch(/href="\/dashboard\/receiving"/);
   });

@@ -97,7 +97,9 @@ describe("#operational-brief-emoji-sweep — buildBriefRationaleSummary backward
       { input: { blocker: "차단 없음", status: "회신 대기", replyCount: 0, totalItems: 1, isSent: true }, kw: "회신 대기" },
       { input: { blocker: "차단 없음", replyCount: 1, totalItems: 3, isSent: true }, kw: "회신" },
       { input: { blocker: "차단 없음", replyCount: 3, totalItems: 3, compareReady: "가능", isSent: true }, kw: "비교" },
-      { input: { blocker: "차단 없음", replyCount: 3, totalItems: 3, poReady: "가능", isSent: true }, kw: "발주" },
+      /* 승계 §quote-completed-honesty (2026-09-25 · 호영님 판정) — 「발주」 는 제품에 없다(§po-ui-removed · §purchases-ui-removed).
+         이 case 의 명제는 「poReady 분기가 자기 문장을 낸다」 이고, 키워드만 참인 것으로 옮긴다. */
+      { input: { blocker: "차단 없음", replyCount: 3, totalItems: 3, poReady: "가능", isSent: true }, kw: "구매 진행 처리" },
     ];
     for (const c of cases) {
       const summary = buildBriefRationaleSummary(c.input);

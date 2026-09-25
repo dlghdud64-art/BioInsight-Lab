@@ -69,7 +69,9 @@ describe("#quote-rationale-inventory-context Phase 1 — base 6-case (no invento
       blocker: "차단 없음",
       poReady: "가능",
     });
-    expect(result).toMatch(/비교 완료 → 발주 전환 가능/);
+    /* 승계 §quote-completed-honesty (2026-09-25 · 호영님 판정) — 「발주 전환 · 결재 또는 PO 생성」 은 제품에 없는 다음 단계다
+       (§po-ui-removed · §purchases-ui-removed · 결재는 요금제로 막힘). 명제(poReady 분기가 잡힌다)는 불변. */
+    expect(result).toMatch(/비교 완료 → 구매 진행 처리가 다음 단계입니다/);
   });
 
   it("fallback (모든 case 미충족)", () => {

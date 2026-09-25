@@ -106,10 +106,11 @@ describe("§11.264g #3 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/onSelect\?\.\(signals\.ctaLabel\)/);
   });
 
-  it("Progress bar content 보존 (SENT/RESPONDED + itemCount > 0)", () => {
-    expect(page).toMatch(
-      /\(quote\.status === "SENT" \|\| quote\.status === "RESPONDED"\) && itemCount > 0/,
-    );
+  it("Progress bar content 보존 (발송된 견적 + itemCount > 0)", () => {
+    /* 승계 §quote-reply-count-split (2026-09-25 · 호영님 실측) — 구 판본은 상태 **목록**을 통짜로 핀했다. 그 목록이 COMPLETED 를 빠뜨려
+       회신이 도착한 견적에서 진행률이 통째로 사라졌다(호영님 라이브 실측).
+       명제는 「발송된 견적에만 진행률이 뜬다」 이지 「SENT 이거나 RESPONDED」 가 아니다. */
+    expect(page).toMatch(/hasBeenSent\(quote\) && itemCount > 0/);
     expect(page).toMatch(/role="progressbar"/);
   });
 
