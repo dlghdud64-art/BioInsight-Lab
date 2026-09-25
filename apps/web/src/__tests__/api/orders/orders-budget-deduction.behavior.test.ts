@@ -133,7 +133,10 @@ function makeTx(opts: { candidates?: unknown[]; activeEvents?: unknown[]; spent?
     workspaceId: null,
     scopeKey: `org-${ORG_ID}`,
     yearMonth: "2026-09",
-    description: null,
+    // §orders-budget-pick-by-period — budgetId 없는 경로는 기간이 오늘을 포함하는 예산을 고른다.
+    //   고정 월(2026-09)이면 이 테스트가 달력에 따라 NO_BUDGET 으로 깨진다 → 넓은 명시 기간.
+    description: "period:2000-01-01~2099-12-31",
+    createdAt: new Date("2026-09-01T00:00:00Z"),
     amount: BUDGET_AMOUNT,
     isActive: true,
   };
@@ -179,6 +182,7 @@ function makeTx(opts: { candidates?: unknown[]; activeEvents?: unknown[]; spent?
     budget: {
       findUnique: vi.fn(async () => ({ ...budgetRow })),
       findFirst: vi.fn(async () => ({ ...budgetRow })),
+      findMany: vi.fn(async () => [{ ...budgetRow }]),
     },
     purchaseRecord: {
       aggregate: vi.fn(async () => ({ _sum: { amount: opts.spent ?? 0 } })),

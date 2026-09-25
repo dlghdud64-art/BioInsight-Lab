@@ -23,7 +23,7 @@ import {
   ORDER_RELEASED,
   ORDER_CONFIRMED,
 } from "@/lib/budget/order-reservation";
-import { resolveBudgetPeriod } from "@/lib/budget/budget-period";
+import { resolveBudgetPeriod, pickBudgetCoveringNow } from "@/lib/budget/budget-period";
 import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 
 // 주문번호 생성 함수
@@ -181,12 +181,31 @@ export async function POST(request: NextRequest) {
       //    UserBudget 조회/차감 경로 소거: 발주 예산의 canonical truth 는 Budget 이고,
       //    차감이 아니라 BudgetEvent 예약(ORDER_RESERVED)으로 기록한다.
       //    지출 확정은 PurchaseRecord 소관 — 예약과 확정을 겹쳐 세지 않는다.
+      // 🛑 §orders-budget-pick-by-period (호영님 판정 2026-09-25) — budgetId 가 없으면
+      //   **기간이 오늘을 포함하는 예산**을 고른다(대시보드 §budget-pick-by-period 와 같은 함수).
+      //   (구) `orderBy: { yearMonth: "desc" }` — yearMonth 는 **만든 달**이지 기간이 아니다.
+      //        9월에 만든 검증용 예산이 8월에 만든 하반기 운영 예산보다 앞서 뽑히고,
+      //        기간이 끝난 예산에도 예약이 잡힐 수 있었다.
+      //   오늘을 포함하는 예산이 없으면 NO_BUDGET — 기간 밖 예산에 조용히 예약하지 않는다.
       const budget = budgetId
         ? await tx.budget.findUnique({ where: { id: budgetId } })
-        : await tx.budget.findFirst({
-            where: { organizationId: quote.organizationId },
-            orderBy: { yearMonth: "desc" },
-          });
+        : pickBudgetCoveringNow<{
+            id: string;
+            yearMonth: string;
+            description: string | null;
+            createdAt: Date;
+            amount: number;
+            organizationId: string | null;
+            scopeKey: string;
+            workspaceId: string | null;
+          }>(
+            await tx.budget.findMany({
+              where: { organizationId: quote.organizationId },
+              orderBy: [{ createdAt: "desc" }],
+              take: 200,
+            }),
+            new Date(),
+          );
 
       if (!budget) {
         throw new Error("NO_BUDGET");
