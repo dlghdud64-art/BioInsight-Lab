@@ -5,6 +5,12 @@ import { withDbRetry } from "@/lib/db-retry";
 import { resolveBudgetPeriod, pickBudgetCoveringNow } from "@/lib/budget/budget-period";
 import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 import {
+  activeReservedAmount,
+  ORDER_RESERVED,
+  ORDER_RELEASED,
+  ORDER_CONFIRMED,
+} from "@/lib/budget/order-reservation";
+import {
   deriveDashboardSummary,
   canonicalBudgetQuery,
   type DashboardSummaryInput,
@@ -147,6 +153,7 @@ export async function GET(request: NextRequest) {
     //   런타임에는 findMany 가 amount 를 내려주지만 타입 정보가 any 에서 끊긴다(2026-09-25 build exit 1).
     const fallbackBudget = fallbackCandidates
       ? pickBudgetCoveringNow<{
+          id: string;
           yearMonth: string;
           description: string | null;
           createdAt: Date;
@@ -242,6 +249,8 @@ export async function GET(request: NextRequest) {
       budgetInput = {
         limit: activeBudget.totalAmount,
         spent: activeBudget.usedAmount,
+        // UserBudget 에는 예약 원장이 없다(발주 예약은 canonical Budget 에만 잡힌다 · ⑪ 2026-08-22).
+        reserved: 0,
         remaining: activeBudget.remainingAmount,
         // 선언이 없으면 null — 소비측이 이번 달 말일로 폴백한다(종전 동작).
         periodEnd: toKstCalendarDate(activeBudget.endDate as Date | null),
@@ -278,10 +287,29 @@ export async function GET(request: NextRequest) {
         )
         .catch(() => 0);
 
+      // 🛑 §budget-usage-reserved (호영님 판정 2026-09-25) — 사용률은 **집행 + 활성 예약**이다.
+      //   (구) 집행만 셌다. 발주 차단(/api/orders validateReservation)과 예산 상세(deriveBudgetDetail)는
+      //        예약을 포함해 판정하므로, 같은 예산이 대시보드에서만 덜 쓴 것으로 보였다.
+      //   예약은 같은 원장 · 같은 함수(activeReservedAmount)로 센다 — 상쇄 규칙을 다시 쓰지 않는다.
+      const fbReserved = await db.budgetEvent
+        .findMany({
+          where: {
+            budgetId: fallbackBudget.id,
+            eventType: { in: [ORDER_RESERVED, ORDER_RELEASED, ORDER_CONFIRMED] },
+          },
+          select: { eventType: true, amount: true, sourceEntityId: true },
+        })
+        .then((rows: { eventType: string; amount: number; sourceEntityId: string }[]) =>
+          activeReservedAmount(rows),
+        );
+      // .catch(() => 0) 을 두지 않는다 — 조회 실패를 「예약 0」 으로 바꾸면 사용률이 거짓으로 낮아진다.
+      //   실패는 summary 전체 오류로 올라가고 카드는 재시도 상태를 보인다.
+
       budgetInput = {
         limit: fallbackBudget.amount,
         spent: fbSpent,
-        remaining: fallbackBudget.amount - fbSpent,
+        reserved: fbReserved,
+        remaining: fallbackBudget.amount - fbSpent - fbReserved,
         periodEnd: fbPeriod.endCalendarDate,
       };
     }

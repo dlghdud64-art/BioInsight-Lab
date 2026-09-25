@@ -172,6 +172,8 @@ describe("§main-dashboard-redesign P1 (E) — helper 계약 회귀 0", () => {
       "limit",
       "periodEnd",
       "remaining",
+      // §budget-usage-reserved (2026-09-25) — 활성 발주 예약. 계약 확장.
+      "reserved",
       "spent",
       "usageRate",
     ]);
@@ -463,5 +465,53 @@ describe("(I) §budget-pick-by-period · 오늘을 포함하는 예산을 고른
   it("⑤ 기간 마지막 날 저녁도 기간 안이다", () => {
     expect(pickBudgetCoveringNow([halfYear], new Date("2026-12-30T20:00:00"))?.id).toBe("half");
     expect(pickBudgetCoveringNow([halfYear], new Date("2026-12-31T00:00:01"))).toBeNull();
+  });
+});
+
+// ── §budget-usage-reserved (호영님 판정 2026-09-25) ────────────────────────
+//   명제: 대시보드 사용률 = (집행 + 활성 예약) / 한도 · 예산 상세·발주 차단과 같은 항.
+//   (구) 집행만 셌다 → 같은 예산이 대시보드에서만 덜 쓴 것으로 보였다.
+describe("§budget-usage-reserved · 대시보드 사용률에 예약이 들어간다", () => {
+  it("① 행동 · 예약이 사용률과 톤을 올린다", () => {
+    const input = emptyInput();
+    input.budget = { limit: 1_000_000, spent: 300_000, reserved: 500_000, remaining: 200_000, periodEnd: null };
+    const s = deriveDashboardSummary(input);
+    expect(s.budget.usageRate).toBe(80);
+    expect(s.budget.reserved).toBe(500_000);
+    expect(s.derived.budTone).toBe("warn");
+  });
+
+  it("② 행동 · 예약 생략(UserBudget 경로)은 0 으로 · 종전 값과 같다", () => {
+    const input = emptyInput();
+    input.budget = { limit: 1_000_000, spent: 500_000, remaining: 500_000, periodEnd: null };
+    const s = deriveDashboardSummary(input);
+    expect(s.budget.usageRate).toBe(50);
+    expect(s.budget.reserved).toBe(0);
+  });
+
+  it("③ 폴백 경로 · 예약은 BudgetEvent 원장에서 발주 판정과 같은 함수로 센다 · 잔여에서도 뺀다", () => {
+    const fb = blockAfter(code(ROUTE), "} else if (fallbackBudget");
+    expect(fb).toMatch(/db\.budgetEvent[\s\S]{0,40}\.findMany\(/);
+    expect(fb).toMatch(/budgetId:\s*fallbackBudget\.id/);
+    expect(fb).toMatch(/activeReservedAmount\(rows\)/);
+    expect(lineWith(fb, "reserved:")).toContain("fbReserved");
+    expect(lineWith(fb, "remaining:")).toMatch(/fallbackBudget\.amount - fbSpent - fbReserved/);
+  });
+
+  it("④ 예약 조회 실패를 0 으로 삼키지 않는다", () => {
+    const fb = blockAfter(code(ROUTE), "} else if (fallbackBudget");
+    const i = fb.indexOf("const fbReserved");
+    // 창 끝은 다음 문장(budgetInput 대입)이다. 첫 `;` 로 끊으면 타입 주석 `{ eventType: string; … }` 에서 잘린다.
+    const stmt = fb.slice(i, fb.indexOf("budgetInput = {", i));
+    expect(i).toBeGreaterThan(-1);
+    expect(stmt, "예약 조회가 .catch(() => 0) 으로 실패를 숨긴다").not.toMatch(/\.catch\(/);
+  });
+
+  it("⑤ 카드 · 큰 숫자는 집행 + 예약 · 예약이 있을 때만 나눠 보인다", () => {
+    const card = code("src/components/dashboard/budget-spend-card.tsx");
+    expect(card).toMatch(/won\(budget!\.spent \+ budget!\.reserved\)/);
+    expect(card).toMatch(/budget!\.reserved > 0 &&/);
+    expect(card).toContain("% 사용");
+    expect(card, "예약이 들어간 비율을 「소진」 이라 부르면 거짓이다").not.toContain("% 소진");
   });
 });

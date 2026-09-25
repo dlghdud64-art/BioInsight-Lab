@@ -167,11 +167,18 @@ export function BudgetSpendCard({ state, summary, onRetry, categorySpending = []
       </div>
 
       <p className="text-[26px] md:text-[28px] font-black tracking-tight tabular-nums leading-none text-slate-900">
-        {won(budget!.spent)}
+        {won(budget!.spent + budget!.reserved)}
         <span className="text-[13px] font-semibold text-slate-400 ml-1.5">
-          / {won(budget!.limit)} · {usageRate}% 소진
+          / {won(budget!.limit)} · {usageRate}% 사용
         </span>
       </p>
+      {/* §budget-usage-reserved · 사용 = 집행 + 발주 예약(예산 상세·발주 차단과 같은 항).
+          예약이 있을 때만 나눠 보인다. 예약 원장이 없는 예산에 「예약 ₩0」 을 그리지 않는다. */}
+      {budget!.reserved > 0 && (
+        <p className="mt-1 text-[11px] text-slate-500 tabular-nums">
+          집행 {won(budget!.spent)} · 예약 {won(budget!.reserved)}
+        </p>
+      )}
 
       {/* 게이지 8px — §11.302 신호등(canonical budTone 상속. 로컬 임계 재정의 0). */}
       <div className="mt-3 h-2 rounded-full bg-slate-100 overflow-hidden">

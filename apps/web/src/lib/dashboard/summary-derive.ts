@@ -61,7 +61,14 @@ export interface DashboardSummaryInput {
   /** 활성 예산 부재 시 null. */
   budget: {
     limit: number;
+    /** 집행(PurchaseRecord) */
     spent: number;
+    /**
+     * §budget-usage-reserved (호영님 판정 2026-09-25) — 활성 발주 예약(BudgetEvent · activeReservedAmount).
+     * 사용률 = (집행 + 예약) / 한도. /api/orders 의 잔액 판정과 예산 상세(deriveBudgetDetail)가 같은 항을 쓴다.
+     * 예약 원장이 없는 예산(UserBudget)은 0 · 생략 시 0.
+     */
+    reserved?: number;
     remaining: number;
     /**
      * §budget-period-axis (P1-5) — 예산이 선언한 기간의 **마지막 달력 날짜** `YYYY-MM-DD`.
@@ -83,6 +90,8 @@ export interface DashboardSummaryBudget {
   isSet: boolean;
   limit: number;
   spent: number;
+  /** 활성 발주 예약 합 · 사용률에 포함된다 */
+  reserved: number;
   remaining: number;
   /** 0–100+ (over budget 시 100 초과 가능). 예산 미설정 시 0. */
   usageRate: number;
@@ -159,7 +168,7 @@ export function deriveDashboardSummary(
   const isSet = budget !== null && budget.limit > 0;
   const usageRate =
     isSet && budget!.limit > 0
-      ? (budget!.spent / budget!.limit) * 100
+      ? ((budget!.spent + (budget!.reserved ?? 0)) / budget!.limit) * 100
       : 0;
 
   const allEmpty =
@@ -174,6 +183,7 @@ export function deriveDashboardSummary(
       isSet,
       limit: budget?.limit ?? 0,
       spent: budget?.spent ?? 0,
+      reserved: budget?.reserved ?? 0,
       remaining: budget?.remaining ?? 0,
       usageRate: Math.round(usageRate * 10) / 10,
       periodEnd: budget?.periodEnd ?? null,
