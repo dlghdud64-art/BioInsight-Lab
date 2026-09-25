@@ -109,6 +109,32 @@ const GUIDE_CATEGORIES = [
   { id: "role-guide", label: "역할별 가이드", icon: UserCog },
 ];
 
+/* §approval-gate-single-source (2026-09-25 · 호영님 판정) — 결재를 설명하는 카드는 **결재가 열려 있을 때만** 보여준다.
+ *   오늘 결재는 모든 사용자에게 막혀 있다(정책 none · 결제 게이트 닫힘 · ADMIN 0 → 라우트 400 두 개).
+ *   도달 불가인 기능을 설명해 두면 그게 약속이 된다(호영님). 지우지 않고 판정 뒤에 둔다 —
+ *   결재가 실제로 켜지는 날 저절로 보인다.
+ *   판정은 `GET /api/approval/capability` 가 내려주고, 그 라우트는 request-approval 라우트의
+ *   400 두 개와 **같은 함수**(lib/approval/approval-capability)를 부른다. */
+const APPROVAL_ONLY_GUIDE_IDS = new Set(["org-2", "role-2"]);
+
+function useApprovalEnabled(): boolean {
+  const { data } = useQuery<{ enabled: boolean; reason: string | null }>({
+    queryKey: ["approval-capability"],
+    queryFn: async () => {
+      const res = await fetch("/api/approval/capability");
+      if (!res.ok) return { enabled: false, reason: null };
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  return data?.enabled ?? false;
+}
+
+function visibleGuides(approvalEnabled: boolean): GuideEntry[] {
+  if (approvalEnabled) return GUIDE_ENTRIES;
+  return GUIDE_ENTRIES.filter((e) => !APPROVAL_ONLY_GUIDE_IDS.has(e.id));
+}
+
 interface GuideEntry {
   id: string;
   category: string;
@@ -131,7 +157,7 @@ const GUIDE_ENTRIES: GuideEntry[] = [
   { id: "sc-2", category: "search-compare", icon: GitCompareArrows, title: "비교 워크스페이스", what: "여러 제품을 행 기반으로 나란히 비교하여 가격, 규격, 납기를 한눈에 파악합니다.", when: "동일 품목의 제조사·규격·가격을 비교하고 싶을 때", keyInputs: ["비교할 품목 (검색에서 추가)", "그룹 설정"], nextAction: "최적 품목 선택 후 견적 요청", link: { label: "비교 워크스페이스 열기", href: "/compare" } },
   // ── 견적 요청과 구매 ──
   { id: "qp-1", category: "quote-purchase", icon: FileText, title: "견적 요청", what: "비교에서 선택한 품목이나 직접 입력한 품목 목록으로 견적을 요청합니다.", when: "구매 전 가격·납기를 확인해야 할 때", keyInputs: ["품목 목록", "수량", "희망 납기", "특이사항"], nextAction: "벤더 회신 확인 → 가격 비교", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
-  { id: "qp-2", category: "quote-purchase", icon: GitCompareArrows, title: "견적 비교 및 확정", what: "복수 벤더의 회신을 가격·납기·MOQ 기준으로 비교하고 최종 견적을 확정합니다.", when: "벤더 회신이 도착한 후", keyInputs: ["벤더별 회신 내용", "비교 기준"], nextAction: "결재 요청", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
+  { id: "qp-2", category: "quote-purchase", icon: GitCompareArrows, title: "견적 비교 및 확정", what: "복수 벤더의 회신을 가격·납기·MOQ 기준으로 비교하고 최종 견적을 확정합니다.", when: "벤더 회신이 도착한 후", keyInputs: ["벤더별 회신 내용", "비교 기준"], nextAction: "공급사 선정 → 구매 진행", link: { label: "견적 관리로 이동", href: "/dashboard/quotes" } },
   // §purchases-ui-removed (2026-09-24 · 호영님 판정) — 카드 qp-3「발주 및 구매 관리」 제거. 설명하던 기능(발주 진행·구매 이력 증빙)이
   //   제품에 없다. 지원센터가 없는 기능을 안내하면 그 자체가 거짓 약속이다.
   // ── 입고와 재고 운영 ──
@@ -500,6 +526,9 @@ function isTabId(value: string | null): value is TabId {
 }
 
 export default function SupportCenterPage() {
+  // §approval-gate-single-source (2026-09-25 · 호영님 판정) — ⌘K 결과에서도 결재 카드는 판정 뒤에 있다.
+  const approvalEnabled = useApprovalEnabled();
+  const guides = useMemo(() => visibleGuides(approvalEnabled), [approvalEnabled]);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -574,7 +603,7 @@ export default function SupportCenterPage() {
   const cmdkResults = useMemo(() => {
     const q = cmdkQuery.trim().toLowerCase();
     if (!q) return { manual: [], troubleshoot: [], inquiry: [], total: 0 };
-    const manual = GUIDE_ENTRIES.filter(
+    const manual = guides.filter(
       (e) => e.title.toLowerCase().includes(q) || e.what.toLowerCase().includes(q) || e.when.toLowerCase().includes(q),
     ).slice(0, 6);
     const troubleshoot = RUNBOOK_ITEMS.filter(
@@ -775,6 +804,9 @@ export default function SupportCenterPage() {
    ═══════════════════════════════════════════════════════════════════ */
 
 function ManualTab() {
+  // §approval-gate-single-source (2026-09-25 · 호영님 판정) — 결재 카드는 판정 뒤에 있다.
+  const approvalEnabled = useApprovalEnabled();
+  const guides = useMemo(() => visibleGuides(approvalEnabled), [approvalEnabled]);
   const [activeCategory, setActiveCategory] = useState("getting-started");
   // §2 슬라이드 리더 패널 대상 가이드.
   const [readerGuide, setReaderGuide] = useState<GuideEntry | null>(null);
@@ -783,15 +815,15 @@ function ManualTab() {
   const [aiSubmitted, setAiSubmitted] = useState("");
 
   const filteredEntries = useMemo(() => {
-    return GUIDE_ENTRIES.filter((e) => e.category === activeCategory);
-  }, [activeCategory]);
+    return guides.filter((e) => e.category === activeCategory);
+  }, [guides, activeCategory]);
 
   const activeCategoryMeta = GUIDE_CATEGORIES.find((c) => c.id === activeCategory);
 
   // §2 인기 가이드 3카드 (큐레이션 — 첫 견적 / 라벨 스캔 입고 / MSDS 등록).
   const popularGuides = useMemo(
-    () => (["qp-1", "inv-3", "sf-1"].map((id) => GUIDE_ENTRIES.find((e) => e.id === id)).filter(Boolean) as GuideEntry[]),
-    [],
+    () => (["qp-1", "inv-3", "sf-1"].map((id) => guides.find((e) => e.id === id)).filter(Boolean) as GuideEntry[]),
+    [guides],
   );
 
   // §5 AI 도우미 — 매뉴얼/시나리오 인덱스 실매칭. LLM 생성·할루시네이션 없음.
@@ -799,7 +831,7 @@ function ManualTab() {
   const aiAnswer = useMemo(() => {
     const q = aiSubmitted.trim().toLowerCase();
     if (!q) return null;
-    const guideHits = GUIDE_ENTRIES.filter(
+    const guideHits = guides.filter(
       (e) =>
         e.title.toLowerCase().includes(q) ||
         e.what.toLowerCase().includes(q) ||
@@ -812,7 +844,8 @@ function ManualTab() {
     return { guideHits, runbookHits, found: guideHits.length > 0 || runbookHits.length > 0 };
   }, [aiSubmitted]);
 
-  const AI_PROMPTS = ["MSDS는 어떻게 등록하나요?", "라벨 스캔으로 입고하는 방법", "승인 한도는 어디서 바꾸나요?"];
+  // §approval-gate-single-source (2026-09-25 · 호영님 판정) — 「승인 한도」 는 결재가 열려야 답이 있는 질문이다. 오늘 참인 것으로 바꾼다.
+  const AI_PROMPTS = ["MSDS는 어떻게 등록하나요?", "라벨 스캔으로 입고하는 방법", "견적 요청은 어떻게 하나요?"];
 
   return (
     <div>
@@ -933,7 +966,7 @@ function ManualTab() {
             {GUIDE_CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               const isActive = activeCategory === cat.id;
-              const count = GUIDE_ENTRIES.filter((e) => e.category === cat.id).length;
+              const count = guides.filter((e) => e.category === cat.id).length;
               return (
                 <button
                   key={cat.id}

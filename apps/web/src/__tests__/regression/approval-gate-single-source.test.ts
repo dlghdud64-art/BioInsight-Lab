@@ -27,7 +27,7 @@
  *      self_admin 을 막는다. 화면은 금액을 모르는 자리(퍼널·지원센터)에서도 판정해야 하므로
  *      「한 명이라도 있는가」 만 본다 → 워크스페이스 ADMIN 이 본인뿐이고 금액이 high tier 면
  *      화면은 보여주고 라우트는 400 이다. 좁히려면 화면에 금액을 들려보내야 한다.
- *   ~~2. 퍼널 s4 라벨 배선~~ → **닫힘**(아래 ⑥⑦⑧). 남은 것은 **지원센터·역할 설명**이다 — 다음 커밋.
+ *   ~~2. 로그인 뒤 표면 배선~~ → **닫힘**(아래 ⑥⑦⑧⑨). 퍼널·모바일·지원센터 전부 판정 뒤에 있다.
  *   3. 금액 구간(한계 1)은 CLAUDE.md §유료 결제 오픈 전 게이트 「의존 항목」 ③ 에 걸었다 —
  *      닫는 방법(같은 함수의 두 호출 방식)까지 적어 뒀다.
  *   3. 소스 문자열만 본다. 런타임 응답은 보지 않는다.
@@ -51,6 +51,7 @@ const LANDING = "app/_components/bioinsight-hero-section.tsx";
 const INTRO = "app/intro/page.tsx";
 const FUNNEL = "components/quotes/quote-funnel.tsx";
 const MOBILE = "components/quotes/mobile-quotes-view.tsx";
+const SUPPORT = "app/dashboard/support-center/page.tsx";
 
 describe("§approval-gate-single-source · 판정은 한 함수에서 나온다", () => {
   it("① 판정 모듈이 라우트의 400 두 개를 그대로 담는다", () => {
@@ -153,5 +154,26 @@ describe("§approval-gate-single-source · 판정은 한 함수에서 나온다"
     const src = code(FUNNEL);
     expect(src).not.toMatch(/발주/);
     expect(src).toMatch(/key: "s5", label: "입고 대기", sub: "구매 완료 · 입고 등록 전"/);
+  });
+
+  it("⑨ 지원센터 결재 카드가 판정 뒤에 있다", () => {
+    const src = code(SUPPORT);
+    /* 지우지 않았다 — 도달 불가인 기능을 **설명**해 두면 약속이 되므로 판정 뒤에 둔다.
+       결재가 켜지는 날 저절로 보인다. 목록은 리터럴로 고정한다(개수가 아니라 이름을 핀한다). */
+    expect(src).toMatch(/APPROVAL_ONLY_GUIDE_IDS = new Set\(\["org-2", "role-2"\]\)/);
+    expect(src).toMatch(/function visibleGuides\(approvalEnabled: boolean\): GuideEntry\[\]/);
+    // 껍데기만 두고 본문을 비우면 전량이 새어 나간다(프로브 ⑨-2 가 잡았다).
+    expect(src).toMatch(/return GUIDE_ENTRIES\.filter\(\(e\) => !APPROVAL_ONLY_GUIDE_IDS\.has\(e\.id\)\)/);
+    expect(src).toMatch(/useApprovalEnabled\(/);
+    expect(src).toMatch(/fetch\(\"\/api\/approval\/capability\"\)/);
+    // 소비처가 판정을 거치지 않고 원본 배열을 직접 필터하면 카드가 새어 나온다.
+    expect(src).not.toMatch(/GUIDE_ENTRIES\.filter\(\(e\) => e\.category/);
+    expect(src).not.toMatch(/const guideHits = GUIDE_ENTRIES/);
+    // 결재가 켜졌을 때 보여줄 내용은 **지우지 않았다**(「없는 척」 금지).
+    expect(src).toMatch(/결재 요청을 승인·반려합니다/);
+    expect(src).toMatch(/Approver의 승인을 거치도록/);
+    // 판정과 무관한 자리의 결재 약속은 오늘 참인 것으로.
+    expect(src).not.toMatch(/nextAction: "결재 요청"/);
+    expect(src).not.toMatch(/승인 한도는 어디서 바꾸나요/);
   });
 });
