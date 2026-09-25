@@ -46,13 +46,18 @@ describe("§quotes-mobile-density P2 — canonical 보존(회귀 0)", () => {
   it("§quotes-mobile-redesign 래퍼/게이트/collapse 보존", () => {
     expect(FUNNEL).toMatch(/items-stretch gap-2/); // §sian-restore — 모바일 압축 래퍼(md:hidden) 보존
     expect(FUNNEL).toMatch(/진행 중 견적 없음/);
-    expect(FUNNEL).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
-    expect(FUNNEL).toMatch(/s\.key !== "s5"/);
+    /* 승계 §funnel-s5-removed (2026-09-25 · 호영님 판정) — **명제가 뒤집혔다**(라벨 이동이 아니다).
+       §funnel-s5-producer 는 「생산자가 관리자 콘솔 1곳이니 지우지 않고 이름만 고친다」 였는데,
+       호영님이 그 생산자도 지우기로 판정했다(§admin-order-create-removed) → PURCHASED 생산자 0.
+       생산자가 만들 수 없는 값의 카운트는 표시하지 않는다.
+       반대 명제는 regression/purchasing-residue-removed.test.ts ④ 가 든다. */
+    expect(FUNNEL).not.toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
+    expect(FUNNEL).not.toMatch(/s\.key !== "s5"/);
     /* 승계 §approval-gate-single-source · §funnel-s5-producer (2026-09-25 · 호영님 판정) — 라벨만 참인 것으로 옮겼다.
        s4 「승인/예외」 는 결재가 열렸을 때만 참이라 판정 함수 뒤로(기본 「선정 대기」).
        s5 「발주 전환」 은 지운 기능 이름이고 그 버킷은 PURCHASED 라 「입고 대기」 다.
        명제(s5 단계 정의가 보존된다)는 불변. 판정축은 regression/approval-gate-single-source.test.ts ⑥⑦⑧ 가 든다. */
-    expect(FUNNEL).toMatch(/label: "입고 대기"/);
+    expect(FUNNEL).not.toMatch(/label: "입고 대기"/);
   });
   it("§11.302 색 정합 보존(yellow=회신추적, amber/orange 0)", () => {
     expect(FUNNEL).toMatch(/text-yellow-600/);

@@ -19,9 +19,15 @@ const FUNNEL = read("components/quotes/quote-funnel.tsx");
 const PAGE = read("app/dashboard/quotes/page.tsx");
 
 describe("§quote-management P2 — 퍼널 컴포넌트", () => {
-  it("deriveStage 집계 + 5단계(s1~s5) + 현재집중", () => {
+  it("deriveStage 집계 + 4단계(s1~s4) + 현재집중", () => {
     expect(FUNNEL).toMatch(/deriveStage/);
-    expect(FUNNEL).toMatch(/key: "s1"[\s\S]*key: "s2"[\s\S]*key: "s3"[\s\S]*key: "s4"[\s\S]*key: "s5"/);
+    /* 승계 §funnel-s5-removed (2026-09-25 · 호영님 판정) — **명제가 뒤집혔다**(라벨 이동이 아니다).
+       §funnel-s5-producer 는 「생산자가 관리자 콘솔 1곳이니 지우지 않고 이름만 고친다」 였는데,
+       호영님이 그 생산자도 지우기로 판정했다(§admin-order-create-removed) → PURCHASED 생산자 0.
+       생산자가 만들 수 없는 값의 카운트는 표시하지 않는다.
+       반대 명제는 regression/purchasing-residue-removed.test.ts ④ 가 든다. */
+    expect(FUNNEL).toMatch(/key: "s1"[\s\S]*key: "s2"[\s\S]*key: "s3"[\s\S]*key: "s4"/);
+    expect(FUNNEL).not.toMatch(/key: "s5"/);
     expect(FUNNEL).toMatch(/현재 집중/);
     expect(FUNNEL).toMatch(/counts\[s\] \+= 1/);
   });

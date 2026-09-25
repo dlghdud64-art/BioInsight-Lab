@@ -1,6 +1,5 @@
 "use client";
 
-import { csrfFetch } from "@/lib/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminSidebar } from "../_components/admin-sidebar";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +37,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Eye,
-  ShoppingCart,
   Loader2,
   Search,
   Flame,
@@ -114,7 +112,6 @@ function getSLAStatus(createdAt: string, status: string): { label: string; class
 
 export default function AdminQuotesPage() {
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
-  const [showConvertDialog, setShowConvertDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -147,30 +144,13 @@ export default function AdminQuotesPage() {
     enabled: !!selectedQuoteId,
   });
 
-  const convertToOrderMutation = useMutation({
-    mutationFn: async (quoteId: string) => {
-      const response = await csrfFetch("/api/admin/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quoteId }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed");
-      }
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-quotes"] });
-      setShowConvertDialog(false);
-      setSelectedQuoteId(null);
-      toast({ title: "주문 생성 완료", description: "견적이 주문으로 전환되었습니다." });
-      router.push(`/admin/orders/${data.order.id}`);
-    },
-    onError: (error: Error) => {
-      toast({ title: "주문 생성 실패", description: error.message, variant: "destructive" });
-    },
-  });
+  /* 🛑 은퇴 §admin-order-create-removed (2026-09-25 · 호영님 판정) — 관리자 「주문 전환」 배선(POST /api/admin/orders → quote.status = PURCHASED).
+   *   호영님: 구매 대행은 나중 일로 보고 관리자 주문 생성도 지운다.
+   *   이걸로 견적을 PURCHASED 로 옮기는 **UI 경로가 0**이 된다(일반 사용자 축은 §order-entry-removed 에서 이미 0).
+   *   🔑 API·DB 는 건드리지 않았다 — /api/admin/orders · Order 테이블 · cancel-restore-quote 는 그대로다.
+   *      구매 대행을 시작할 때 다시 쓸 자리다(docs/plans/QUEUE_concierge-purchasing.md).
+   *   역계약: __tests__/regression/purchasing-residue-removed.test.ts ① 이
+   *          이 화면에서 /api/admin/orders POST 가 되살아나면 RED 를 낸다. */
 
   const allQuotes: Quote[] = data?.quotes || [];
 
@@ -382,7 +362,6 @@ export default function AdminQuotesPage() {
                       const cfg = STATUS_CONFIG[quote.status] ?? { label: quote.status, className: "bg-el text-slate-600 border-0", order: 99 };
                       const sla = getSLAStatus(quote.createdAt, quote.status);
                       const itemCount = quote._count?.items ?? 0;
-                      const canConvert = quote.status === "COMPLETED";
 
                       return (
                         <TableRow
@@ -432,18 +411,8 @@ export default function AdminQuotesPage() {
                               >
                                 <Eye className="h-3 w-3 mr-0.5" />상세
                               </Button>
-                              {canConvert && (
-                                <Button
-                                  size="sm"
-                                  className="h-6 px-2 text-[10px] bg-blue-600 hover:bg-blue-700 text-white"
-                                  onClick={() => {
-                                    setSelectedQuoteId(quote.id);
-                                    setShowConvertDialog(true);
-                                  }}
-                                >
-                                  <ShoppingCart className="h-3 w-3 mr-0.5" />전환
-                                </Button>
-                              )}
+                              {/* 🛑 삭제 §admin-order-create-removed (2026-09-25 · 호영님 판정) — 행 「전환」 버튼도 같은 배선이었다.
+                                  형태를 하나 고쳤으면 형제 슬롯을 전수한다(행 버튼 · 시트 버튼 · 다이얼로그 셋). */}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -458,7 +427,7 @@ export default function AdminQuotesPage() {
       </div>
 
       {/* ── 상세 패널 ── */}
-      <Sheet open={!!selectedQuoteId && !showConvertDialog} onOpenChange={(open) => !open && setSelectedQuoteId(null)}>
+      <Sheet open={!!selectedQuoteId} onOpenChange={(open) => !open && setSelectedQuoteId(null)}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto p-0">
           <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-100">
             <SheetTitle className="text-sm font-bold text-slate-100">견적 상세</SheetTitle>
@@ -532,45 +501,12 @@ export default function AdminQuotesPage() {
                   <Eye className="h-3.5 w-3.5 mr-1.5" />
                   전체 상세 보기
                 </Button>
-                {selectedQuote.status === "COMPLETED" && (
-                  <Button
-                    size="sm"
-                    className="text-xs flex-1 bg-blue-600 hover:bg-blue-700"
-                    onClick={() => setShowConvertDialog(true)}
-                  >
-                    <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                    주문 전환
-                  </Button>
-                )}
               </div>
             </div>
           )}
         </SheetContent>
       </Sheet>
 
-      {/* ── 주문 전환 확인 ── */}
-      <Dialog open={showConvertDialog} onOpenChange={setShowConvertDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>주문으로 전환</DialogTitle>
-            <DialogDescription>이 견적을 실제 주문 건으로 생성하시겠습니까?</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConvertDialog(false)} disabled={convertToOrderMutation.isPending}>
-              취소
-            </Button>
-            <Button
-              onClick={() => { if (selectedQuoteId) convertToOrderMutation.mutate(selectedQuoteId); }}
-              disabled={convertToOrderMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {convertToOrderMutation.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />처리 중...</>
-              ) : "확인"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

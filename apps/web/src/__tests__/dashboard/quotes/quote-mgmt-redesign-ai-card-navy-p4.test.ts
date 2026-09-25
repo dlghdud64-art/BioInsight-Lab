@@ -47,7 +47,7 @@ describe("§quote-management-redesign P4 — 카드 canonical 보존(AI 격상 0
 });
 
 describe("§quote-management-redesign P4 — 퍼널 5단계 현행 가드(호영님 결정)", () => {
-  it("5단계 라벨 보존(발송 대기/회신 추적/비교 검토/선정 대기/입고 대기)", () => {
+  it("4단계 라벨 보존(발송 대기/회신 추적/비교 검토/선정 대기)", () => {
     /* 승계 §approval-gate-single-source · §funnel-s5-producer (2026-09-25 · 호영님 판정) — 라벨만 참인 것으로 옮겼다.
        s4 「승인/예외」 는 결재가 열렸을 때만 참이라 판정 함수 뒤로(기본 「선정 대기」).
        s5 「발주 전환」 은 지운 기능 이름이고 그 버킷은 PURCHASED 라 「입고 대기」 다.
@@ -56,11 +56,22 @@ describe("§quote-management-redesign P4 — 퍼널 5단계 현행 가드(호영
     expect(FUNNEL).toMatch(/label: "회신 추적"/);
     expect(FUNNEL).toMatch(/label: "비교 검토"/);
     expect(FUNNEL).toMatch(/label: "선정 대기"/);
-    expect(FUNNEL).toMatch(/label: "입고 대기"/);
+    /* 승계 §funnel-s5-removed (2026-09-25 · 호영님 판정) — **명제가 뒤집혔다**(라벨 이동이 아니다).
+       §funnel-s5-producer 는 「생산자가 관리자 콘솔 1곳이니 지우지 않고 이름만 고친다」 였는데,
+       호영님이 그 생산자도 지우기로 판정했다(§admin-order-create-removed) → PURCHASED 생산자 0.
+       생산자가 만들 수 없는 값의 카운트는 표시하지 않는다.
+       반대 명제는 regression/purchasing-residue-removed.test.ts ④ 가 든다. */
+    expect(FUNNEL).not.toMatch(/label: "입고 대기"/);
+    expect(FUNNEL).not.toMatch(/key: "s5"/);
   });
-  it("발주 off 시 s5 hide 게이트 + 0건 흐림 보존", () => {
-    expect(FUNNEL).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
-    expect(FUNNEL).toMatch(/s\.key !== "s5"/);
+  it("0건 흐림 보존 (s5 게이트는 은퇴 · 단계 자체가 없다)", () => {
+    /* 승계 §funnel-s5-removed (2026-09-25 · 호영님 판정) — **명제가 뒤집혔다**(라벨 이동이 아니다).
+       §funnel-s5-producer 는 「생산자가 관리자 콘솔 1곳이니 지우지 않고 이름만 고친다」 였는데,
+       호영님이 그 생산자도 지우기로 판정했다(§admin-order-create-removed) → PURCHASED 생산자 0.
+       생산자가 만들 수 없는 값의 카운트는 표시하지 않는다.
+       반대 명제는 regression/purchasing-residue-removed.test.ts ④ 가 든다. */
+    expect(FUNNEL).not.toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
+    expect(FUNNEL).not.toMatch(/s\.key !== "s5"/);
     expect(FUNNEL).toMatch(/opacity-50/);
   });
   it("§11.302 amber/orange 0(퍼널 — Tailwind 클래스)", () => {

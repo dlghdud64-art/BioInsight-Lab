@@ -27,10 +27,15 @@ const FUNNEL = "src/components/quotes/quote-funnel.tsx";
 const PAGE = "src/app/dashboard/quotes/page.tsx";
 
 describe("§quotes-mobile-redesign — 퍼널 (A)", () => {
-  it("발주 전환(s5) ENABLE_PURCHASING 게이트", () => {
+  it("s5 단계 부재 (ENABLE_PURCHASING 게이트 은퇴)", () => {
     const src = read(FUNNEL);
-    expect(src).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
-    expect(src).toMatch(/s\.key !== "s5"/);
+    /* 승계 §funnel-s5-removed (2026-09-25 · 호영님 판정) — **명제가 뒤집혔다**(라벨 이동이 아니다).
+       §funnel-s5-producer 는 「생산자가 관리자 콘솔 1곳이니 지우지 않고 이름만 고친다」 였는데,
+       호영님이 그 생산자도 지우기로 판정했다(§admin-order-create-removed) → PURCHASED 생산자 0.
+       생산자가 만들 수 없는 값의 카운트는 표시하지 않는다.
+       반대 명제는 regression/purchasing-residue-removed.test.ts ④ 가 든다. */
+    expect(src).not.toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
+    expect(src).not.toMatch(/s\.key !== "s5"/);
   });
   it("전 단계 0건 collapse — '진행 중 견적 없음' 단일 라인", () => {
     const src = read(FUNNEL);
@@ -80,8 +85,8 @@ describe("§quotes-mobile-redesign — 회귀 0 (B)", () => {
        s4 「승인/예외」 는 결재가 열렸을 때만 참이라 판정 함수 뒤로(기본 「선정 대기」).
        s5 「발주 전환」 은 지운 기능 이름이고 그 버킷은 PURCHASED 라 「입고 대기」 다.
        명제(s5 단계 정의가 되살리기용으로 보존된다)는 불변. 판정축은 regression/approval-gate-single-source.test.ts ⑥⑦⑧ 가 든다. */
-    expect(src).toMatch(/label: "입고 대기"/);
-    expect(src).toMatch(/key: "s5"/);
+    expect(src).not.toMatch(/label: "입고 대기"/);
+    expect(src).not.toMatch(/key: "s5"/);
   });
   it("빠른 필터 canonical wiring 보존 (구 MODE_CHIPS/setModeChip 대체)", () => {
     // §quotes-quick-filter-4a P2 — MODE_CHIPS/setModeChip 제거(의도). filteredQuotes 는

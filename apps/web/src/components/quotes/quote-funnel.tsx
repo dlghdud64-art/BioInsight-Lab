@@ -15,8 +15,7 @@
 
 import { Fragment } from "react";
 import { deriveStage, type Stage } from "@/lib/quote-management/derive";
-import { Send, Clock, GitCompare, CheckCircle2, Package, Inbox, ChevronRight } from "lucide-react";
-import { getFlag } from "@/lib/feature-flags";
+import { Send, Clock, GitCompare, CheckCircle2, Inbox, ChevronRight } from "lucide-react";
 
 const STAGES: {
   key: Stage;
@@ -33,15 +32,13 @@ const STAGES: {
    *   오늘 결재는 모든 사용자에게 막혀 있다(정책 none · 결제 게이트 닫힘 · ADMIN 0 → 400 두 개).
    *   그래서 이름을 판정 함수 뒤에 둔다 — 거짓이면 오늘 참인 「선정 대기」 다. */
   { key: "s4", label: "선정 대기", sub: "비교 후 공급사 선정", icon: CheckCircle2, tint: { text: "text-emerald-600", bg: "bg-emerald-50" } },
-  /* §funnel-s5-producer (2026-09-25 · 호영님 판정) — s5 는 PURCHASED 버킷이다. 「발주 전환 · 발주서 준비」 는 지운 기능을 가리키고 있었다.
-   *   생산자 실측 2026-09-25: **관리자 콘솔 1곳**(admin/quotes → POST /api/admin/orders → quote.status = PURCHASED).
-   *     일반 사용자 화면의 생산자는 0이다(주문 접수 제거 · POST /api/orders 호출자 0).
-   *   prod 실측(operator-shell → Supabase xhid… Session Pooler · SELECT 만):
-   *     PURCHASED 견적 **0건** · Order 2건은 **둘 다 CANCELLED** 이고 같은 견적에서 나왔다
-   *     (cancel-restore-quote 가 그 견적을 COMPLETED 로 되돌렸다).
-   *   생산자가 0은 아니므로 단계를 지우지 않고 **참인 이름**으로 바꾼다.
-   *   ⚠️ 이 단계는 아직 ENABLE_PURCHASING(기본 false) 뒤에 있어 prod 에서 렌더되지 않는다. */
-  { key: "s5", label: "입고 대기", sub: "구매 완료 · 입고 등록 전", icon: Package, tint: { text: "text-slate-500", bg: "bg-slate-100" } },
+  /* 🛑 삭제 §funnel-s5-removed (2026-09-25 · 호영님 판정) — s5(PURCHASED) 단계.
+   *   §funnel-s5-producer 에서 「생산자가 관리자 콘솔 1곳이므로 지우지 않고 이름만 고친다」 고 했는데,
+   *   호영님이 그 생산자도 지우기로 판정했다(§admin-order-create-removed (2026-09-25 · 호영님 판정)). 그래서 **UI 생산자가 0**이 됐다.
+   *   생산자가 만들 수 없는 값의 카운트는 표시하지 않는다(CLAUDE.md §연결되지 않은 소스는 0 을 보여주지 않는다).
+   *   퍼널은 견적 요청 → 회신 추적 → 비교 검토 → 선정 대기에서 끝나고, 그다음은 입고 관리다.
+   *   prod 실측: PURCHASED 견적 0건 · Order 2건 전부 CANCELLED — 되살릴 과거 데이터도 없다.
+   *   🔑 되살리는 조건은 docs/plans/QUEUE_concierge-purchasing.md 에 세 가지로 적어 뒀다. */
 ];
 
 /** §approval-gate-single-source (2026-09-25 · 호영님 판정) — 결재가 열려 있을 때만 참인 s4 이름. 판정은 화면이 하지 않는다(서버가 내려준다). */
@@ -64,13 +61,13 @@ export function QuoteFunnel({
     const s = deriveStage(q.status);
     if (s) counts[s] += 1;
   }
-  // §quotes-mobile-redesign — 발주 전환(s5)은 발주 hide 결정과 일관: ENABLE_PURCHASING off 시 제외.
-  const purchasingOn = getFlag("ENABLE_PURCHASING");
+  /* §funnel-s5-removed (2026-09-25 · 호영님 판정) — s5 가 없어졌으므로 ENABLE_PURCHASING 게이트도 이 파일에서 뗀다.
+   *   ⚠️ 플래그 **자체**는 남긴다 — 다른 소비자 4곳(대시보드 파이프라인 po 단계 · 재무 KPI 「확정 발주액」 ·
+   *      사이드바 「발주 관리」 · 재고 「바로 발주」)이 아직 쓴다. 그 넷은 각각 별도 판정이 필요하다. */
   // §approval-gate-single-source (2026-09-25 · 호영님 판정) — 결재가 열려야 s4 가 결재 이름을 쓴다. 기본값은 오늘 참인 「선정 대기」 다.
-  const stages = STAGES.map((s) =>
+  const visibleStages = STAGES.map((s) =>
     s.key === "s4" && approvalEnabled ? { ...s, ...S4_APPROVAL_LABEL } : s,
   );
-  const visibleStages = stages.filter((s) => purchasingOn || s.key !== "s5");
   // 현재 집중 = 케이스 존재하는 가장 앞(보이는) 단계.
   const focus = visibleStages.find((s) => counts[s.key] > 0)?.key ?? null;
   const allZero = visibleStages.every((s) => counts[s.key] === 0);

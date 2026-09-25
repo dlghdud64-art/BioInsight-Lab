@@ -150,11 +150,11 @@ describe("§approval-gate-single-source · 판정은 한 함수에서 나온다"
     expect(src).toMatch(/amountLabel: "구매 금액"/);
   });
 
-  it("⑧ 퍼널 s5 가 지운 기능의 이름을 쓰지 않는다", () => {
-    const src = code(FUNNEL);
-    expect(src).not.toMatch(/발주/);
-    expect(src).toMatch(/key: "s5", label: "입고 대기", sub: "구매 완료 · 입고 등록 전"/);
-  });
+  /* 🛑 은퇴 §funnel-s5-removed (2026-09-25 · 호영님 판정) — ⑧ 「퍼널 s5 가 지운 기능의 이름을 쓰지 않는다」.
+   *   그 명제는 **s5 단계가 있다** 를 전제로 했다. 호영님이 관리자 주문 생성까지 지우기로 판정해
+   *   PURCHASED 생산자가 0이 됐고, 단계 자체가 사라졌다.
+   *   살아 있는 명제(퍼널에 발주 이름 0)는 새 이름으로 옮겼다 —
+   *   regression/purchasing-residue-removed.test.ts ④ 가 s5 부재와 플래그 게이트 부재를 함께 든다. */
 
   it("⑨ 지원센터 결재 카드가 판정 뒤에 있다", () => {
     const src = code(SUPPORT);
