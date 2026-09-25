@@ -99,6 +99,8 @@ interface Quote {
   id: string;
   title: string;
   status: QuoteStatus;
+  /* §quote-selection-recorded (2026-09-25 · 호영님 판정) — 선정 기록. COMPLETED 와 **다른 축**이다(status 는 취소 복원으로도 COMPLETED 가 된다). */
+  selectedReplyId?: string | null;
   createdAt: string;
   // §quote-management P4-core-A — computePriority money 요인(미상이면 null = unknown 가중, 근사 금지).
   totalAmount?: number | null;
@@ -144,14 +146,18 @@ const OP_STATUS: Record<string, { label: string; bg: string; text: string; borde
   회신_대기:      { label: "회신 대기 중",    bg: "bg-yellow-100",  text: "text-yellow-800",   border: "border-yellow-300",   leftBorder: "border-l-yellow-500",   dotColor: "bg-yellow-500" },
   // §dashboard-mobile #9 — "요청 발송 전"은 위험(red)이 아니라 §12 s1 발송 단계(파랑·중립 대기). red 오독 해소.
   요청_접수:      { label: "발송 대기",    bg: "bg-[#dce8ff]",   text: "text-[#1d4ed8]",    border: "border-[#bcd3fb]",    leftBorder: "border-l-blue-400",    dotColor: "bg-blue-500" },
-  /* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 「선정 완료」 는 **내가 확인 없이 쓴 말**이었다. 실측으로 갈렸다:
-   *   COMPLETED 로 가는 경로가 둘이고 선정·구매 기록이 **경로마다 다르다**.
-   *     사용자 「구매 진행 처리」(PATCH /api/quotes/[id]) → markQuoteAsPurchased → PurchaseRecord 생성(공급사명 포함)
-   *     관리자 (PATCH /api/quotes/[id]/status)            → PurchaseRecord **생성 안 함**
-   *   그리고 두 경로 **어디서도** Quote.selectedReplyId 를 채우지 않는다
-   *   (select-reply 라우트의 UI 호출자 0 · prod QuoteReply 0행 · COMPLETED 1건도 selectedReplyId null).
-   *   → 「선정됐다」 고 단정할 수 없다. 두 경로에서 **모두 참인** 것은 「견적이 완료 처리됐다」 뿐이다. */
-  발주_완료:      { label: "견적 완료",       bg: "bg-emerald-100",text: "text-emerald-800", border: "border-emerald-300", leftBorder: "border-l-emerald-500", dotColor: "bg-emerald-500" },
+  /* §quote-selection-recorded (2026-09-25 · 호영님 판정) — 「선정 완료」 는 **선정이 기록됐을 때만** 참이다. 판정축은 status 가 아니라 selectedReplyId 다.
+   *   실측 2026-09-25(operator-shell → Supabase xhid… Session Pooler · SELECT 만):
+   *     COMPLETED 로 가는 경로가 둘인데(사용자 「구매 진행 처리」 · 관리자 status 라우트)
+   *     **어느 쪽도** selectedReplyId 를 채우지 않는다 — select-reply 라우트의 UI 호출자 0 · QuoteReply 0행 ·
+   *     견적 7건 selectedReplyId 전부 null.
+   *   게다가 orders/cancel-restore-quote.ts:103 이 주문 취소 시 견적을 COMPLETED 로 되돌린다
+   *   → status 로 판정하면 「넣었다가 취소한 견적」에도 「선정 완료」 가 붙는다(호영님).
+   *   ⚠️ 그래서 아래 발주_완료 는 오늘 prod 에서 **한 번도 뜨지 않는다.** 뜨는 것은 선정_대기 쪽이다.
+   *      지우지 않는 이유: 선정 배선이 들어오면 그날 바로 참이 되는 자리이고, 거짓을 막는 쪽은 판정식이지
+   *      라벨이 아니다. 역계약이 「status 만으로 이 라벨이 나오면 RED」 를 든다. */
+  발주_완료:      { label: "선정 완료",       bg: "bg-emerald-100",text: "text-emerald-800", border: "border-emerald-300", leftBorder: "border-l-emerald-500", dotColor: "bg-emerald-500" },
+  선정_대기:      { label: "회신 도착 · 비교 후 선정", bg: "bg-purple-100", text: "text-purple-800", border: "border-purple-300", leftBorder: "border-l-purple-500", dotColor: "bg-purple-500" },
   취소됨:         { label: "취소됨",          bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-300",   leftBorder: "border-l-slate-300",   dotColor: "bg-slate-400" },
 };
 
@@ -162,7 +168,8 @@ function getOpStatus(q: Quote) {
     case "SENT":
       return quoteReadiness(q).respondedCount > 0 ? OP_STATUS.일부_회신 : OP_STATUS.회신_대기;
     case "PENDING":   return OP_STATUS.요청_접수;
-    case "COMPLETED": return OP_STATUS.발주_완료;
+    // §quote-selection-recorded (2026-09-25 · 호영님 판정) — status 가 아니라 선정 기록으로 가른다.
+    case "COMPLETED": return q.selectedReplyId ? OP_STATUS.발주_완료 : OP_STATUS.선정_대기;
     case "CANCELLED": return OP_STATUS.취소됨;
     default:          return OP_STATUS.요청_접수;
   }
@@ -319,10 +326,11 @@ const RAIL_STATE_MAP: Record<RailState, {
    *   🛑 결재로 바꾸지도 않았다 — prod 실측상 결재는 요금제(FREE → approvalPolicy "none")와
    *      결재자 부재(ADMIN 0)로 **두 번 막힌다**. 켜지지 않는 경로를 가리키는 문장은 쓰지 않는다(호영님).
    *   오늘 사용자가 실제로 하는 일을 그대로 적는다: 선정하고, 플랫폼 밖에서 사서, 입고로 돌아온다. */
+  /* §quote-selection-recorded (2026-09-25 · 호영님 판정) — 이 표의 값은 **선정이 기록된 경우**다. 기록이 없으면 getOpSignals 가 아래에서 덮는다. */
   ready_for_po_conversion: {
-    badge: "견적 완료", headerSummary: "견적이 완료 처리된 상태입니다", urgency: "구매 후 입고 관리에서 입고를 등록하세요",
-    status: "견적 완료", blocker: "차단 없음", nextAction: "입고 등록", compareReady: "완료", poReady: "입고 등록",
-    snapshotNote: "견적이 완료됐습니다 · 구매는 플랫폼 밖에서 진행하고 입고 관리에서 입고를 등록합니다",
+    badge: "선정 완료", headerSummary: "공급사 선정이 기록된 상태입니다", urgency: "구매 후 입고 관리에서 입고를 등록하세요",
+    status: "선정 완료", blocker: "차단 없음", nextAction: "구매 후 입고 등록", compareReady: "완료", poReady: "완료",
+    snapshotNote: "선정이 기록됐습니다 · 구매는 플랫폼 밖에서 진행하고 입고 관리에서 입고를 등록합니다",
     handoffTarget: "입고 관리", handoffStatus: "입고 등록 대기",
     aiRecommendation: "",
     // §quote-completed-honesty (2026-09-25 · 호영님 판정) — 클릭 두 번을 한 번으로. 작업창을 거치지 않고 입고 관리로 직행한다(아래 3곳 동일).
@@ -452,6 +460,14 @@ function getOpSignals(q: Quote) {
   const m =
     railState === "compare_not_ready" && !readiness.po.ready
       ? { ...base, badge: readiness.summary, status: readiness.summary, blocker: "전환할 수 있는 회신 없음", nextAction: "추가 회신 확보", poReady: "불가 · 전환할 회신 없음", handoffTarget: "추가 회신 확보", handoffStatus: "회신 확보 전", ctaLabel: "추가 회신 확보", railCtaLabel: "추가 확보 검토", ctaVariant: "outline" as const }
+      /* §quote-selection-recorded (2026-09-25 · 호영님 판정) — 완료 처리는 됐는데 **선정 기록이 없는** 경우. 오늘 prod 의 유일한 COMPLETED 가 여기다.
+         「선정 완료」 대신 지금 참인 것을 말하고, 사용자가 다음에 할 일을 적는다(호영님 문안). */
+      : railState === "ready_for_po_conversion" && !q.selectedReplyId
+      ? { ...base, badge: "회신 도착 · 비교 후 선정", status: "회신 도착 · 비교 후 선정",
+          headerSummary: "회신이 도착했고 아직 공급사를 고르지 않은 상태입니다",
+          urgency: "공급사를 고른 뒤 구매하고, 입고 관리에서 입고를 등록하세요",
+          poReady: "필요",
+          snapshotNote: "공급사를 고른 뒤 구매하고, 입고 관리에서 입고를 등록합니다" }
       : base;
   const responseCount = readiness.respondedCount;
 
@@ -3968,7 +3984,7 @@ function QuotesPageContent() {
                 상태를 하나씩 읽어 참인 것만 말한다. */}
             <p className="text-[11px] font-medium text-slate-600 mt-1">
               {selectedQuote.status === "COMPLETED"
-                ? "구매 후 입고를 등록하세요"
+                ? (selectedQuote.selectedReplyId ? "구매 후 입고를 등록하세요" : "공급사를 고른 뒤 구매하세요")
                 : selectedQuote.status === "PENDING"
                   ? "첫 액션이 필요합니다"
                   : sqResponseCount < selectedQuote.items.length
@@ -4084,7 +4100,7 @@ function QuotesPageContent() {
                       <MetricCell label="현재 상태" value={selectedSignals.status} tone="neutral" />
                       <MetricCell label="회신" value={replyValue} tone={replyTone} />
                       <MetricCell label="비교 가능" value={selectedSignals.compareReady} tone={compareTone} />
-                      <MetricCell label="다음 단계" value={selectedSignals.poReady} tone={poTone} />
+                      <MetricCell label="선정" value={selectedSignals.poReady} tone={poTone} />
                     </div>
                   );
                 })()}
@@ -4329,7 +4345,7 @@ function QuotesPageContent() {
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-700">{selectedSignals.handoffTarget}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">진행 상태</span><span className={selectedSignals.poReady === "입고 등록" ? "text-emerald-400" : "text-yellow-600"}>{selectedSignals.handoffStatus}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">진행 상태</span><span className={selectedSignals.poReady === "완료" ? "text-emerald-400" : "text-yellow-600"}>{selectedSignals.handoffStatus}</span></div>
             </div>
           </section>
           )}

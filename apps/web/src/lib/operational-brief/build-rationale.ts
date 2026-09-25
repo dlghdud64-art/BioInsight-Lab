@@ -121,11 +121,21 @@ function buildBaseResult(
   /* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 완료된 견적이 이 분기에 먼저 걸려 「최적안 선택이 다음 단계입니다」 를 냈다.
    *   선정이 끝났다고 말하면서 선택하라고 하는 자기모순이다(호영님 라이브 실측).
    *   완료 판정을 **앞에** 둔다 — 분기 순서가 곧 우선순위다. */
-  if (poReady === "입고 등록") {
+  if (poReady === "완료") {
     return {
-      message: "견적 완료 → 구매는 플랫폼 밖에서 진행합니다. 입고 관리에서 입고 등록이 다음 단계입니다.",
+      message: "선정 완료 → 구매는 플랫폼 밖에서 진행합니다. 입고 관리에서 입고 등록이 다음 단계입니다.",
       case: "po_ready",
       tone: "emerald",
+    };
+  }
+  /* §quote-selection-recorded (2026-09-25 · 호영님 판정) — 완료 처리됐지만 선정 기록이 없는 상태. 이 경우에도 「최적안 선택이 다음 단계입니다」 가
+     먼저 걸리면 안 된다 — 맞는 말이긴 하나 그 문장은 **고르는 화면이 있다는 뜻**으로 읽힌다(없다).
+     오늘 사용자가 실제로 하는 일을 적는다. */
+  if (poReady === "필요") {
+    return {
+      message: "회신 도착 → 비교 후 공급사를 고르고, 구매 후 입고 관리에서 입고를 등록하세요.",
+      case: "po_ready",
+      tone: "blue",
     };
   }
   if (replyCount > 0 && replyCount >= totalItems && (compareReady === "가능" || compareReady === "완료")) {

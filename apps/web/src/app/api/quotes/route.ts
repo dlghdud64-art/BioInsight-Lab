@@ -607,6 +607,7 @@ export async function GET(request: NextRequest) {
     type MappedOrganization = { id: string; name: string } | null;
     type MappedQuote = {
       id: string;
+      selectedReplyId: string | null;
       title: string;
       description?: string | null;
       status: string;
@@ -670,6 +671,10 @@ export async function GET(request: NextRequest) {
       title: q.title,
       description: q.description ?? null,
       status: q.status,
+      /* §quote-selection-recorded (2026-09-25 · 호영님 판정) — 화면이 「선정 완료」 를 말하려면 **선정 기록**을 봐야 한다.
+         status COMPLETED 는 선정이 아니다 — orders/cancel-restore-quote.ts:103 이
+         주문 취소 시 견적을 COMPLETED 로 **되돌리므로**, 「넣었다가 취소한 견적」도 같은 값이 된다. */
+      selectedReplyId: q.selectedReplyId ?? null,
       createdAt: q.createdAt.toISOString(),
       // §quote-management P4-core-A — computePriority money 요인 실값(근사 금지, 미상이면 null).
       totalAmount: q.totalAmount ?? null,

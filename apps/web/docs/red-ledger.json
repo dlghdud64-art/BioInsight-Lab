@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-25T05:41:51.119Z",
+  "generated": "2026-09-25T06:41:16.473Z",
   "axis": "npx vitest run (전 축)",
   "total": 136,
   "kind": "sentinel 만 등재한다 · ratchet 은 등재 대상이 아니라 즉시 처리 대상",
@@ -49,7 +49,7 @@
     "src/__tests__/dashboard/page-send-to-supplier-visible-274b.test.ts > §11.274b #2 — section 구조 invariant 보존 quote-dispatch-summary-send-cta data-testid 보존",
     "src/__tests__/dashboard/page-send-to-supplier-visible-274b.test.ts > §11.274b #2 — section 구조 invariant 보존 quote-dispatch-verification-summary section + aria-label 보존",
     "src/__tests__/dashboard/quotes/operational-brief-emoji-caller-wiring.test.ts > #operational-brief-emoji-sweep — quotes/page.tsx caller page.tsx 자체에 emoji prefix 잔존하지 않음 (cluster sentinel)",
-    "src/__tests__/dashboard/quotes/quote-bottom-sheet-dual-overlap-264i.test.ts > §11.264i #2 — invariant 보존 (canonical truth) KPI 5 카드 라벨 보존: 발송 대기 / 회신 추적 / 비교 검토 필요 / 승인 ・ 예외 처리 / 견적 완료",
+    "src/__tests__/dashboard/quotes/quote-bottom-sheet-dual-overlap-264i.test.ts > §11.264i #2 — invariant 보존 (canonical truth) KPI 5 카드 라벨 보존: 발송 대기 / 회신 추적 / 비교 검토 필요 / 승인 ・ 예외 처리 / 선정 완료",
     "src/__tests__/dashboard/quotes/quote-bottom-sheet-dual-overlap-264i.test.ts > §11.264i #2 — invariant 보존 (canonical truth) §11.248e mobile context sheet 구조 보존 (badge + #ID + title + summary)",
     "src/__tests__/dashboard/quotes/quote-bottom-sheet-dual-overlap-264i.test.ts > §11.264i #2 — invariant 보존 (canonical truth) §11.259a KPI cards flex sm:grid + snap-x 보존 (모바일 가로 스크롤)",
     "src/__tests__/dashboard/quotes/quote-bottom-sheet-dual-overlap-264i.test.ts > §11.264i #3 — KPI 5 카드 모바일 도트 인디케이터 §11.264i KPI 도트 인디케이터 wrapper 존재 (sm:hidden)",

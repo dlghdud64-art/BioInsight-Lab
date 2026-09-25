@@ -56,19 +56,41 @@ function objectBlock(src: string, startAnchor: string): string {
 }
 
 describe("§quote-completed-honesty · 완료 견적이 선정을 단정하지 않는다", () => {
-  it("① 완료 상태 신호가 「선정」 을 주장하지 않는다", () => {
+  it("① 「선정 완료」 는 selectedReplyId 로만 판정된다 · status 만으로는 RED", () => {
+    /* §quote-selection-recorded (2026-09-25 · 호영님 판정) — 호영님 판정: COMPLETED 는 상태값일 뿐 공급사를 고른 기록이 아니다.
+       게다가 lib/orders/cancel-restore-quote.ts:103 이 주문 취소 시 견적을 COMPLETED 로 되돌린다
+       → status 로 판정하면 「넣었다가 취소한 견적」에도 「선정 완료」 가 붙는다. */
+    // 구 판정: status 만 보고 뱃지를 골랐다.
+    expect(pageCode).not.toMatch(
+      /case "COMPLETED":\s*return OP_STATUS\.발주_완료;/,
+    );
+    // 새 판정: 선정 기록을 본다.
+    expect(pageCode).toMatch(
+      /case "COMPLETED":\s*return q\.selectedReplyId \? OP_STATUS\.발주_완료 : OP_STATUS\.선정_대기;/,
+    );
+    // 신호(뱃지·안내)도 같은 축으로 덮인다.
+    expect(pageCode).toMatch(
+      /railState === "ready_for_po_conversion" && !q\.selectedReplyId/,
+    );
+    expect(pageCode).toMatch(/badge: "회신 도착 · 비교 후 선정"/);
+    expect(pageCode).toMatch(/공급사를 고른 뒤 구매하고, 입고 관리에서 입고를 등록하세요/);
+    // 기록이 있을 때의 문구는 표에 남아 있다(선정 배선이 들어오면 그날 참이 된다).
     const block = objectBlock(pageCode, "ready_for_po_conversion:");
-    // 선정 기록이 0이므로 선정을 말할 수 없다.
-    expect(block).not.toMatch(/선정/);
-    // 두 경로에서 모두 참인 문장.
-    expect(block).toMatch(/badge:\s*"견적 완료"/);
-    expect(block).toMatch(/status:\s*"견적 완료"/);
-    // 「다음 조치」 가 제자리를 맴돌지 않는다 — 실제 행동을 적는다.
-    expect(block).toMatch(/nextAction:\s*"입고 등록"/);
-    expect(block).not.toMatch(/nextAction:\s*"다음 단계"/);
-    // 목적지를 CTA 가 그대로 말한다(클릭 한 번).
-    expect(block).toMatch(/ctaLabel:\s*"입고 관리 열기"/);
-    expect(block).toMatch(/railCtaLabel:\s*"입고 관리 열기"/);
+    expect(block).toMatch(/badge: "선정 완료"/);
+    expect(block).toMatch(/nextAction: "구매 후 입고 등록"/);
+    expect(block).not.toMatch(/nextAction: "다음 단계"/);
+    expect(block).toMatch(/ctaLabel: "입고 관리 열기"/);
+    expect(block).toMatch(/railCtaLabel: "입고 관리 열기"/);
+  });
+
+  it("①-b 판정축이 화면까지 배선돼 있다 (API · 타입 · 상세)", () => {
+    /* 선언만 늘고 배선이 없으면 RED — §인프라를 만들면 같은 커밋에서 배선한다.
+       API 가 안 실어 보내면 selectedReplyId 는 **언제나 undefined** 라 판정이 조용히 한쪽으로 고정된다. */
+    const listApi = read("src/app/api/quotes/route.ts");
+    expect(listApi).toMatch(/selectedReplyId: q\.selectedReplyId \?\? null/);
+    expect(pageCode).toMatch(/selectedReplyId\?: string \| null/);
+    const detail = stripComments(read("src/app/quotes/[id]/page.tsx"));
+    expect(detail).toMatch(/quote\.selectedReplyId \? "선정 완료" : "회신 도착 · 비교 후 선정"/);
   });
 
   it("② 완료 견적에 「첫 액션이 필요합니다」 가 붙지 않는다", () => {
@@ -76,17 +98,23 @@ describe("§quote-completed-honesty · 완료 견적이 선정을 단정하지 �
     expect(pageCode).not.toMatch(/status\s*!==\s*"SENT"[\s\S]{0,80}첫 액션이 필요합니다/);
     // 완료를 **먼저** 가른다.
     expect(pageCode).toMatch(
-      /selectedQuote\.status\s*===\s*"COMPLETED"[\s\S]{0,120}첫 액션이 필요합니다/,
+      /selectedQuote\.status\s*===\s*"COMPLETED"[\s\S]{0,200}첫 액션이 필요합니다/,
     );
+    // §quote-selection-recorded (2026-09-25 · 호영님 판정) — 완료 안에서도 선정 기록으로 다시 갈린다.
+    expect(pageCode).toMatch(/selectedQuote\.selectedReplyId \? "구매 후 입고를 등록하세요" : "공급사를 고른 뒤 구매하세요"/);
   });
 
   it("③ 판단 근거가 완료 견적에 「최적안 선택」 을 요구하지 않는다", () => {
     // 완료 분기가 회신-완료 분기보다 **앞**에 온다. 순서가 곧 우선순위다.
-    const completedAt = rationaleCode.indexOf('poReady === "입고 등록"');
+    const selectedAt = rationaleCode.indexOf('poReady === "완료"');
+    const pendingAt = rationaleCode.indexOf('poReady === "필요"');
     const replyAt = rationaleCode.indexOf("최적안 선택이 다음 단계입니다");
-    expect(completedAt).toBeGreaterThan(-1);
+    expect(selectedAt).toBeGreaterThan(-1);
+    expect(pendingAt).toBeGreaterThan(-1);
     expect(replyAt).toBeGreaterThan(-1);
-    expect(completedAt).toBeLessThan(replyAt);
+    // 두 분기 **모두** 회신-완료 분기보다 앞이다. 하나만 앞서면 나머지가 옛 문구로 떨어진다.
+    expect(selectedAt).toBeLessThan(replyAt);
+    expect(pendingAt).toBeLessThan(replyAt);
     // 제품에 없는 다음 단계를 근거가 약속하지 않는다.
     expect(rationaleCode).not.toMatch(/발주 전환/);
     expect(rationaleCode).not.toMatch(/PO 생성/);

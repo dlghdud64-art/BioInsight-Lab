@@ -1513,10 +1513,15 @@ export default function QuoteDetailPage() {
                     오늘 사용자가 실제로 하는 일을 그대로 적는다 — 선정하고, 플랫폼 밖에서 사고, 입고로 돌아온다. */}
                 {quoteStatus === "COMPLETED" && !quote.order && isAdmin && (
                   <div className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    {/* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 선정 기록이 0이라 「선정」 을 단정할 수 없다(selectedReplyId 전 견적 null · QuoteReply 0행).
-                        목록 패널과 **같은 이름**을 쓴다 — 한 견적이 화면마다 다른 상태로 불리면 안 된다. */}
-                    <p className="text-sm font-semibold text-slate-800">견적 완료</p>
-                    <p className="mt-0.5 text-xs text-slate-500">구매 후 입고 관리에서 입고를 등록하세요</p>
+                    {/* §quote-selection-recorded (2026-09-25 · 호영님 판정) — 목록 패널과 **같은 축**으로 가른다(selectedReplyId). 한 견적이 화면마다 다르게 불리면 안 된다. */}
+                    <p className="text-sm font-semibold text-slate-800">
+                      {quote.selectedReplyId ? "선정 완료" : "회신 도착 · 비교 후 선정"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {quote.selectedReplyId
+                        ? "구매 후 입고 관리에서 입고를 등록하세요"
+                        : "공급사를 고른 뒤 구매하고, 입고 관리에서 입고를 등록하세요"}
+                    </p>
                     <Link href="/dashboard/receiving" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700">
                       입고 관리로 <ArrowRight className="h-3.5 w-3.5" />
                     </Link>

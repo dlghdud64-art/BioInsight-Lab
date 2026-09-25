@@ -160,13 +160,13 @@ describe("§11.264i #2 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("KPI 5 카드 라벨 보존: 발송 대기 / 회신 추적 / 비교 검토 필요 / 승인 ・ 예외 처리 / 견적 완료", () => {
+  it("KPI 5 카드 라벨 보존: 발송 대기 / 회신 추적 / 비교 검토 필요 / 승인 ・ 예외 처리 / 선정 완료", () => {
     expect(page).toMatch(/label: "발송 대기"/);
     expect(page).toMatch(/label: "회신 추적"/);
     expect(page).toMatch(/label: "비교 검토 필요"/);
     expect(page).toMatch(/label: "승인 ?\/ ?예외 처리"/);
-    /* 승계 §quote-completed-honesty (2026-09-25 · 호영님 판정) — 「선정 완료」 는 참이 아니었다(선정 기록 0). 명제는 「KPI 5칸이 보존된다」 이고
-       이름만 참인 것으로 옮긴다. 근거는 regression/quote-completed-honesty.test.ts ① 이 든다. */
-    expect(page).toMatch(/label: "견적 완료"/);
+    /* 승계 §quote-selection-recorded (2026-09-25 · 호영님 판정) — 라벨은 「선정 완료」 로 돌아왔고, 참이 되는 조건이 selectedReplyId 로 잠겼다.
+       명제는 「KPI 5칸이 보존된다」 이고 불변이다. 판정축은 regression/quote-completed-honesty.test.ts ① 이 든다. */
+    expect(page).toMatch(/label: "선정 완료"/);
   });
 });
