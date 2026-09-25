@@ -24,7 +24,9 @@ describe("§quotes-mgmt-enhance §1a — 카드 스텝퍼 경량화", () => {
   it("우측 요약 · 발송 전 / 회신 N/M (canonical 파생)", () => {
     /* 승계 §quote-reply-count-split (2026-09-25 · 호영님 실측) — PARSED 도 발송 전인데 구 판본은 PENDING 만 셌다. 판정을 hasBeenSent 로 옮긴다.
        명제(우측 요약이 발송 전/회신 N/M 두 상태를 canonical 에서 판다)는 불변. */
-    expect(PAGE).toMatch(/!hasBeenSent\(quote\) \? "발송 전" : `회신 \$\{responseCount\}\/\$\{quote\.vendorRequests\?\.length \?\? itemCount\}`/);
+    /* 승계 §quote-reply-denominator (2026-09-25 · 호영님 판정) — 분모가 품목 수에서 요청한 공급사 수로 바뀌었다.
+       명제(우측 요약이 발송 전/회신 N/M 두 상태를 canonical 에서 판다)는 불변이다. */
+    expect(PAGE).toMatch(/!hasBeenSent\(quote\) \? "발송 전" : `회신 \$\{responseCount\}\/\$\{replyTotal\}`/);
   });
 
   it("공급사 응답 ●●● 타임라인 제거(시각 소음)", () => {

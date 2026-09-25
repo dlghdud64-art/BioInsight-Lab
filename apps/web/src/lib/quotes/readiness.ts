@@ -51,6 +51,19 @@ export interface ReadinessAxis {
 export interface QuoteReadiness {
   /** 회신한 공급사 수(포털 포함 · 공급사 기준 중복 제거) */
   respondedCount: number;
+  /**
+   * 회신을 **요청한** 공급사 수 = 회신 수의 분모.
+   *
+   * §quote-reply-denominator (2026-09-25 · 호영님 판정) — 화면들이 분모로 **품목 수**(items.length)를 쓰고 있었다.
+   *   「회신 1/1」 이 말하는 것은 「보낸 공급사 중 몇 곳이 답했나」 인데,
+   *   품목 3개를 공급사 1곳에 보내고 답을 받으면 「1/3」 이 나왔다.
+   *   prod 견적이 전부 1품목이라 **우연히** 맞아 보였을 뿐이다(호영님).
+   *   RFQ 를 여러 곳에 돌려 추적하는 것이 지금 파는 기능이므로 가장 먼저 참이어야 하는 숫자다.
+   *
+   * vendorRequest 없이 포털로만 들어온 회신은 초대 행이 없으므로 분모에도 더한다
+   * — 그래야 respondedCount ≤ invitedCount 가 언제나 성립한다.
+   */
+  invitedCount: number;
   /** 구매 전환에 쓸 수 있는 회신 수(vendorRequest 가 있는 회신만) */
   convertibleCount: number;
   compare: ReadinessAxis;
@@ -109,8 +122,11 @@ export function resolveQuoteReadiness(input: QuoteReadinessInput): QuoteReadines
   const poLabel = poReady ? "발주 가능" : "발주 불가";
   const compareLabel = compareReady ? "비교 가능" : "비교 불가";
 
+  const invitedCount = input.vendorRequests.length + portalOnly.size;
+
   return {
     respondedCount,
+    invitedCount,
     convertibleCount,
     po: { ready: poReady, label: poLabel },
     compare: { ready: compareReady, label: compareLabel },

@@ -110,7 +110,11 @@ describe("§11.264g #3 — invariant 보존 (canonical truth)", () => {
     /* 승계 §quote-reply-count-split (2026-09-25 · 호영님 실측) — 구 판본은 상태 **목록**을 통짜로 핀했다. 그 목록이 COMPLETED 를 빠뜨려
        회신이 도착한 견적에서 진행률이 통째로 사라졌다(호영님 라이브 실측).
        명제는 「발송된 견적에만 진행률이 뜬다」 이지 「SENT 이거나 RESPONDED」 가 아니다. */
-    expect(page).toMatch(/hasBeenSent\(quote\) && itemCount > 0/);
+    /* 승계 §quote-reply-denominator (2026-09-25 · 호영님 판정) — 분모가 품목 수에서 **요청한 공급사 수**로 바뀌었다.
+       「회신 1/1」 은 「보낸 공급사 중 몇 곳이 답했나」 이고, 품목 수로 나누면
+       품목 3개를 1곳에 보낸 견적이 「1/3」 이 된다(호영님). 명제(진행률이 회신 수를 보여준다)는 불변.
+       분모 축의 단언은 regression/quote-reply-denominator.test.ts 가 든다. */
+    expect(page).toMatch(/hasBeenSent\(quote\) && replyTotal > 0/);
     expect(page).toMatch(/role="progressbar"/);
   });
 

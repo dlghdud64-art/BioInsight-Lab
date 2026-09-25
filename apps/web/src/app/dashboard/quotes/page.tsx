@@ -706,7 +706,10 @@ function QuoteCard({
    *     QuoteResponse **전 견적 0행** · COMPLETED 견적의 vendorRequest RESPONDED 1건.
    *     즉 목록은 구조적으로 항상 0을 보여주고 패널만 1을 보여주고 있었다.
    *   §「화면이 보여주는 수와 게이트가 판정하는 수는 같은 함수에서 나와야 한다」 그대로다. */
-  const responseCount = quoteReadiness(quote).respondedCount;
+  const cardReadiness = quoteReadiness(quote);
+  const responseCount = cardReadiness.respondedCount;
+  /* §quote-reply-denominator (2026-09-25 · 호영님 판정) — 분모는 품목 수가 아니라 **요청한 공급사 수**다. 판정 단일 출처에서 같이 받는다. */
+  const replyTotal = cardReadiness.invitedCount;
   const prices = (quote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
   const minPrice = prices.length ? Math.min(...prices) : null;
   // §11.223 #quote-card-batch3-price-delivery — 호영님 spec #4: 가격 범위 +
@@ -926,32 +929,33 @@ function QuoteCard({
           PENDING hide (회신 의미 없음) — SENT/RESPONDED 만 노출.
           color: 0% slate, partial blue, 완료(N≥M) emerald.
           §11.264g — 모바일 collapsed 시 hidden (확장 시 표시), 데스크탑 always. */}
-      {/* §quote-reply-count-split (2026-09-25 · 호영님 실측) — 완료된 견적에서 진행률이 통째로 사라지던 게이트. 발송 여부로 판정한다. */}
-      {hasBeenSent(quote) && itemCount > 0 && (
+      {/* §quote-reply-count-split (2026-09-25 · 호영님 실측) — 완료된 견적에서 진행률이 통째로 사라지던 게이트. 발송 여부로 판정한다.
+          §quote-reply-denominator (2026-09-25 · 호영님 판정) — 분모도 회신 축으로. 요청한 공급사가 0이면 보여줄 비율 자체가 없다. */}
+      {hasBeenSent(quote) && replyTotal > 0 && (
         <div className={`mt-2.5 flex items-center gap-2 ${isExpanded ? "" : "hidden md:flex"}`} aria-label="회신 수집 진행률">
           <span className="text-[10px] font-medium text-slate-600 shrink-0 tabular-nums">
-            회신 {responseCount}/{itemCount}
+            회신 {responseCount}/{replyTotal}
           </span>
           <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
             <div
               role="progressbar"
               aria-valuenow={responseCount}
               aria-valuemin={0}
-              aria-valuemax={itemCount}
-              aria-label={`회신 ${responseCount}/${itemCount}`}
+              aria-valuemax={replyTotal}
+              aria-label={`회신 ${responseCount}/${replyTotal}`}
               className={`h-full rounded-full transition-all ${
                 responseCount === 0
                   ? "bg-slate-200"
-                  : responseCount >= itemCount
+                  : responseCount >= replyTotal
                     ? "bg-emerald-500"
                     : "bg-blue-500"
               }`}
               style={{
-                width: `${Math.min(100, (responseCount / itemCount) * 100)}%`,
+                width: `${Math.min(100, (responseCount / replyTotal) * 100)}%`,
               }}
             />
           </div>
-          {responseCount >= itemCount && (
+          {responseCount >= replyTotal && (
             <span className="text-[10px] font-medium text-emerald-700 shrink-0">완료</span>
           )}
         </div>
@@ -981,7 +985,7 @@ function QuoteCard({
           <span className="text-sm font-bold text-blue-700 whitespace-nowrap">{READINESS_LABELS[signals.readinessStage]}</span>
           <span className="ml-auto text-[11px] text-slate-500 whitespace-nowrap">
             {/* §quote-reply-count-split (2026-09-25 · 호영님 실측) — PARSED 도 발송 전이다. */}
-            {!hasBeenSent(quote) ? "발송 전" : `회신 ${responseCount}/${quote.vendorRequests?.length ?? itemCount}`}
+            {!hasBeenSent(quote) ? "발송 전" : `회신 ${responseCount}/${replyTotal}`}
           </span>
         </div>
       </div>
@@ -3144,7 +3148,10 @@ function QuotesPageContent() {
                 const signals = getOpSignals(quote);
                 const itemCount = quote.items?.length ?? 0;
                 // §quote-reply-count-split (2026-09-25 · 호영님 실측) — 카드·패널과 같은 함수. 구 `quote.responses.length` 는 prod 에서 항상 0이었다.
-                const responseCount = quoteReadiness(quote).respondedCount;
+                const rowReadiness = quoteReadiness(quote);
+                const responseCount = rowReadiness.respondedCount;
+                // §quote-reply-denominator (2026-09-25 · 호영님 판정) — 분모도 같은 함수에서. 품목 수가 아니라 요청한 공급사 수다.
+                const replyTotal = rowReadiness.invitedCount;
                 const railState = deriveRailState(quote);
                 const isSelected = selectedQuoteId === quote.id;
                 // §11.242 #4 — 우선순위 left border tr scope derive (canonical RailState 기반).
@@ -3407,23 +3414,23 @@ function QuotesPageContent() {
                         //   §quote-floating-selbar §5 — 미발송/회신 0 = 의도적 muted "회신 전" 태그(disabled 회색 — 금지, §11.242 #8 가짜 데이터 0).
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
-                            {hasBeenSent(quote) && itemCount > 0 ? (
+                            {hasBeenSent(quote) && replyTotal > 0 ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <span className="text-[10px] tabular-nums text-slate-600">
-                                  {responseCount}/{itemCount}
+                                  {responseCount}/{replyTotal}
                                 </span>
                                 <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
                                   <div
                                     role="progressbar"
                                     aria-valuenow={responseCount}
                                     aria-valuemin={0}
-                                    aria-valuemax={itemCount}
+                                    aria-valuemax={replyTotal}
                                     className={`h-full rounded-full ${
                                       responseCount === 0 ? "bg-slate-200"
-                                      : responseCount >= itemCount ? "bg-emerald-500"
+                                      : responseCount >= replyTotal ? "bg-emerald-500"
                                       : "bg-blue-500"
                                     }`}
-                                    style={{ width: `${Math.min(100, (responseCount / itemCount) * 100)}%` }}
+                                    style={{ width: `${Math.min(100, (responseCount / replyTotal) * 100)}%` }}
                                   />
                                 </div>
                               </div>
@@ -3899,7 +3906,10 @@ function QuotesPageContent() {
       {/* §order-entry-rewire P3-2 — po_conversion(주문 접수) 중에도 브리핑 미노출:
           발주 흐름에 브리핑이 끼어들지 않는다 (request_send 와 동형 처리). */}
       {activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion" && selectedQuote && selectedSignals && selectedOpStatus && (() => {
-        const sqResponseCount = quoteReadiness(selectedQuote).respondedCount; // §quote-readiness-single-source 3b · 카운트 단일 출처
+        const sqReadiness = quoteReadiness(selectedQuote); // §quote-readiness-single-source 3b · 카운트 단일 출처
+        const sqResponseCount = sqReadiness.respondedCount;
+        // §quote-reply-denominator (2026-09-25 · 호영님 판정) — 회신 축의 분모. 품목 수와 섞지 않는다.
+        const sqReplyTotal = sqReadiness.invitedCount;
         // §11.212 — sqDaysSince 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
         // <RelativeTimeText iso={selectedQuote.createdAt} /> 가 useEffect mount 후 set.
         const sqDelayed = isDelayed(selectedQuote);
@@ -3975,7 +3985,8 @@ function QuotesPageContent() {
               </div>
             </div>
             <h3 className="text-sm font-semibold text-slate-900 truncate mb-1">{selectedQuote.title}</h3>
-            <p className="text-[11px] text-slate-500">{selectedQuote.items.length}건 · 회신 {sqResponseCount}/{selectedQuote.items.length} · <RelativeTimeText iso={selectedQuote.createdAt} /></p>
+            {/* §quote-reply-denominator (2026-09-25 · 호영님 판정) — 앞의 「N건」 은 품목 수(그대로), 뒤의 분모는 요청한 공급사 수다. 두 축이 한 줄에 있다. */}
+            <p className="text-[11px] text-slate-500">{selectedQuote.items.length}건 · 회신 {sqResponseCount}/{sqReplyTotal} · <RelativeTimeText iso={selectedQuote.createdAt} /></p>
             <p className="text-[11px] text-slate-400 mt-0.5">{selectedSignals.urgency}</p>
             {/* §quote-brief-rail-tabs-sian — 시안 lead 줄. canonical truth(status/회신 수)
                 기반 1줄 상태 안내. 새 추정 없음. */}
@@ -3987,7 +3998,7 @@ function QuotesPageContent() {
                 ? (selectedQuote.selectedReplyId ? "구매 후 입고를 등록하세요" : "공급사를 고른 뒤 구매하세요")
                 : selectedQuote.status === "PENDING"
                   ? "첫 액션이 필요합니다"
-                  : sqResponseCount < selectedQuote.items.length
+                  : sqResponseCount < sqReplyTotal
                     ? "회신을 기다리는 중입니다"
                     : "비교할 견적이 모였습니다"}
             </p>
@@ -4038,7 +4049,8 @@ function QuotesPageContent() {
                 #operational-brief-emoji-sweep — 이모지 제거 후 컬러 도트
                 + Clock icon (inventory tail) 시각 위계. B2B 톤 정합. */}
             {(() => {
-              const totalItems = selectedQuote.items.length;
+              // §quote-reply-denominator (2026-09-25 · 호영님 판정) — buildBriefRationale 이 replyCount 와 비교하는 값이라 **회신 분모**다.
+              const totalItems = sqReplyTotal;
               const mostUrgent = findMostUrgentInventoryForQuote(
                 selectedQuote.items as never,
                 inventories,
@@ -4051,7 +4063,8 @@ function QuotesPageContent() {
                 poReady: selectedSignals.poReady,
                 replyCount: sqResponseCount,
                 totalItems,
-                isSent: selectedQuote.status === "SENT",
+                // §quote-reply-denominator (2026-09-25 · 호영님 판정) — 모바일과 같은 판정. status 목록은 쓰지 않는다.
+                isSent: hasBeenSent(selectedQuote),
                 inventoryContext: { mostUrgent },
               });
               return (
@@ -4081,7 +4094,8 @@ function QuotesPageContent() {
             {factsExpanded && (
               <>
                 {(() => {
-                  const totalItems = selectedQuote.items.length;
+                  // §quote-reply-denominator (2026-09-25 · 호영님 판정) — 회신 셀의 분모.
+                  const totalItems = sqReplyTotal;
                   const replyTone: "ok" | "warn" | "danger" =
                     sqResponseCount === 0
                       ? "danger"
@@ -4129,19 +4143,21 @@ function QuotesPageContent() {
               <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">회신 현황</div>
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  {/* §quote-reply-denominator (2026-09-25 · 호영님 판정) — 「발송 공급사」 칸이 **품목 수**를 보여주고 있었다. 셀 이름과 값이 다른 것을 세고 있었다. */}
                   <div className="text-[10px] text-slate-400">발송 공급사</div>
-                  <div className="text-sm font-semibold text-slate-900 mt-0.5">{selectedQuote.items.length}곳</div>
+                  <div className="text-sm font-semibold text-slate-900 mt-0.5">{sqReplyTotal}곳</div>
                 </div>
                 <div className={`rounded-lg border px-3 py-2 ${sqResponseCount === 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
                   <div className={`text-[10px] ${sqResponseCount === 0 ? "text-red-600" : "text-slate-400"}`}>회신 수신</div>
-                  <div className={`text-sm font-semibold mt-0.5 ${sqResponseCount === 0 ? "text-red-700" : "text-slate-900"}`}>{sqResponseCount}/{selectedQuote.items.length}</div>
+                  <div className={`text-sm font-semibold mt-0.5 ${sqResponseCount === 0 ? "text-red-700" : "text-slate-900"}`}>{sqResponseCount}/{sqReplyTotal}</div>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
                   <div className="text-[10px] text-slate-400">상태</div>
                   <div className="text-sm font-semibold text-slate-900 mt-0.5">
-                    {selectedQuote.status !== "SENT"
+                    {/* §quote-reply-denominator (2026-09-25 · 호영님 판정) — `status !== "SENT"` 는 COMPLETED 도 「미발송」 으로 만든다(같은 형태 3번째). */}
+                    {!hasBeenSent(selectedQuote)
                       ? "미발송"
-                      : sqResponseCount < selectedQuote.items.length
+                      : sqResponseCount < sqReplyTotal
                         ? "수집 중"
                         : "완료"}
                   </div>
@@ -4201,7 +4217,7 @@ function QuotesPageContent() {
                 <span className="text-slate-400">수신 견적</span>
                 <span className={`font-medium ${sqResponseCount > 0 ? "text-blue-600" : "text-slate-700"}`}>{sqResponseCount}건{sqResponseCount > 0 && selectedQuote.status === "SENT" ? " (새 회신)" : ""}</span>
               </div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">회신 대기</span><span className={selectedQuote.status === "SENT" && sqResponseCount === 0 ? "text-yellow-600" : "text-slate-500"}>{selectedQuote.status === "SENT" ? `${selectedQuote.items.length - sqResponseCount}건` : "—"}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">회신 대기</span><span className={selectedQuote.status === "SENT" && sqResponseCount === 0 ? "text-yellow-600" : "text-slate-500"}>{hasBeenSent(selectedQuote) ? `${Math.max(0, sqReplyTotal - sqResponseCount)}건` : "—"}</span></div>
               {/* 가격 범위 — 회신이 있을 때만 */}
               {(() => {
                 const prices = (selectedQuote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
@@ -4485,7 +4501,10 @@ function QuotesPageContent() {
               {/* #operational-brief-emoji-sweep — mobile mirror desktop §11.221.
                   컬러 도트 + Clock icon (B2B 톤). */}
               {(() => {
-                const totalItems = selectedQuote.items.length;
+                /* §quote-reply-denominator (2026-09-25 · 호영님 판정) — 모바일 블록은 패널 IIFE 밖이라 지역변수가 없다.
+                   같은 함수를 여기서 한 번 더 부른다 — 값이 갈리지 않는 이유는 **출처가 하나**이기 때문이다. */
+                const mReadiness = quoteReadiness(selectedQuote);
+                const totalItems = mReadiness.invitedCount;
                 const mostUrgent = findMostUrgentInventoryForQuote(
                   selectedQuote.items as never,
                   inventories,
@@ -4496,9 +4515,10 @@ function QuotesPageContent() {
                   nextAction: selectedSignals.nextAction,
                   compareReady: selectedSignals.compareReady,
                   poReady: selectedSignals.poReady,
-                  replyCount: selectedQuote.responses?.length ?? 0,
+                  // §quote-reply-denominator (2026-09-25 · 호영님 판정) — 모바일만 아직 QuoteResponse(prod 전 견적 0행)를 세고 있었다. 데스크탑과 같은 값으로.
+                  replyCount: mReadiness.respondedCount,
                   totalItems,
-                  isSent: selectedQuote.status === "SENT",
+                  isSent: hasBeenSent(selectedQuote),
                   inventoryContext: { mostUrgent },
                 });
                 return (

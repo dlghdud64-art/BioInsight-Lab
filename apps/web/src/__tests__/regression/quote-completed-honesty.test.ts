@@ -139,8 +139,10 @@ describe("§quote-reply-count-split · 회신 수는 한 함수에서만 나온�
   it("⑤ 카드·목록·패널이 같은 함수를 쓴다", () => {
     // 회신 축의 출처는 quoteReadiness 하나다. QuoteResponse 를 회신 수로 세지 않는다.
     expect(pageCode).not.toMatch(/const\s+responseCount\s*=\s*quote\.responses/);
+    /* 승계 §quote-reply-denominator(2026-09-25 · 호영님 판정) — 분모를 같이 받느라 판정 결과를
+       지역변수로 받는 형태가 됐다. 명제(회신 수가 quoteReadiness 한 함수에서 나온다)는 불변이다. */
     const fromReadiness = pageCode.match(
-      /const\s+responseCount\s*=\s*quoteReadiness\(quote\)\.respondedCount/g,
+      /const\s+responseCount\s*=\s*(?:card|row)Readiness\.respondedCount/g,
     );
     expect(fromReadiness ?? []).toHaveLength(2); // 카드 · 목록 행
     // 패널은 같은 객체의 같은 필드를 읽는다.
@@ -160,7 +162,9 @@ describe("§quote-reply-count-split · 회신 수는 한 함수에서만 나온�
       /NOT_YET_SENT_STATUSES[\s\S]{0,120}new Set\(\["PENDING",\s*"PARSED"\]\)/,
     );
     // 목록 행 · 카드 진행률 두 자리 모두 그 이름을 쓴다.
-    const gates = pageCode.match(/hasBeenSent\(quote\)\s*&&\s*itemCount\s*>\s*0/g);
+    /* 승계 §quote-reply-denominator — 게이트의 두 번째 항이 품목 수에서 **요청한 공급사 수**로 바뀌었다.
+       명제(발송된 견적에만 진행률이 뜬다)는 불변이고, 분모 0이면 보여줄 비율이 없다는 조건이 더해졌다. */
+    const gates = pageCode.match(/hasBeenSent\(quote\)\s*&&\s*replyTotal\s*>\s*0/g);
     expect(gates ?? []).toHaveLength(2);
     expect(pageCode).toMatch(/!hasBeenSent\(quote\)\s*\?\s*"발송 전"/);
   });

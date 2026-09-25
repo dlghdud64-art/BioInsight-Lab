@@ -26,7 +26,11 @@ describe("§11.217 Phase 4 — quote card 회신 수집 progress bar", () => {
 
   it("aria-valuenow / aria-valuemax — responseCount / itemCount 기반", () => {
     expect(src).toMatch(/aria-valuenow=\{\s*responseCount\s*\}/);
-    expect(src).toMatch(/aria-valuemax=\{\s*itemCount\s*\}/);
+    /* 승계 §quote-reply-denominator (2026-09-25 · 호영님 판정) — 분모가 품목 수에서 **요청한 공급사 수**로 바뀌었다.
+       「회신 1/1」 은 「보낸 공급사 중 몇 곳이 답했나」 이고, 품목 수로 나누면
+       품목 3개를 1곳에 보낸 견적이 「1/3」 이 된다(호영님). 명제(진행률이 회신 수를 보여준다)는 불변.
+       분모 축의 단언은 regression/quote-reply-denominator.test.ts 가 든다. */
+    expect(src).toMatch(/aria-valuemax=\{\s*replyTotal\s*\}/);
   });
 
   it("발송 전 hide · 발송 후 노출", () => {
@@ -35,11 +39,11 @@ describe("§11.217 Phase 4 — quote card 회신 수집 progress bar", () => {
        판정을 이름 있는 함수로 옮기고, 그 함수가 무엇을 발송 전으로 세는지까지 고정한다. */
     expect(src).toMatch(/function hasBeenSent\(/);
     expect(src).toMatch(/NOT_YET_SENT_STATUSES[\s\S]{0,120}new Set\(\["PENDING",\s*"PARSED"\]\)/);
-    expect(src).toMatch(/hasBeenSent\(quote\) && itemCount > 0/);
+    expect(src).toMatch(/hasBeenSent\(quote\) && replyTotal > 0/);
   });
 
   it("회신 N/M 라벨 (responseCount/itemCount)", () => {
-    expect(src).toMatch(/회신\s*\{responseCount\}\/\{itemCount\}/);
+    expect(src).toMatch(/회신\s*\{responseCount\}\/\{replyTotal\}/);
   });
 
   it("color tone — 0% slate / partial blue / full(>=) emerald", () => {
