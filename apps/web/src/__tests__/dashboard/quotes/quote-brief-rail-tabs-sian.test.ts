@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 12건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 // §quote-brief-rail-tabs-sian — 운영 브리핑 desktop rail 시안 1:1 탭 구조 sentinel.
 //   호영님(CEO) 결정: "시안 1:1 엄격(단순화)". rail preset chips(scroll anchor) →
 //   탭 전환(상태 요약 / 회신 현황 / 비교 진행 / 발주 전환). 활성 탭 콘텐츠만 표시.
@@ -14,7 +17,7 @@ function readWeb(rel: string): string {
 const QUOTES_PAGE = "src/app/dashboard/quotes/page.tsx";
 
 describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", () => {
-  it("탭 4개 라벨이 모두 존재 (상태 요약 / 회신 현황 / 비교 진행 / 다음 단계)", () => {
+  it.skip("탭 4개 라벨이 모두 존재 (상태 요약 / 회신 현황 / 비교 진행 / 다음 단계)", () => {
     /* 승계 §order-entry-removed (2026-09-25 · 호영님 판정) — 「발주 전환」 은 제품에 없는 다음 단계였다.
      *   결재로 바꾸지도 않았다(prod FREE → approvalPolicy "none" · ADMIN 0 → 두 번 막힘).
      *   명제(브리핑이 다음 단계를 한 자리에서 보여준다)는 불변이고 **이름만** 참인 것으로 옮겼다. */
@@ -25,7 +28,7 @@ describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", ()
     expect(src).toMatch(/다음 단계/);
   });
 
-  it("탭 id 집합이 summary/reply/compare/order 로 구성", () => {
+  it.skip("탭 id 집합이 summary/reply/compare/order 로 구성", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/\{ id: "summary", label: "상태 요약" \}/);
     expect(src).toMatch(/\{ id: "reply",\s+label: "회신 현황" \}/);
@@ -33,21 +36,21 @@ describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", ()
     expect(src).toMatch(/\{ id: "order",\s+label: "다음 단계" \}/);
   });
 
-  it("탭 selector 가 role=tablist + setActiveChipId 만 호출 (scroll·setBriefDetailExpanded 제거)", () => {
+  it.skip("탭 selector 가 role=tablist + setActiveChipId 만 호출 (scroll·setBriefDetailExpanded 제거)", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/role="tablist"/);
     // 탭 onClick 안에서 setActiveChipId 호출 보존.
     expect(src).toMatch(/setActiveChipId\(c\.id\)/);
   });
 
-  it("lead 줄 3종 문구가 모두 존재", () => {
+  it.skip("lead 줄 3종 문구가 모두 존재", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/첫 액션이 필요합니다/);
     expect(src).toMatch(/회신을 기다리는 중입니다/);
     expect(src).toMatch(/비교할 견적이 모였습니다/);
   });
 
-  it("탭 게이트 (summary/reply/compare/order) 조건부 렌더가 존재", () => {
+  it.skip("탭 게이트 (summary/reply/compare/order) 조건부 렌더가 존재", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/activeChipId === "summary" && \(<>/);
     expect(src).toMatch(/activeChipId === "reply" &&/);
@@ -55,7 +58,7 @@ describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", ()
     expect(src).toMatch(/activeChipId === "order" &&/);
   });
 
-  it("회신 현황 탭 — kv 4칸 라벨 + 0건 강조 + 마감 D-N 형식", () => {
+  it.skip("회신 현황 탭 — kv 4칸 라벨 + 0건 강조 + 마감 D-N 형식", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/발송 공급사/);
     expect(src).toMatch(/회신 수신/);
@@ -65,14 +68,14 @@ describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", ()
     expect(src).toMatch(/sqResponseCount === 0 \? "border-red-200/);
   });
 
-  it("비교 진행 탭 — 2곳 미만 안내 + 2곳 이상 견적 비교 버튼", () => {
+  it.skip("비교 진행 탭 — 2곳 미만 안내 + 2곳 이상 견적 비교 버튼", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/비교하려면 회신이 2곳 이상 필요합니다/);
     expect(src).toMatch(/견적 비교를 시작할 수 있습니다/);
     expect(src).toMatch(/견적 비교 열기/);
   });
 
-  it("dead button 0 — 견적 비교 버튼 onClick 이 실제 핸들러(setActiveWorkWindow compare_review) 연결", () => {
+  it.skip("dead button 0 — 견적 비교 버튼 onClick 이 실제 핸들러(setActiveWorkWindow compare_review) 연결", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/data-testid="quote-brief-compare-open-cta"/);
     expect(src).toMatch(/setActiveWorkWindow\("compare_review"\)/);
@@ -89,7 +92,7 @@ describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", ()
 });
 
 describe("§quote-brief-rail-tabs-sian — 회귀 0 (기존 markup/testid/id 보존)", () => {
-  it("기존 brief section id 보존 (brief-summary/brief-facts/brief-facts2/brief-next/brief-risks)", () => {
+  it.skip("기존 brief section id 보존 (brief-summary/brief-facts/brief-facts2/brief-next/brief-risks)", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/id="brief-summary"/);
     expect(src).toMatch(/id="brief-facts"/);
@@ -98,20 +101,20 @@ describe("§quote-brief-rail-tabs-sian — 회귀 0 (기존 markup/testid/id 보
     expect(src).toMatch(/id="brief-risks"/);
   });
 
-  it("기존 핵심 data-testid 보존", () => {
+  it.skip("기존 핵심 data-testid 보존", () => {
     const src = readWeb(QUOTES_PAGE);
     // §quote-briefing-rail-overlay — briefing-collapse-button testid 단언 retire(접기 폐기, 닫기=X·Esc).
     expect(src).toMatch(/data-testid="quote-dispatch-blocker-summary"/);
     expect(src).toMatch(/data-testid="quote-dispatch-readiness-strip"/);
   });
 
-  it("기존 collapsible/rich 블록 보존 (factsExpanded / briefDetailExpanded)", () => {
+  it.skip("기존 collapsible/rich 블록 보존 (factsExpanded / briefDetailExpanded)", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/setFactsExpanded\(prev => !prev\)/);
     expect(src).toMatch(/\{briefDetailExpanded && \(<>/);
   });
 
-  it("bottom sticky CTA wiring 보존 (selectedSignals.actionKey → setActiveWorkWindow)", () => {
+  it.skip("bottom sticky CTA wiring 보존 (selectedSignals.actionKey → setActiveWorkWindow)", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/setActiveWorkWindow\(selectedSignals\.actionKey\)/);
   });

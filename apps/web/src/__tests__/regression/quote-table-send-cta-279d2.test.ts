@@ -61,8 +61,9 @@ describe("§11.279d-2 — 테이블 뷰 발송 버튼 모달 wiring", () => {
     expect(PAGE).toMatch(/e\.stopPropagation\(\)[\s\S]{0,300}handleQuoteCardSelect/);
   });
 
-  it("openQuoteContextRail 호출은 다른 CTA (새 회신 보기 등) 에서만 (기존 분기 보존)", () => {
-    // handleQuoteCardSelect 안에서 발송 외 CTA 는 openQuoteContextRail 호출
-    expect(PAGE).toMatch(/openQuoteContextRail\(quoteId,\s*"row"\)/);
+  // 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 발송 외 CTA 는 레일 대신 각자의 목적지로 간다(회신 확인=상세 · 단계 CTA=작업창).
+  it("발송 외 CTA 는 handleQuoteCardSelect 가 목적지를 정한다 (레일 경유 0)", () => {
+    expect(PAGE).toMatch(/const workWindow = CTA_WORK_WINDOW\[ctaLabel\];/);
+    expect(PAGE).not.toMatch(/openQuoteContextRail/);
   });
 });

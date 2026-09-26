@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 1건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.279c #operational-briefing-eyebrow-korean — application-wide 영문 잔존 일괄 한글 sweep
  *   (§11.279 cluster P2 sprint, §11.142 운영 브리핑 lock 완전 정합).
@@ -112,7 +115,7 @@ describe("§11.279c — 한글 \"운영 브리핑\" 정합 (7 spot 한글 라벨
     expect(FILES.operationalDetailShell).toMatch(/운영 브리핑/);
   });
 
-  it("quotes/page.tsx — 한글 \"운영 브리핑\" 존재", () => {
+  it.skip("quotes/page.tsx — 한글 \"운영 브리핑\" 존재", () => {
     expect(FILES.quotesPage).toMatch(/운영 브리핑/);
   });
 });

@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 5건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.144 #operational-brief-rail-rfq-detail
  *
@@ -22,23 +25,23 @@ const PATH = resolve(
 describe("operational brief rail (RFQ-Quote detail) — §11.144 regression guard", () => {
   const source = readFileSync(PATH, "utf8");
 
-  it("rail title \"운영 브리핑\" 존재", () => {
+  it.skip("rail title \"운영 브리핑\" 존재", () => {
     expect(source).toMatch(/운영 브리핑/);
   });
 
-  it("Object label \"선택한 견적\" 존재", () => {
+  it.skip("Object label \"선택한 견적\" 존재", () => {
     expect(source).toMatch(/선택한 견적/);
     expect(source).not.toMatch(/SELECTED OBJECT/);
   });
 
-  it("4 preset chips: 상태 요약 / 회신 현황 / 비교 진행 / 발주 전환", () => {
+  it.skip("4 preset chips: 상태 요약 / 회신 현황 / 비교 진행 / 발주 전환", () => {
     expect(source).toMatch(/상태 요약/);
     expect(source).toMatch(/회신 현황/);
     expect(source).toMatch(/비교 진행/);
     expect(source).toMatch(/발주 전환/);
   });
 
-  it("4 canonical section 라벨: 상황 요약 / 핵심 근거 / 리스크 / 다음 조치", () => {
+  it.skip("4 canonical section 라벨: 상황 요약 / 핵심 근거 / 리스크 / 다음 조치", () => {
     expect(source).toMatch(/상황 요약/);
     expect(source).toMatch(/핵심 근거/);
     expect(source).toMatch(/리스크/);
@@ -67,7 +70,7 @@ describe("operational brief rail (RFQ-Quote detail) — §11.144 regression guar
     expect(source).toMatch(/setActiveWorkWindow/);
   });
 
-  it("rail desktop only (hidden lg:flex) — same-canvas 보존", () => {
+  it.skip("rail desktop only (hidden lg:flex) — same-canvas 보존", () => {
     expect(source).toMatch(/hidden lg:flex/);
   });
 });

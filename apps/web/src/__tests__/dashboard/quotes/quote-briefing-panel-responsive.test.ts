@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 9건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.248e #quote-briefing-panel-responsive — 호영님 P0 견적 관리 #5 Operational Briefing 패널 반응형
  *
@@ -28,14 +31,14 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.248e #1 — breakpoint 1024px → 1200px 상향 (Tailwind arbitrary)", () => {
-  it("우측 Briefing 패널 hidden min-[1200px]:flex (이전 hidden lg:flex)", () => {
+  it.skip("우측 Briefing 패널 hidden min-[1200px]:flex (이전 hidden lg:flex)", () => {
     // <div className="hidden min-[1200px]:flex w-[480px] ..."> 패턴
     expect(page).toMatch(
       /hidden\s+min-\[1200px\]:flex[\s\S]{0,200}w-\[480px\]/,
     );
   });
 
-  it("Mobile bottom-sheet min-[1200px]:hidden (이전 lg:hidden)", () => {
+  it.skip("Mobile bottom-sheet min-[1200px]:hidden (이전 lg:hidden)", () => {
     // <div className="min-[1200px]:hidden fixed inset-0 z-40"> 패턴
     expect(page).toMatch(
       /min-\[1200px\]:hidden\s+fixed\s+inset-0\s+z-40/,
@@ -53,7 +56,7 @@ describe("§11.248e #1 — breakpoint 1024px → 1200px 상향 (Tailwind arbitra
 });
 
 describe("§11.248e #2 — 내부 텍스트 word-break (break-keep)", () => {
-  it("selectedQuote.title / selectedSignals.summary 영역 break-keep 적용", () => {
+  it.skip("selectedQuote.title / selectedSignals.summary 영역 break-keep 적용", () => {
     // 패널 안 selectedQuote.title 또는 summary text 에 break-keep 클래스
     expect(page).toMatch(
       /(selectedQuote\.title|selectedSignals\.summary)[\s\S]{0,800}break-keep/,
@@ -62,7 +65,7 @@ describe("§11.248e #2 — 내부 텍스트 word-break (break-keep)", () => {
 });
 
 describe("§11.248e #3 — '전체 상세 열기 / 닫기' 44px 터치 영역", () => {
-  it("Briefing 패널 안 '전체 상세 열기' Button min-h-[44px] 또는 h-11", () => {
+  it.skip("Briefing 패널 안 '전체 상세 열기' Button min-h-[44px] 또는 h-11", () => {
     // line 3103 근처 — Button 안 전체 상세 열기 + min-h-[44px] 또는 h-11
     expect(page).toMatch(
       /(min-h-\[44px\]|h-11)[\s\S]{0,200}전체 상세 열기|전체 상세 열기[\s\S]{0,200}(min-h-\[44px\]|h-11)/,
@@ -71,7 +74,7 @@ describe("§11.248e #3 — '전체 상세 열기 / 닫기' 44px 터치 영역", 
 });
 
 describe("§11.248e #4 — §11.248a 잔재 한글화 (Briefing 패널 안)", () => {
-  it("Briefing 패널 Send to supplier 한글화 — 공급사에 전송", () => {
+  it.skip("Briefing 패널 Send to supplier 한글화 — 공급사에 전송", () => {
     // line 3098 잔재 — 'Send to supplier 잠김' → '공급사에 전송 잠김' 양방향 매칭
     expect(page).toMatch(/공급사에 전송/);
     // Send to supplier 영문이 page.tsx 에 0 (한글화 sweep 완료)
@@ -80,7 +83,7 @@ describe("§11.248e #4 — §11.248a 잔재 한글화 (Briefing 패널 안)", ()
 });
 
 describe("§11.248e #5 — invariant 보존", () => {
-  it("selectedQuote / selectedSignals / selectedOpStatus 시스템 보존", () => {
+  it.skip("selectedQuote / selectedSignals / selectedOpStatus 시스템 보존", () => {
     expect(page).toMatch(/selectedQuote && selectedSignals && selectedOpStatus/);
   });
 
@@ -89,15 +92,15 @@ describe("§11.248e #5 — invariant 보존", () => {
   });
 
   // §11.279c — OPERATIONAL BRIEFING → 운영 브리핑 한글 swap (호영님 P2 sprint)
-  it("운영 브리핑 헤더 보존 (한글, §11.279c)", () => {
+  it.skip("운영 브리핑 헤더 보존 (한글, §11.279c)", () => {
     expect(page).toMatch(/운영 브리핑/);
   });
 
-  it("closeQuoteContextRail mutation 보존", () => {
+  it.skip("closeQuoteContextRail mutation 보존", () => {
     expect(page).toMatch(/closeQuoteContextRail/);
   });
 
-  it("§11.248e trace marker comment", () => {
+  it.skip("§11.248e trace marker comment", () => {
     expect(page).toMatch(/§11\.248e[\s\S]{0,300}(briefing|breakpoint|1200|반응형|word-break|44px)/i);
   });
 });

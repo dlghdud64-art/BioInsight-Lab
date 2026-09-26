@@ -28,7 +28,11 @@ describe("§10 Phase 2 — quotes API responseItems(단가/납기/moq) 와이어
 describe("§10 Phase 2 — page per-RFQ 공급사 비교 집계", () => {
   it("회신 2곳+ 견적 선택(hasVendorData ≥2) — 부족 시 정직 에러", () => {
     expect(PAGE).toContain("hasVendorData");
-    expect(PAGE).toMatch(/\.length >= 2/);
+    /* 재앵커 §quote-brief-rail-removed (2026-09-26) — 구 단언 `/\.length >= 2/` 는 hasVendorData 가 아니라
+       삭제된 레일의 `prices.length >= 2` 에 **대신 매칭**되고 있었다(4원칙 ④). hasVendorData 는
+       §quote-readiness-single-source 이후 상수를 쓴다. 명제(회신 2곳+)는 상수 값까지 함께 고정한다. */
+    expect(PAGE).toMatch(/const hasVendorData = [\s\S]{0,200}\.length >= COMPARE_MIN_RESPONSES/);
+    expect(readFileSync(resolve(__dirname, "../../lib/quotes/readiness.ts"), "utf8")).toMatch(/export const COMPARE_MIN_RESPONSES = 2;/);
     expect(PAGE).toContain("비교할 공급사 회신이 부족합니다");
   });
   it("공급사별 집계: 단가×수량 총액 + 납기/moq max", () => {

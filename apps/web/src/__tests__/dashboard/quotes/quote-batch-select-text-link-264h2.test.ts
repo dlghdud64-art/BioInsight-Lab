@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 2건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.264h-2 #quote-batch-select-text-link — 전체 선택(8건) 칩 → 텍스트 링크 (호영님 spec 견적 #4-2)
  *
@@ -125,14 +128,14 @@ describe("§11.264h-2 #2 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("§11.264i briefSheetOpen + ✦ 운영 브리핑 보존", () => {
+  it.skip("§11.264i briefSheetOpen + ✦ 운영 브리핑 보존", () => {
     expect(page).toMatch(
       /const\s+\[briefSheetOpen,\s+setBriefSheetOpen\]\s*=\s*useState/,
     );
     expect(page).toMatch(/aria-label="운영 브리핑 열기"/);
   });
 
-  it("§11.264j 공급사별 회신 현황 보존", () => {
+  it.skip("§11.264j 공급사별 회신 현황 보존", () => {
     expect(page).toMatch(/공급사별 회신 현황/);
     expect(page).toMatch(/data-testid="quote-vendor-response-status"/);
   });

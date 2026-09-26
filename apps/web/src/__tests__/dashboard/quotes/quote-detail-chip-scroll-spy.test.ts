@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 6건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.217 Phase 5 — RED test
  *
@@ -20,29 +23,29 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const src = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.217 Phase 5 — chip scroll-spy active highlight", () => {
-  it("activeChipId useState 정의", () => {
+  it.skip("activeChipId useState 정의", () => {
     expect(src).toMatch(/const\s+\[activeChipId,\s*setActiveChipId\]/);
   });
 
-  it("IntersectionObserver 사용 (scroll-spy)", () => {
+  it.skip("IntersectionObserver 사용 (scroll-spy)", () => {
     expect(src).toMatch(/new\s+IntersectionObserver/);
   });
 
-  it("4 chip ID 감시 — summary / facts / facts2 / next", () => {
+  it.skip("4 chip ID 감시 — summary / facts / facts2 / next", () => {
     // observer 안에 brief-summary 등 element 또는 array 매칭
     expect(src).toMatch(/brief-summary|"summary"[\s\S]{0,200}"facts"[\s\S]{0,200}"next"/);
   });
 
-  it("chip active class — bg-blue-100 또는 동등 active tone (activeChipId 매칭 시)", () => {
+  it.skip("chip active class — bg-blue-100 또는 동등 active tone (activeChipId 매칭 시)", () => {
     // activeChipId === c.id 분기 + bg-blue-100 or text-blue-700
     expect(src).toMatch(/activeChipId\s*===\s*c\.id[\s\S]{0,200}(bg-blue-100|text-blue-700|font-semibold)/);
   });
 
-  it("chip click 시 setActiveChipId 즉시 업데이트", () => {
+  it.skip("chip click 시 setActiveChipId 즉시 업데이트", () => {
     expect(src).toMatch(/setActiveChipId\s*\(\s*c\.id\s*\)/);
   });
 
-  it("§11.217 Phase 5 cluster trace marker", () => {
+  it.skip("§11.217 Phase 5 cluster trace marker", () => {
     expect(src).toMatch(/§11\.217 Phase 5|chip scroll-spy|scroll-spy/);
   });
 });

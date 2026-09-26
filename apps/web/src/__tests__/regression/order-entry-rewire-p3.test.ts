@@ -30,10 +30,14 @@ function stripComments(src: string): string {
  *       안정적이므로 아래 ③ 에 남겨 둔다. 나머지는 §order-entry-removed 가 역계약으로 든다. */
 
 describe("③ 브리핑은 작업창을 가리지 않는다 (유지)", () => {
-  it("po_conversion 중에는 브리핑 rail·모바일 sheet 가 뜨지 않는다 (2곳 모두)", () => {
+  /* 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 원 단언은 레일·모바일 시트 2곳의 가드를 셌다.
+     두 표면이 삭제돼 가드도 사라졌다. 명제(브리핑이 작업창을 가리지 않는다)는 「브리핑 표면 자체가 없다」 로 더 강하게 성립한다 —
+     정본 단언은 regression/quote-brief-rail-removed.test.ts ②. 여기서는 그 표면이 없다는 사실만 교차 확인한다. */
+  it("po_conversion 중에는 브리핑 rail·모바일 sheet 가 뜨지 않는다 (표면 0)", () => {
     const code = stripComments(read(QUOTES_WB));
-    const guarded = code.match(/activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion"/g) ?? [];
-    expect(guarded.length).toBe(2);
+    expect(code).not.toMatch(/MobileOperationalBriefSheet/);
+    expect(code).not.toMatch(/min-\[1200px\]:fixed/);
+    expect(code).not.toMatch(/activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion" && selectedQuote/);
   });
 });
 

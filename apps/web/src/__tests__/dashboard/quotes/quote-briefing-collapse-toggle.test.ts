@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 6건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.248e-2 #quote-briefing-collapse-toggle — [SUPERSEDED by §quote-briefing-rail-overlay]
  *
@@ -48,7 +51,7 @@ describe("§quote-briefing-rail-overlay — 접기 메커니즘 폐기(RETIRED)"
 });
 
 describe("§quote-briefing-rail-overlay — 레일 항상 overlay", () => {
-  it("레일 ≥1200 overlay: min-[1200px]:fixed 노출", () => {
+  it.skip("레일 ≥1200 overlay: min-[1200px]:fixed 노출", () => {
     expect(page).toMatch(/min-\[1200px\]:fixed/);
   });
 
@@ -60,23 +63,23 @@ describe("§quote-briefing-rail-overlay — 레일 항상 overlay", () => {
 });
 
 describe("§quote-briefing-rail-overlay — 생존 invariant 보존", () => {
-  it("레일 ≥1200 노출 + 480px (hidden min-[1200px]:flex … w-[480px])", () => {
+  it.skip("레일 ≥1200 노출 + 480px (hidden min-[1200px]:flex … w-[480px])", () => {
     expect(page).toMatch(/hidden\s+min-\[1200px\]:flex[\s\S]{0,200}w-\[480px\]/);
   });
 
-  it("mobile bottom-sheet min-[1200px]:hidden fixed inset-0 보존", () => {
+  it.skip("mobile bottom-sheet min-[1200px]:hidden fixed inset-0 보존", () => {
     expect(page).toMatch(/min-\[1200px\]:hidden\s+fixed\s+inset-0/);
   });
 
-  it("운영 브리핑 헤더 보존", () => {
+  it.skip("운영 브리핑 헤더 보존", () => {
     expect(page).toMatch(/운영 브리핑/);
   });
 
-  it("selectedQuote && selectedSignals && selectedOpStatus gating 보존", () => {
+  it.skip("selectedQuote && selectedSignals && selectedOpStatus gating 보존", () => {
     expect(page).toMatch(/selectedQuote && selectedSignals && selectedOpStatus/);
   });
 
-  it("closeQuoteContextRail mutation 보존 (X·Esc 닫기 경로)", () => {
+  it.skip("closeQuoteContextRail mutation 보존 (X·Esc 닫기 경로)", () => {
     expect(page).toMatch(/closeQuoteContextRail/);
   });
 });

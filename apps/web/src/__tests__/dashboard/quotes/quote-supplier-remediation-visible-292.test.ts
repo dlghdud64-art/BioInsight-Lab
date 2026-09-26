@@ -26,7 +26,10 @@ describe("quote supplier remediation visible gate", () => {
     expect(workbenchSource).toContain("manualEmailInputRef.current?.focus()");
   });
 
-  it("classifies any missing supplier-candidate blocker as send-blocking", () => {
+  /* 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 원 명제: 「목록 화면이 공급사 후보 누락을 발송 차단으로 분류한다」.
+     그 분류(getQuoteDispatchEvidence)는 레일 안 발송 준비 띠만 쓰던 것이라 레일과 함께 삭제됐다(소비자 0).
+     발송 차단의 정본은 발송 작업창(vendor-dispatch-workbench)이고 위 두 it 가 그쪽을 본다. */
+  it.skip("classifies any missing supplier-candidate blocker as send-blocking", () => {
     expect(quotesPageSource).toContain('blocker.includes("공급사 후보")');
   });
 
@@ -34,6 +37,7 @@ describe("quote supplier remediation visible gate", () => {
     const labels = `${quotesPageSource}\n${workbenchSource}`.match(/공급사 후보 보강/g) ?? [];
 
     expect(labels).toHaveLength(1);
-    expect(quotesPageSource).toContain("보완 화면 열기");
+    // 승계 §quote-brief-rail-removed — 목록 쪽 「보완 화면 열기」 버튼 2곳은 레일·모바일 시트 안이라 함께 삭제됐다.
+    expect(quotesPageSource).not.toContain("보완 화면 열기");
   });
 });

@@ -196,11 +196,13 @@ describe("§quote-readiness-single-source · 두 화면이 같은 함수를 읽�
     expect(dash.indexOf('const PO_DETAIL_CTA = "구매 진행";')).toBeLessThan(dash.indexOf("compare_not_ready: {"));
   });
 
-  it("대시보드 · 구매 진행은 상세로 간다 (행 CTA · 레일 CTA 2곳 각각)", () => {
+  /* 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 원 제목 「행 CTA · 레일 CTA 2곳 각각」.
+     레일(데스크톱·모바일 시트)이 삭제돼 구매 진행 CTA 는 행·카드 한 경로만 남았다. 명제(구매 진행 → 상세)는 불변.
+     레일 CTA 가 되살아나면 그 자리도 상세로 가야 하므로 「0 이거나 상세」 가 아니라 **0** 을 단언한다(레일 부활 자체가 역계약 위반). */
+  it("대시보드 · 구매 진행은 상세로 간다 (행·카드 CTA · 레일 CTA 0)", () => {
     const dash = code(DASH);
     expect(dash).toMatch(/if \(ctaLabel === PO_DETAIL_CTA\) \{\s*router\.push\(`\/quotes\/\$\{quoteId\}`\);\s*return;\s*\}/);
-    const rail = dash.match(/if \(selectedSignals\.ctaLabel === PO_DETAIL_CTA\) \{ router\.push\(`\/quotes\/\$\{selectedQuote\.id\}`\); return; \}/g) ?? [];
-    expect(rail.length).toBe(2);
+    expect(dash).not.toMatch(/selectedSignals\.ctaLabel === PO_DETAIL_CTA/);
   });
 
   it("상세 · canConvert 는 판정 함수의 발주 축 · 헤더 배지는 같은 요약", () => {

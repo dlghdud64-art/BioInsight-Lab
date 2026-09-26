@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 3건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.161 #operational-brief-hook-call-sites
  *
@@ -48,7 +51,7 @@ describe("§11.161 hook call-sites — 5 surface", () => {
     describe(s.label, () => {
       const source = readFileSync(resolve(__dirname, s.path), "utf8");
 
-      it("useOperationalBriefNarrative import 존재", () => {
+      it.skip("useOperationalBriefNarrative import 존재", () => {
         expect(source).toMatch(/useOperationalBriefNarrative/);
       });
 
@@ -57,12 +60,12 @@ describe("§11.161 hook call-sites — 5 surface", () => {
         expect(source).toMatch(re);
       });
 
-      it("facts 객체 (status / blocker / nextAction) payload 사용", () => {
+      it.skip("facts 객체 (status / blocker / nextAction) payload 사용", () => {
         // hook 호출에 facts: { ... } 패턴 존재
         expect(source).toMatch(/facts:\s*\{/);
       });
 
-      it("narrative 변수 사용 (hook 결과 표시)", () => {
+      it.skip("narrative 변수 사용 (hook 결과 표시)", () => {
         expect(source).toMatch(/narrative/);
       });
 

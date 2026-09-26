@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 10건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * #operational-brief-3-section-compress — Phase B-2 desktop RED
  *
@@ -27,51 +30,51 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("#operational-brief-3-section-compress — state 통합", () => {
-  it("briefDetailExpanded state 정의 (factsExpanded 와 의미 통합)", () => {
+  it.skip("briefDetailExpanded state 정의 (factsExpanded 와 의미 통합)", () => {
     expect(page).toMatch(/briefDetailExpanded/);
   });
 
-  it("setBriefDetailExpanded setter 사용", () => {
+  it.skip("setBriefDetailExpanded setter 사용", () => {
     expect(page).toMatch(/setBriefDetailExpanded/);
   });
 });
 
 describe("#operational-brief-3-section-compress — 5 섹션 collapse", () => {
-  it("brief-facts2 (회신·비교 현황) 가 conditional render 안 wrap", () => {
+  it.skip("brief-facts2 (회신·비교 현황) 가 conditional render 안 wrap", () => {
     // brief-facts2 element 가 briefDetailExpanded conditional 안.
     // 매칭 패턴: briefDetailExpanded 가 brief-facts2 의 직전 conditional 위치.
     expect(page).toMatch(/briefDetailExpanded\s*&&[\s\S]{0,2000}brief-facts2/);
   });
 
-  it("brief-risks (리스크) 가 conditional render 안 wrap", () => {
+  it.skip("brief-risks (리스크) 가 conditional render 안 wrap", () => {
     expect(page).toMatch(/briefDetailExpanded\s*&&[\s\S]{0,12000}brief-risks/);
   });
 
-  it("운영 판단 영역 / 최근 활동 영역 모두 conditional 안", () => {
+  it.skip("운영 판단 영역 / 최근 활동 영역 모두 conditional 안", () => {
     // "운영 판단" 섹션 + "최근 활동" 섹션 모두 briefDetailExpanded conditional 안.
     expect(page).toMatch(/briefDetailExpanded\s*&&[\s\S]{0,12000}운영 판단/);
   });
 });
 
 describe("#operational-brief-3-section-compress — chip click auto-expand", () => {
-  it("chip click handler 가 setBriefDetailExpanded(true) 호출", () => {
+  it.skip("chip click handler 가 setBriefDetailExpanded(true) 호출", () => {
     // chip onClick 안 setBriefDetailExpanded(true) 호출.
     expect(page).toMatch(/setBriefDetailExpanded\s*\(\s*true\s*\)/);
   });
 });
 
 describe("#operational-brief-3-section-compress — visible 3 섹션 보존", () => {
-  it("§ 1 brief-summary 항상 visible (narrative)", () => {
+  it.skip("§ 1 brief-summary 항상 visible (narrative)", () => {
     expect(page).toMatch(/id=["']brief-summary["']/);
   });
 
-  it("§ 2 brief-facts 한 줄 요약 항상 visible (B-1 helper output)", () => {
+  it.skip("§ 2 brief-facts 한 줄 요약 항상 visible (B-1 helper output)", () => {
     // brief-facts 영역 자체는 항상 mount + 한 줄은 항상 visible.
     expect(page).toMatch(/id=["']brief-facts["']/);
     expect(page).toMatch(/buildBriefRationale\s*\(/);
   });
 
-  it("§ 4 brief-next 항상 visible (다음 조치)", () => {
+  it.skip("§ 4 brief-next 항상 visible (다음 조치)", () => {
     expect(page).toMatch(/id=["']brief-next["']/);
   });
 });
@@ -90,7 +93,7 @@ describe("#operational-brief-3-section-compress — drift sentinel", () => {
 });
 
 describe("#operational-brief-3-section-compress — cluster trace", () => {
-  it("cluster trace marker", () => {
+  it.skip("cluster trace marker", () => {
     expect(page).toMatch(/#operational-brief-3-section-compress|3 섹션 압축|3-section/);
   });
 });

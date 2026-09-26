@@ -89,8 +89,9 @@ describe("§11.230c (c) #4 — invariant 보존", () => {
   it("§11.230a 기존 4 key 분기 보존 (ArrowUp/Down/Enter/Escape)", () => {
     expect(page).toMatch(/e\.key === "ArrowDown"[\s\S]{0,400}setFocusedRowIndex/);
     expect(page).toMatch(/e\.key === "ArrowUp"[\s\S]{0,400}setFocusedRowIndex/);
-    expect(page).toMatch(/e\.key === "Enter"[\s\S]{0,200}openQuoteContextRail/);
-    expect(page).toMatch(/e\.key === "Escape"[\s\S]{0,200}closeQuoteContextRail/);
+    // 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 레일 삭제로 open/closeQuoteContextRail 이 selectQuoteRow/clearQuoteSelection 으로 바뀌었다. 명제(Enter=행 선택 · Escape=해제 · 행 클릭=선택)는 불변.
+    expect(page).toMatch(/e\.key === "Enter"[\s\S]{0,200}selectQuoteRow/);
+    expect(page).toMatch(/e\.key === "Escape"[\s\S]{0,400}clearQuoteSelection/);
   });
 
   it("§11.230c (d) sortedQuotes change focus reset useEffect 보존", () => {

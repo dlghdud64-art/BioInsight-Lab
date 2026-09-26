@@ -80,8 +80,8 @@ describe("§order-entry-removed · 만들 수 없는 다음 단계를 약속하�
     expect(list).toContain("선정 완료");
     expect(list).toContain("회신 도착 · 비교 후 선정");
     expect(list).toContain("구매 후 입고 관리에서 입고를 등록하세요");
-    // 탭 이름은 중립적으로 — 결재를 약속하지 않는다
-    expect(list).toMatch(/\{ id: "order",\s+label: "다음 단계" \}/);
+    /* 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 구 단언 「레일 탭 이름 `다음 단계`」 는 레일과 함께 은퇴.
+       탭이 없어졌으므로 결재를 약속하는 라벨이 없다는 역단언만 남긴다. */
     expect(list).not.toMatch(/label: "결재 요청"/);
 
     const detail = code(DETAIL);

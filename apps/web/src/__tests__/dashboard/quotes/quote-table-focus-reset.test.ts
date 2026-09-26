@@ -55,8 +55,9 @@ describe("#quote-table-focus-reset-anchor invariants", () => {
   it("preserves keyboard row navigation branches", () => {
     expect(page).toMatch(/ArrowDown[\s\S]{0,220}setFocusedRowIndex/);
     expect(page).toMatch(/ArrowUp[\s\S]{0,220}setFocusedRowIndex/);
-    expect(page).toMatch(/openQuoteContextRail.*"row"/);
-    expect(page).toMatch(/closeQuoteContextRail.*"esc_key"/);
+    // 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 레일 삭제로 open/closeQuoteContextRail 이 selectQuoteRow/clearQuoteSelection 으로 바뀌었다. 명제(Enter=행 선택 · Escape=해제 · 행 클릭=선택)는 불변.
+    expect(page).toMatch(/selectQuoteRow\(quote\.id\)/);
+    expect(page).toMatch(/clearQuoteSelection\(\);/);
   });
 
   it("preserves sortedQuotes and column preference contracts", () => {
