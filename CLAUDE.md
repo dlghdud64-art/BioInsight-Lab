@@ -194,10 +194,31 @@ UI 에 적용하는 공통 원칙. 신규 화면 / 모바일 UX 작업 시 자�
 ### 9. 색상 — §11.302 신호등 체계
 
 - 위험 (즉시 결품, 0 재고): `bg-red-600 text-white` (배지) / `bg-red-50 border-red-200 text-red-700` (큰 카드)
-- 긴급/주의 (낮은 재고, 만료 임박, 검토 필요): **yellow 신호등** — 배지 `bg-yellow-100 text-yellow-700 border-yellow-200`, 큰 카드 `bg-yellow-50 border-yellow-200 text-yellow-800` (§11.283a/302c/302d, 15+ sentinel 잠금)
+- 🛑 **재고 상태 색 판정표 (2026-09-26 · 호영님 판정 · §inventory-state-tone)** — 구 「낮은 재고 = yellow」 를 이 표로 정정.
+  재고 화면에서 색은 **「지금 손대야 하나」** 를 말한다. 안전재고는 정의상 재주문을 시작하는 선이라,
+  그 아래로 내려갔다는 것은 곧 조치가 필요하다는 뜻이다. 한 번 정하고 끝낸다.
+
+  | 톤 | 뜻 | 사건 |
+  |---|---|---|
+  | red | 조치 필요 | 품절 · 안전재고 미만 · 재주문 필요 · 만료 · 폐기 대상 |
+  | yellow | 주시 | 만료 임박 |
+  | emerald | 정상 | 정상 |
+
+  · 상태 배지에서 **blue 는 뺀다** — 「재발주 필요」 는 red 다(§11.302d-3 이 품절을 blue→red 로 고친 것과 같은 방향).
+  · **품절과 미달은 색이 아니라 라벨 문구로 구분한다** (둘 다 red).
+  · 🔑 **판정은 함수 하나에서만 일어난다**: `src/lib/inventory/state-tone.ts`.
+    KPI · `InventoryTable` · `inventory-context-panel` · 안전재고 게이지가 모두 그 함수만 부른다.
+    색만 맞추면 다음 화면이 또 갈라진다 — 같은 사건이 세 색으로 나온 뿌리가 표면마다 색 맵을 든 것이었다.
+    역계약 `regression/inventory-state-tone-single-source.test.ts`: 표면에 로컬 상태→색 맵이 남으면 RED ·
+    우회해서 원색을 직접 쓰면 RED. §11.302d 는 이 함수에 재앵커됐다(구 판본은 `{false &&` 안이라 집행된 적이 없다).
+  · 배지 토큰 `bg-yellow-100 text-yellow-700 border-yellow-200` · 큰 카드 `bg-yellow-50 border-yellow-200` 는
+    yellow 톤의 클래스로 정본 안에 있다 — 표면에 다시 적지 않는다.
+  · ⚠️ 판정표에 없는 줄: 보관 조건 불일치 · 공급사 미지정 · 위치 미지정(정본의 `needs_review`)은
+    **보이던 대로 yellow** 에 뒀다. red 로 올리면 「조치 필요」 를 넓히는 것이고 중립으로 내리면 경고를
+    약화시키는 것이라 판정 없이 정하지 않았다 — 판정 대기.
 - 정상: `bg-emerald-100 text-emerald-700` (배지)
 - 정보 (실행 가능 CTA): `bg-emerald-600 text-white` (primary), `bg-blue-600 text-white` (분석/검토)
-- ✅ 주의색 = **yellow 신호등**(§11.283a/302c/302d — 만료임박·검토·낮은재고). ❌ Tailwind `amber-*`/`orange-*` 금지 유지(16 amber-removed sentinel — 밝은 amber 눈피로로 yellow/red 통일 sweep). 위험=red, 정상=emerald.
+- ✅ 주의색 = **yellow 신호등**(§11.283a/302c/302d — **만료임박만**. 「낮은재고」 는 2026-09-26 판정표에서 red 로 옮겨졌다 · 위 표 참조). ❌ Tailwind `amber-*`/`orange-*` 금지 유지(16 amber-removed sentinel — 밝은 amber 눈피로로 yellow/red 통일 sweep). 위험=red, 정상=emerald.
 - ⚠️ **#b45821 muted amber 이전(2026-06-30 지향)은 미채택/보류** (호영님 2026-07-10 §P6 재결정): 라이브 yellow 신호등 + 15+ inventory sentinel(kpi-283a·priority-banner-302d4·cardbg-302d2·context-320 등)이 yellow=주의를 잠금 → 전환 시 source ~76 spot + sentinel ~15개 재작성·283/302 신호등 반전 필요(대공사, 별도 신중 배치 대상). 재개 시 근거·범위 재승인 후.
 - 📌 **302c·302d-1 은퇴→승계 (2026-08-06, §inventory-dead-file-cleanup 2차 — 호영님 분류표 승인)**: 구 302c(KPI)·302d-1(badge) 원 판본은 dead file(`inventory-main.tsx`, importer 0) 세대의 구현 내부명/라인 종속 잠금이라 은퇴. **정책(yellow=주의·amber 금지·위험=red·정상=emerald)은 불변** — 정책 잠금은 **283a(KPI 만료임박=yellow·재주문=red·안전재고미달=red·0건 톤다운)** 가 라이브 표면에서 유지한다(vitest GREEN 실측). 위 계열 표기 §11.283a/302c/302d 중 **302c 는 이제 색상이 아니라 dead-file 구세대 부활 차단 + isReorderNeeded canonical 로 재정의**됨(line 92 구체 나입 283a/302d4/302d2/320 은 무손상).
 

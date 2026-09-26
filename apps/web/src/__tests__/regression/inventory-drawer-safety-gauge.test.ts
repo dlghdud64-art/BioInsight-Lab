@@ -51,7 +51,14 @@ describe("§inventory-safety-gauge-drawer — 재고 현황 갭 게이지", () =
 
   it("상태 배너 toneClass — §inventory-brief-sian(2026-07-29 시안 정합) 톤 배경 + 재고 현황 게이지 보존", () => {
     // 구 de-red(bg-white+rose) → 시안 톤 배경(bg-red-50) supersede(호영님 승인).
-    expect(SRC).toMatch(/danger:\s*"border-red-200 bg-red-50 text-red-700"/);
+    /* 🛑 재앵커 §inventory-state-tone (2026-09-26 · 호영님 판정) — **명제 불변, 앵커 이동.**
+     *   옛 판본은 패널 안의 로컬 색 맵(`toneClass` 의 danger/warn/ok 리터럴)을 물었다.
+     *   색 판정이 `lib/inventory/state-tone.ts` 정본으로 모였으므로 앵커를 **정본 호출 + 정본 팔레트**로 옮긴다.
+     *   배너가 상태별 3색 톤 배경을 갖는다는 명제는 그대로다(위험 red · 만료 임박 yellow · 정상 emerald).
+     *   팔레트 값 자체는 regression/inventory-state-tone-single-source.test.ts 가 든다. */
+    expect(SRC).toMatch(/const cardTone = inventoryToneClass\(cardState\);/);
+    expect(SRC).toMatch(/const toneClass = `\$\{cardTone\.card\} \$\{cardTone\.text\}`;/);
+    expect(SRC).toMatch(/cardState: InventoryToneState = isOutOfStock/);
     expect(SRC).toMatch(/data-testid="inventory-context-status-banner"/);
     // 재고 현황 섹션의 안전재고 게이지는 별도 보존(카드 게이지와 공존).
     expect(SRC).toMatch(/inventory-context-status-banner[\s\S]*?inventory-context-safety-gauge/);

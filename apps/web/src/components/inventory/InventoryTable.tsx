@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
+import { inventoryStatusLabelToState, inventoryToneClass, inventoryQuantityState } from "@/lib/inventory/state-tone";
 import {
   Tooltip,
   TooltipContent,
@@ -172,77 +173,42 @@ function getRiskScore(group: ProductGroup): number {
 }
 
 /* ── 상태 배지 렌더링 ── */
+/* 🛑 §inventory-state-tone (2026-09-26 · 호영님 판정) — 색 판정을 이 파일에서 **빼냈다.**
+ *   옛 판본은 여기서 직접 색을 골랐다: 부족 = yellow · 재발주 필요 = blue · 주의 = yellow ·
+ *   만료 임박 = yellow-600. 같은 사건을 KPI 는 red 로, 이 배지는 yellow/blue 로 말하고 있었다.
+ *   이제 라벨 → 상태 → 톤은 `lib/inventory/state-tone.ts` 한 곳에서만 정해진다.
+ *   품절과 미달은 색이 아니라 **라벨 문구**로 구분한다(둘 다 red).
+ *   문구·아이콘(만료의 ping 애니메이션)은 표면 소유로 남는다 — 색만 정본을 따른다. */
 
 function StatusBadge({ status }: { status: string }) {
-  const isShort = status === "부족" || status === "out_of_stock" || status === "low";
-  const isImpending = status.startsWith("소진 임박") || status === "재주문 권장";
-  const isWarning = status === "주의" || status === "warning";
-  const isExpiry = status === "임박";
-  const isDiscarded = status === "폐기";
+  const state = inventoryStatusLabelToState(status);
+  const tone = inventoryToneClass(state);
+  const label =
+    state === "expired" ? "만료"
+    : state === "disposal_target" ? "폐기"
+    : state === "below_safety" ? "부족"
+    : state === "out_of_stock" ? "품절"
+    : state === "expiring_soon" ? (status === "주의" || status === "warning" ? "주의" : "임박")
+    : state === "reorder_needed" ? status
+    : state === "normal" ? "정상"
+    : status;
 
-  // 만료 (expired lot with qty > 0) — 최우선 blocker
-  const isExpiredLot = status === "만료" || status === "expired";
-  if (isExpiredLot) {
-    return (
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="relative flex h-2 w-2 shrink-0">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600" />
-        </span>
-        <span className="text-[11px] font-bold text-red-600 whitespace-nowrap">만료</span>
-      </span>
-    );
-  }
-  // 폐기 완료 — red (닫힌 상태)
-  if (isDiscarded) {
-    return (
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
-        <span className="text-[11px] font-medium text-red-600 whitespace-nowrap">폐기</span>
-      </span>
-    );
-  }
-  // 부족 — amber (운영 상태)
-  if (isShort) {
-    return (
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="h-2 w-2 rounded-full bg-yellow-500 shrink-0" />
-        <span className="text-[11px] font-medium text-yellow-600 whitespace-nowrap">부족</span>
-      </span>
-    );
-  }
-  // 재발주 필요 — blue (액션 유도)
-  if (isImpending) {
-    return (
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
-        <span className="text-[11px] font-medium text-blue-600 whitespace-nowrap">{status}</span>
-      </span>
-    );
-  }
-  // 주의 — amber
-  if (isWarning) {
-    return (
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="h-2 w-2 rounded-full bg-yellow-500 shrink-0" />
-        <span className="text-[11px] font-medium text-yellow-600 whitespace-nowrap">주의</span>
-      </span>
-    );
-  }
-  // 만료 임박 — deep amber
-  if (isExpiry) {
-    return (
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="h-2 w-2 rounded-full bg-yellow-600 shrink-0" />
-        <span className="text-[11px] font-medium text-yellow-700 whitespace-nowrap">임박</span>
-      </span>
-    );
-  }
-  // 정상 — green
+  /* 만료 lot 은 최우선 blocker라 도트에 ping 을 얹는다(색은 정본, 강조는 표면). */
+  const ping = state === "expired";
+
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-      <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-      <span className="text-[11px] font-medium text-emerald-600 whitespace-nowrap">정상</span>
+      {ping ? (
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${tone.dot} opacity-60`} />
+          <span className={`relative inline-flex h-2 w-2 rounded-full ${tone.dot}`} />
+        </span>
+      ) : (
+        <span className={`h-2 w-2 rounded-full shrink-0 ${tone.dot}`} />
+      )}
+      <span className={`text-[11px] whitespace-nowrap ${state === "expired" ? "font-bold" : "font-medium"} ${tone.text}`}>
+        {label}
+      </span>
     </span>
   );
 }
@@ -360,7 +326,7 @@ export function InventoryTable({
               return (
                 <div
                   key={group.productId}
-                  className={`${isRisky ? "bg-yellow-500/5" : ""}`}
+                  className={inventoryToneClass(inventoryStatusLabelToState(displayStatus)).rowTint}
                 >
                   {/* ── 품목 카드 ── */}
                   <div className="px-3.5 py-3">
@@ -666,7 +632,7 @@ export function InventoryTable({
                         ${isExpanded
                           ? "bg-blue-50/30 hover:bg-blue-50/50"
                           : isRisky
-                          ? "bg-yellow-50/30 hover:bg-yellow-50/50"
+                          ? inventoryToneClass(inventoryStatusLabelToState(displayStatus)).rowTint
                           : "bg-white hover:bg-slate-50/80"
                         }
                       `}
@@ -739,7 +705,7 @@ export function InventoryTable({
                             {(() => {
                               const safety = group.safetyStock ?? 0;
                               const pct = safety > 0 ? Math.min(100, Math.round((group.totalQuantity / safety) * 100)) : 0;
-                              const barColor = group.totalQuantity === 0 ? "bg-red-500" : group.totalQuantity <= safety ? "bg-yellow-500" : "bg-emerald-500";
+                              const barColor = inventoryToneClass(inventoryQuantityState(group.totalQuantity, group.safetyStock)).bar;
                               return (
                                 <div className="mt-1 w-full h-2 rounded-full bg-slate-100 overflow-hidden" role="img" aria-label={`안전재고 대비 ${pct}%`}>
                                   <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />

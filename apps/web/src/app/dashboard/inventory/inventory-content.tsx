@@ -2,6 +2,7 @@
 
 // §11.283c #inventory-content-traffic-light — amber/orange 토큰 → yellow/red 신호등 sweep (호영님 P0 spec, §11.283 cluster C, 30+ spot byte-level swap).
 import { isSuspectReceivedQuantity, countSuspectInventories } from "@/lib/inventory/suspect-received-quantity";
+import { inventoryToneClass, INVENTORY_TONE_CLASS } from "@/lib/inventory/state-tone";
 import { ToastAction } from "@/components/ui/toast";
 import { buildInventoryPatchBody } from "@/lib/inventory/inventory-form-payload";
 // §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 인라인 h1 교체, 모달 액션 클러스터는 보존.
@@ -1637,7 +1638,8 @@ function InventoryPageContent() {
               { label: "만료 임박", value: displayInventories.filter((i) => { if (!i.expiryDate) return false; const dd = Math.ceil((new Date(i.expiryDate).getTime() - Date.now()) / 86400000); return dd > 0 && dd <= 30; }).length, unit: "", alert: false },
             ].map((k) => (
               /* §reorder-quote-handoff 1a — KPI 3장 흰 카드 통일 (레드 보더 이중 강조 제거,
-                 호영님 지시문 2026-08-05). 미달 신호 = 숫자 #b91c1c + 6px 점만.
+                 호영님 지시문 2026-08-05). 미달 신호 = 숫자 + 6px 점만.
+                 §inventory-state-tone(2026-09-26) — 색은 lib/inventory/state-tone.ts 정본에서 온다(구 #b91c1c ≡ red-700).
                  강조는 아래 재발주 권장 배너 하나로 일원화.
                  ⚠️ 이 파일이 라이브 표면 (page.tsx → inventory-content). 같은 계약이
                  inventory-main.tsx(dead, importer 0)에도 있었으나 그 파일은
@@ -1646,10 +1648,10 @@ function InventoryPageContent() {
                 {kpiPending ? (
                   <p className="text-sm font-semibold text-slate-400" aria-busy={!inventoriesError}>{inventoriesError ? "불러오지 못함" : "불러오는 중"}</p>
                 ) : (
-                <p className={`text-xl font-extrabold ${k.alert && k.value > 0 ? "text-[#b91c1c]" : "text-slate-900"}`}>{k.value}<span className="text-slate-400 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
+                <p className={`text-xl font-extrabold ${k.alert && k.value > 0 ? inventoryToneClass("below_safety").text : "text-slate-900"}`}>{k.value}<span className="text-slate-400 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
                 )}
                 <p className="text-[11px] mt-0.5 text-slate-500 flex items-center gap-1.5">
-                  <span className={`h-1.5 w-1.5 rounded-full ${k.alert && k.value > 0 ? "bg-[#b91c1c]" : "bg-slate-300"}`} aria-hidden />
+                  <span className={`h-1.5 w-1.5 rounded-full ${k.alert && k.value > 0 ? inventoryToneClass("below_safety").dot : INVENTORY_TONE_CLASS.neutral.dot}`} aria-hidden />
                   {k.label}
                 </p>
               </div>
@@ -1861,7 +1863,7 @@ function InventoryPageContent() {
                 }`}
               >
                 <span className="flex items-center justify-between gap-1">
-                  <span className={`block text-[10px] font-semibold ${headerKpiExpiringSoon > 0 ? "text-yellow-700" : "text-slate-500"}`}>만료 임박</span>
+                  <span className={`block text-[10px] font-semibold ${headerKpiExpiringSoon > 0 ? inventoryToneClass("expiring_soon").text : INVENTORY_TONE_CLASS.neutral.text}`}>만료 임박</span>
                   {statusFilter === "expiring" && (
                     <span className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600">필터 중 ✕</span>
                   )}
@@ -1869,7 +1871,7 @@ function InventoryPageContent() {
                 {kpiPending ? (
                   <KpiPendingValue error={inventoriesError} />
                 ) : headerKpiExpiringSoon > 0 ? (
-                  <span className="mt-0.5 block text-lg font-extrabold leading-none md:text-xl text-yellow-700">
+                  <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${inventoryToneClass("expiring_soon").text}`}>
                     {headerKpiExpiringSoon}
                     <span className="ml-0.5 text-[10px] font-bold">건</span>
                   </span>
@@ -1894,17 +1896,17 @@ function InventoryPageContent() {
                 }`}
               >
                 <span className="flex items-center justify-between gap-1">
-                  <span className={`block text-[10px] font-semibold ${headerKpiLowStock > 0 ? "text-rose-700" : "text-slate-500"}`}>안전재고 미달</span>
+                  <span className={`block text-[10px] font-semibold ${headerKpiLowStock > 0 ? inventoryToneClass("below_safety").text : INVENTORY_TONE_CLASS.neutral.text}`}>안전재고 미달</span>
                   {statusFilter === "low" ? (
                     <span className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600">필터 중 ✕</span>
                   ) : headerKpiLowStock > 0 ? (
-                    <span className="hidden items-center text-[10px] font-bold text-rose-600 group-hover:flex">자세히 →</span>
+                    <span className={`hidden items-center text-[10px] font-bold group-hover:flex ${inventoryToneClass("below_safety").text}`}>자세히 →</span>
                   ) : null}
                 </span>
                 {kpiPending ? (
                   <KpiPendingValue error={inventoriesError} />
                 ) : (
-                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiLowStock > 0 ? "text-rose-700" : "text-gray-400"}`}>
+                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiLowStock > 0 ? inventoryToneClass("below_safety").text : "text-gray-400"}`}>
                   {headerKpiLowStock}
                   <span className="ml-0.5 text-[10px] font-bold">건</span>
                 </span>
@@ -3619,7 +3621,7 @@ function InventoryPageContent() {
               // §stock-risk-consolidation P2 — 재발주 차단 사유(RFQ 진행·예산 초과) 실데이터 노출.
               const blk = reorderBlockReasonsFor(contextPanelItem.id);
               if (blk.length > 0) return <div className="space-y-0.5">{blk.map((b, i) => <p key={i} className="text-xs font-semibold text-[#b45821]">차단 · {b}</p>)}</div>;
-              return contextPanelItem.expiryDate && new Date(contextPanelItem.expiryDate).getTime() < Date.now() ? <p className="text-xs text-rose-700">유효기간 만료</p> : <p className="text-xs text-slate-500">차단 없음</p>;
+              return contextPanelItem.expiryDate && new Date(contextPanelItem.expiryDate).getTime() < Date.now() ? <p className={`text-xs ${inventoryToneClass("expired").text}`}>유효기간 만료</p> : <p className="text-xs text-slate-500">차단 없음</p>;
             })()}
             next={<p className="text-xs text-slate-700">재발주 또는 정보 수정</p>}
             primaryCta={(() => {

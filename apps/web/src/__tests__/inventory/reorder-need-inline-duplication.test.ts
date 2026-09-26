@@ -139,6 +139,11 @@ describe("§reorder-need-inline-duplication · 정본과 같은 명제를 인라
       // 🛑 경계가 정본과 다르다(정본 <=, 여기 <) — 판정 대기
       "lib/inventory/flow-insight-engine.ts A'< 가드:-": 2,
       "lib/inventory/flow-insight-engine.ts B<= 가드:null비교": 1,
+      // 추가됨: §inventory-state-tone(2026-09-26) — 재고 상태 색 정본. `qty <= safetyStock` 형태를 갖는다.
+      //   🛑 정본(reorder-need.ts)과 **다른 명제**다: 이쪽은 「미만이라고 **라벨**한다」 이고
+      //      정본은 「재주문이 **필요**하다」 다(리드타임 축을 함께 본다). 형태가 같아 이 등록부에 오른다.
+      //      통합 여부는 별건 판정 — 지금 합치면 게이지가 리드타임만으로도 red 가 되어 뜻이 바뀐다.
+      "lib/inventory/state-tone.ts B<= 가드:null비교": 1,
       "lib/operations/state-definitions.ts B<= 가드:null비교": 1,
     });
   });

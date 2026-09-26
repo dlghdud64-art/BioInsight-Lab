@@ -25,9 +25,14 @@ describe("§inventory-redesign P2a — 품목 브리핑 rename + de-red 배너",
 
   it("상태 배너 톤 배경 — §inventory-brief-sian(호영님 승인 2026-07-29, 시안 정합)로 de-red supersede", () => {
     // 구 de-red(흰 카드) → 시안 톤 배경 채움 복귀. §9 amber 금지 유지(주의=yellow).
-    expect(SRC).toMatch(/danger:\s*"border-red-200 bg-red-50 text-red-700"/);
-    expect(SRC).toMatch(/ok:\s*"border-emerald-200 bg-emerald-50 text-emerald-700"/);
-    expect(SRC).toMatch(/warn:\s*"border-yellow-200 bg-yellow-50 text-yellow-700"/);
+    /* 🛑 재앵커 §inventory-state-tone (2026-09-26 · 호영님 판정) — **명제 불변, 앵커 이동.**
+     *   옛 판본은 패널 안의 로컬 색 맵(`toneClass` 의 danger/warn/ok 리터럴)을 물었다.
+     *   색 판정이 `lib/inventory/state-tone.ts` 정본으로 모였으므로 앵커를 **정본 호출 + 정본 팔레트**로 옮긴다.
+     *   배너가 상태별 3색 톤 배경을 갖는다는 명제는 그대로다(위험 red · 만료 임박 yellow · 정상 emerald).
+     *   팔레트 값 자체는 regression/inventory-state-tone-single-source.test.ts 가 든다. */
+    expect(SRC).toMatch(/const cardTone = inventoryToneClass\(cardState\);/);
+    expect(SRC).toMatch(/const toneClass = `\$\{cardTone\.card\} \$\{cardTone\.text\}`;/);
+    expect(SRC).toMatch(/cardState: InventoryToneState = isOutOfStock/);
   });
 });
 

@@ -37,9 +37,14 @@ describe("§11.320 — 상태 배너 통합 (Phase 2 GREEN target)", () => {
     const src = read(PATH);
     // §inventory-brief-sian(호영님 승인 2026-07-29, 시안 정합) — de-red(7/9 흰 카드) supersede,
     //   톤 배경 채움 복귀. §9 amber 금지 유지.
-    expect(src).toMatch(/danger:\s*"[^"]*bg-red-50[^"]*text-red-700/);
-    expect(src).toMatch(/ok:\s*"[^"]*text-emerald-700/);
-    expect(src).toMatch(/warn:\s*"[^"]*text-yellow-700/);
+    /* 🛑 재앵커 §inventory-state-tone (2026-09-26 · 호영님 판정) — **명제 불변, 앵커 이동.**
+     *   옛 판본은 패널 안의 로컬 색 맵(`toneClass` 의 danger/warn/ok 리터럴)을 물었다.
+     *   색 판정이 `lib/inventory/state-tone.ts` 정본으로 모였으므로 앵커를 **정본 호출 + 정본 팔레트**로 옮긴다.
+     *   배너가 상태별 3색 톤 배경을 갖는다는 명제는 그대로다(위험 red · 만료 임박 yellow · 정상 emerald).
+     *   팔레트 값 자체는 regression/inventory-state-tone-single-source.test.ts 가 든다. */
+    expect(src).toMatch(/const cardTone = inventoryToneClass\(cardState\);/);
+    expect(src).toMatch(/const toneClass = `\$\{cardTone\.card\} \$\{cardTone\.text\}`;/);
+    expect(src).toMatch(/cardState: InventoryToneState = isOutOfStock/);
   });
 
   it("탭 4 (상태 요약/보유량/리스크/재발주) 제거", () => {

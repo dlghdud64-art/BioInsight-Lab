@@ -37,7 +37,9 @@ describe("§11.328 — 재고 관리 모바일 시안(§03) 정합", () => {
     // 도트 자체·흰 배경·구 채운 카드 금지는 원 계약 그대로 보존.
     const src = read(CONTENT);
     expect(src).toMatch(/flex-1 rounded-\[13px\][^`]*bg-white border-slate-200 shadow-sm/);
-    expect(src).toMatch(/h-1\.5 w-1\.5 rounded-full \$\{k\.alert && k\.value > 0 \? "bg-\[#b91c1c\]" : "bg-slate-300"\}/);
+    /* 🛑 재앵커 §inventory-state-tone (2026-09-26) — 16진 리터럴 핀을 정본 호출로 옮겼다.
+     *   명제(흰 배경 + 6px 상태 도트 · 미달만 red · 0건 중립)는 불변이고 #b91c1c ≡ red-700 이다. */
+    expect(src).toMatch(/h-1\.5 w-1\.5 rounded-full \$\{k\.alert && k\.value > 0 \? inventoryToneClass\("below_safety"\)\.dot : INVENTORY_TONE_CLASS\.neutral\.dot\}/);
     expect(src).not.toMatch(/bg-rose-50 border-rose-200" : "bg-white border-slate-200 shadow-sm/); // 구 채운 카드 잔재 0
   });
 

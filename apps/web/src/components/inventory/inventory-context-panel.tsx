@@ -38,6 +38,7 @@ import { ko } from "date-fns/locale";
 // §11.320 Phase 2 — 상태 배너 onClick → 운영 브리핑 풀 패널 진입
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
+import { inventoryToneClass, inventoryQuantityState, type InventoryToneState } from "@/lib/inventory/state-tone";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { formatRelativeKr } from "@/components/operational-brief/relative-time";
 // §detail-page P3 — COA(시험성적서) lot-scoped surface (inventory record 귀속).
@@ -83,6 +84,8 @@ export interface ContextLotInfo {
 export interface ContextRisk {
   type: "expiring" | "reorder" | "below_safety" | "location_issue" | "label_issue" | "storage_issue";
   severity: "critical" | "high" | "medium" | "low";
+  /* §inventory-state-tone — 색은 severity 가 아니라 **상태**에서 나온다. severity 는 정렬용으로만 남는다. */
+  state: InventoryToneState;
   label: string;
   detail: string;
 }
@@ -156,6 +159,7 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
       risks.push({
         type: "expiring",
         severity: "critical",
+        state: "expired",
         label: "유효기간 만료",
         detail: `만료일 ${format(new Date(item.expiryDate), "yyyy.MM.dd")} (${Math.abs(days)}일 경과)`,
       });
@@ -163,6 +167,7 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
       risks.push({
         type: "expiring",
         severity: "critical",
+        state: "expiring_soon",
         label: "만료 임박",
         detail: `D-${days} (${format(new Date(item.expiryDate), "yyyy.MM.dd")})`,
       });
@@ -170,6 +175,7 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
       risks.push({
         type: "expiring",
         severity: "high",
+        state: "expiring_soon",
         label: "만료 주의",
         detail: `D-${days} (${format(new Date(item.expiryDate), "yyyy.MM.dd")})`,
       });
@@ -180,6 +186,7 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
     risks.push({
       type: "below_safety",
       severity: item.currentQuantity === 0 ? "critical" : "high",
+      state: inventoryQuantityState(item.currentQuantity, item.safetyStock),
       label: "안전재고 미만",
       detail: `현재 ${item.currentQuantity} ${item.unit} / 기준 ${item.safetyStock} ${item.unit}`,
     });
@@ -201,6 +208,7 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
     risks.push({
       type: "reorder",
       severity: "medium",
+      state: "needs_review",
       label: "공급사 미지정",
       detail: "재발주 전 공급사 선택이 필요합니다 (재발주 관문)",
     });
@@ -210,6 +218,7 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
     risks.push({
       type: "location_issue",
       severity: "medium",
+      state: "needs_review",
       label: "위치 미지정",
       detail: "보관 위치가 등록되지 않음",
     });
@@ -219,6 +228,7 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
     risks.push({
       type: "storage_issue",
       severity: "high",
+      state: "needs_review",
       label: "보관 조건 불일치",
       detail: "냉동 보관 필요 품목, 위치 확인 필요",
     });
@@ -287,29 +297,20 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
   return actions;
 }
 
-/* ── Severity badge styling ── */
-// §11.320 Phase 4 — 위험/주의 톤을 §11.302 신호등 정합으로 swap (border 강조 제거, bg-{tone}-50 + text-{tone}-700).
-const SEVERITY_STYLE: Record<string, string> = {
-  critical: "bg-red-100 text-red-700",
-  high: "bg-yellow-100 text-yellow-800",
-  // §inventory-brief-sian(2026-07-29) — 시안 '보통' 배지 = 연노랑(#fef3c7 계열). 구 blue 폐기.
-  medium: "bg-yellow-100 text-yellow-700",
-  low: "bg-slate-50 text-slate-600",
-};
+/* ── 🛑 §inventory-state-tone (2026-09-26 · 호영님 판정) — 로컬 색 맵 3종 제거 ──
+ *   옛 판본은 SEVERITY_STYLE · RISK_CARD_STYLE · LOT_STATUS_STYLE 를 이 파일에 들고 있었고,
+ *   **severity(critical/high/medium/low) 축으로 색을 골랐다.** 그래서 「안전재고 미만」 과
+ *   「재주문 필요」 가 severity high → yellow 로 나왔다 — §11.283a 가 red 로 잠근 같은 사건이다.
+ *   이제 색은 `risk.state` → `inventoryToneClass()` 한 곳에서만 나온다. severity 는 정렬용이다.
+ *   lot 상태도 같은 정본을 쓴다(active=정상 · expiring=만료 임박 · expired=만료 · depleted=중립).
+ *   역계약: __tests__/regression/inventory-state-tone-single-source.test.ts */
 
-// §inventory-brief-sian(2026-07-29) — 리스크 카드 배경 시안 정합(옐로/레드 틴트, low만 무채색).
-const RISK_CARD_STYLE: Record<string, string> = {
-  critical: "border-red-200 bg-red-50",
-  high: "border-yellow-200 bg-yellow-50",
-  medium: "border-yellow-200 bg-yellow-50",
-  low: "border-bd bg-pn",
-};
-
-const LOT_STATUS_STYLE: Record<string, string> = {
-  active: "bg-emerald-500/15 text-emerald-400",
-  expiring: "bg-yellow-500/15 text-yellow-700",
-  expired: "bg-red-500/15 text-red-400",
-  depleted: "bg-pg0/15 text-slate-400",
+/** lot.status(레거시 영문 축) → 상태 축. 정본 톤 함수에 넣기 위한 번역만 한다. */
+const LOT_STATE: Record<string, InventoryToneState> = {
+  active: "normal",
+  expiring: "expiring_soon",
+  expired: "expired",
+  depleted: "unknown",
 };
 
 const LOT_STATUS_LABEL: Record<string, string> = {
@@ -562,23 +563,24 @@ export function InventoryContextPanel({
         const isExpiringSoon = expiryDays !== null && expiryDays >= 0 && expiryDays <= 30;
         const isDanger = isOutOfStock || isBelowSafety;
         const isWarn = !isDanger && isExpiringSoon;
+        /* 🛑 §inventory-state-tone (2026-09-26 · 호영님 판정) — 이 카드도 정본 함수를 쓴다.
+         *   옛 판본은 danger/warn/ok 라는 로컬 축과 로컬 색 맵 2개를 들고 있었다. */
+        const cardState: InventoryToneState = isOutOfStock
+          ? "out_of_stock"
+          : isBelowSafety
+            ? "below_safety"
+            : isExpiringSoon
+              ? "expiring_soon"
+              : "normal";
+        const cardTone = inventoryToneClass(cardState);
         const tone: "danger" | "warn" | "ok" = isDanger ? "danger" : isWarn ? "warn" : "ok";
         // §inventory-brief-sian(호영님 승인 2026-07-29, "시안대로") — 구 de-red(7/9) supersede:
         //   시안 정합 톤 배경 채움 복귀(레드 red-50 계열). §9 amber 금지 유지 — 주의=yellow 토큰.
         //   시안 구조: 카드 외곽 톤 border + 헤더 밴드만 톤 배경, 게이지·CTA 영역은 흰색(#fff).
-        const toneClass: Record<typeof tone, string> = {
-          danger: "border-red-200 bg-red-50 text-red-700",
-          warn: "border-yellow-200 bg-yellow-50 text-yellow-700",
-          ok: "border-emerald-200 bg-emerald-50 text-emerald-700",
-        };
-        const toneBorder: Record<typeof tone, string> = {
-          danger: "border-red-200",
-          warn: "border-yellow-200",
-          ok: "border-emerald-200",
-        };
+        const toneClass = `${cardTone.card} ${cardTone.text}`;
+        const toneBorder = cardTone.border;
         // 시안 아이콘 박스: accent 사각 박스 + 흰 !/✓ (이모지 제거).
-        const toneAccent =
-          tone === "danger" ? "bg-red-500" : tone === "warn" ? "bg-yellow-500" : "bg-emerald-500";
+        const toneAccent = cardTone.dot;
         const toneMark = tone === "ok" ? "✓" : "!";
         const toneLabel =
           tone === "danger"
@@ -644,10 +646,10 @@ export function InventoryContextPanel({
                   operationalBriefPopup?.open?.();
                 }
               }}
-              className={`rounded-xl border ${toneBorder[tone]} overflow-hidden shadow-sm cursor-pointer transition-colors hover:brightness-[0.98]`}
+              className={`rounded-xl border ${toneBorder} overflow-hidden shadow-sm cursor-pointer transition-colors hover:brightness-[0.98]`}
             >
               {/* 헤더 밴드 — 톤 배경(시안 #fef2f2 계열). */}
-              <div className={`flex items-start gap-2.5 px-3 py-2.5 ${toneClass[tone]}`}>
+              <div className={`flex items-start gap-2.5 px-3 py-2.5 ${toneClass}`}>
                 <span
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${toneAccent} text-white text-sm font-extrabold`}
                   aria-hidden="true"
@@ -953,7 +955,7 @@ export function InventoryContextPanel({
                   <span className="font-mono text-xs font-semibold text-slate-600">
                     {lot.lotNumber}
                   </span>
-                  <Badge className={`text-[10px] px-1.5 py-0 border-none ${LOT_STATUS_STYLE[lot.status]}`}>
+                  <Badge className={`text-[10px] px-1.5 py-0 border-none ${inventoryToneClass(LOT_STATE[lot.status] ?? "unknown").badge}`}>
                     {LOT_STATUS_LABEL[lot.status]}
                   </Badge>
                 </div>
@@ -1015,11 +1017,11 @@ export function InventoryContextPanel({
               {visibleRisks.map((risk, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-start gap-2.5 rounded-lg border px-3 py-2.5 ${RISK_CARD_STYLE[risk.severity]}`}
+                  className={`flex items-start gap-2.5 rounded-lg border px-3 py-2.5 ${inventoryToneClass(risk.state).card}`}
                 >
                   <Badge
                     variant="outline"
-                    className={`text-[10px] px-1.5 py-0 shrink-0 mt-0.5 ${SEVERITY_STYLE[risk.severity]}`}
+                    className={`text-[10px] px-1.5 py-0 shrink-0 mt-0.5 ${inventoryToneClass(risk.state).badge}`}
                   >
                     {risk.severity === "critical" ? "긴급" : risk.severity === "high" ? "높음" : risk.severity === "medium" ? "보통" : "낮음"}
                   </Badge>

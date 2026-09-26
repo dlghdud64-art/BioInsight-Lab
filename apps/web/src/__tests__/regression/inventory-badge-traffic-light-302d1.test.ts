@@ -17,6 +17,11 @@
  *   → 카드 배경·배지 축의 yellow=주의 잠금은 **지금 없다.** 정책(yellow=주의)은 §11.283a(KPI 축)가
  *     계속 잠그고 있다. 재앵커는 §③ 미개봉 ×0.3 트랙에서 `inventory-context-panel.tsx` ·
  *     `InventoryTable.tsx` 의 yellow 톤을 실제로 재서 수행한다(토큰 존재가 아니라 명제 일치를 먼저 확인).
+ *   ✅ 재앵커 완료 (2026-09-26 · §inventory-state-tone): 재보니 맞지 않았다 — 안전재고 미만·재발주 필요가
+ *      표·패널에서 yellow/blue 였다. 호영님이 「283a 를 정본으로 red 통일」 을 판정했고, 색 판정이
+ *      `lib/inventory/state-tone.ts` 한 곳으로 모였다. 명제가 돌아간 자리는
+ *      `regression/inventory-state-tone-single-source.test.ts` 이고, 앵커는 구현 내부명·라인이 아니라
+ *      **함수의 입출력**이다. 아래 .skip 은 이관 기록으로 남긴다.
  */
 
 import { describe, it, expect } from "vitest";

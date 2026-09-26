@@ -19,6 +19,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { inventoryStateTone, INVENTORY_TONE_CLASS } from "@/lib/inventory/state-tone";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -56,10 +57,20 @@ describe("§11.283a 신호등 색상 intent 보존 (navy 헤더 / 요약 칩 재
   // §11.283a(05-23) 의도(0건 중립 톤다운·전 카드 동일 톤 회피)는 보존, 잠금 지점만
   //   보더→숫자·도트로 이동 — 1a(08-05 호영님 지시문) 재앵커, §11.328 navy strip
   //   재앵커와 동형 선례. 색조 rose-700/rose-500 → #b91c1c (위험=red 의미 불변).
-  it("안전재고 미달 = 위험 red 톤 보존 (흰 KPI 카드 alert)", () => {
+  /* 🛑 재앵커 §inventory-state-tone (2026-09-26 · 호영님 판정) — **결정은 불변, 앵커만 옮긴다.**
+   *   옛 판본은 `text-[#b91c1c]` / `bg-[#b91c1c]` 라는 **16진 리터럴**을 물었다. 바이트 층위 핀이라
+   *   색을 정본 함수로 모으는 정당한 리팩터링에 깨진다(§sentinel 은 명제를 단언한다).
+   *   `#b91c1c` 는 red-700 과 같은 색이므로 「안전재고 미달 = 위험 red」 라는 명제는 그대로다.
+   *   이제 그 명제는 정본(lib/inventory/state-tone.ts)의 below_safety → red 로 잠기고,
+   *   이 자리는 **KPI 가 그 정본을 부르는지**만 본다. 0건 중립 톤다운은 아래 describe 가 계속 든다. */
+  it("안전재고 미달 = 위험 red 톤 보존 (정본 함수 경유)", () => {
     expect(CONTENT).toMatch(/안전재고 미달/);
-    expect(CONTENT).toMatch(/k\.alert && k\.value > 0 \? "text-\[#b91c1c\]"/);
-    expect(CONTENT).toMatch(/k\.alert && k\.value > 0 \? "bg-\[#b91c1c\]"/); // 상태 도트
+    expect(CONTENT).toMatch(/k\.alert && k\.value > 0 \? inventoryToneClass\("below_safety"\)\.text/);
+    expect(CONTENT).toMatch(/k\.alert && k\.value > 0 \? inventoryToneClass\("below_safety"\)\.dot/); // 상태 도트
+    /* 정본이 그 상태를 red 로 판정한다는 사실까지 같은 자리에서 확인한다 — 함수만 부르고
+     * 정본이 yellow 를 돌려주면 이 명제는 거짓이 된다. */
+    expect(inventoryStateTone("below_safety")).toBe("red");
+    expect(INVENTORY_TONE_CLASS.red.text).toBe("text-red-700");
   });
 });
 
@@ -70,12 +81,15 @@ describe("§11.283a 0건 톤다운 보존 (흰 KPI 카드 alert 게이팅)", () 
     //   보더→숫자·도트로 이동 — 1a(08-05 호영님 지시문) 재앵커, §11.328 navy strip
     //   재앵커와 동형 선례. 보더는 3장 무채색 통일(강조는 재발주 배너 일원화)이라
     //   0건 게이팅의 관측 지점이 숫자·도트로 옮겨졌을 뿐 게이팅 자체는 불변.
+    /* 🛑 재앵커 §inventory-state-tone (2026-09-26) — 위와 같은 이유. 게이팅 명제는 불변이다:
+     *   alert KPI 는 value > 0 에서만 red, 0건이면 중립(slate). */
     expect(CONTENT).toMatch(
-      /k\.alert && k\.value > 0 \? "text-\[#b91c1c\]" : "text-slate-900"/,
+      /k\.alert && k\.value > 0 \? inventoryToneClass\("below_safety"\)\.text : "text-slate-900"/,
     );
     expect(CONTENT).toMatch(
-      /k\.alert && k\.value > 0 \? "bg-\[#b91c1c\]" : "bg-slate-300"/,
+      /k\.alert && k\.value > 0 \? inventoryToneClass\("below_safety"\)\.dot : INVENTORY_TONE_CLASS\.neutral\.dot/,
     );
+    expect(INVENTORY_TONE_CLASS.neutral.dot).toBe("bg-slate-300");
   });
 });
 
