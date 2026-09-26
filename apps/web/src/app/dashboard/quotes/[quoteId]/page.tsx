@@ -1,25 +1,17 @@
 import { redirect } from "next/navigation";
 
 /**
- * Server-side redirect from the legacy page-per-feature route
- * `/dashboard/quotes/[quoteId]` to the canonical same-canvas detail
- * surface `/dashboard/quotes?selected={quoteId}`.
+ * Server-side redirect from the legacy route `/dashboard/quotes/[quoteId]`
+ * to the quote detail page `/quotes/{quoteId}`.
  *
- * Removed in §11.39 (#α-F-followup-quote-detail-page-per-feature):
- * the previous 389-line client component depended on `useOpsStore`
- * (Zustand mock store) and rendered "찾을 수 없습니다" against
- * production data because the store was never hydrated from the
- * canonical Prisma source. That violated two LabAxis principles
- * simultaneously: (1) page-per-feature regression — same-canvas
- * already exists in `/dashboard/quotes` via the `?selected=` query
- * param + right-rail; (2) preview/projection (`useOpsStore`) over-
- * writing actual truth.
+ * §quote-brief-rail-removed 후속 (2026-09-27 · 호영님 판정) — 종전 목적지는
+ * `/dashboard/quotes?selected={quoteId}`(목록 + 우측 레일)였다. 레일이 삭제된 뒤 그 URL 은
+ * 목록에서 행 하나를 표시할 뿐이다. 알림·메일·푸시로 이 링크를 누른 사람은 그 견적을 보러 온
+ * 것이지 목록에서 그 행을 찾으러 온 것이 아니다(호영님) → 상세로 바로 보낸다.
  *
- * The 30+ callers across the codebase
- * (`/dashboard/purchase-orders/[poId]/page.tsx:292`,
- *  `/dashboard/purchases/page.tsx:563,788`, `lib/email.ts:225`,
- *  `lib/ops-console/*`) keep their existing URL — this redirect
- * absorbs them into the canonical right-rail surface.
+ * Removed in §11.39: the previous client component depended on a mock store.
+ * The callers across the codebase (`lib/email.ts`, push hooks, `lib/ops-console/*`)
+ * keep their existing URL — this redirect absorbs them.
  */
 export default async function QuoteDetailRedirect({
   params,
@@ -27,5 +19,5 @@ export default async function QuoteDetailRedirect({
   params: Promise<{ quoteId: string }>;
 }) {
   const { quoteId } = await params;
-  redirect(`/dashboard/quotes?selected=${encodeURIComponent(quoteId)}`);
+  redirect(`/quotes/${encodeURIComponent(quoteId)}`);
 }

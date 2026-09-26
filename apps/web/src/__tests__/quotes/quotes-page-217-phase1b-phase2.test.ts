@@ -30,7 +30,8 @@ describe("§11.217 Phase 1B → §quote-management P4-core-B — '우선 추천'
   it("PriorityRecommendationCard 렌더로 배너 대체", () => {
     expect(source).toMatch(/<PriorityRecommendationCard/);
     // §quote-screen-sian P6.3 §07 — onOpen 이 다음 액션(handleQuoteCardSelect) 직접 연결로 진화(발송 단계→발송 모달).
-    expect(source).toMatch(/onOpen=\{\(id\) =>[\s\S]{0,260}handleQuoteCardSelect/);
+    // 승계 §quote-brief-rail-removed 후속 (2026-09-27 · 호영님 판정) — onOpen 이 (id, stage) 를 받고 「회신 확인」(s2)만 상세로 먼저 보낸다. 나머지는 계속 handleQuoteCardSelect.
+    expect(source).toMatch(/onOpen=\{\(id, stage\) =>[\s\S]{0,700}handleQuoteCardSelect/);
   });
 
   it("구 'AI 추천' 배너 파생/JSX 폐기(priorityAiRecommendation · violet 배너)", () => {

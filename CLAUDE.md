@@ -1266,6 +1266,12 @@ git fetch origin main && git log --oneline origin/main -3
    **main 직접 커밋·푸시 흐름은 그대로 유지한다.**
    금지 해제는 기록으로 남긴다 — 나중에 배포 파이프라인이 바뀌면 재검토 대상이다.
 
+- 🛑 **worktree 를 만들면 `npx husky` 를 실행하고 `ls .husky/_/pre-push` 로 확인한 다음에만 커밋한다**
+  (2026-09-27 · 호영님 판정). husky 는 `core.hooksPath=.husky/_` 를 가리키는데 그 폴더는 **추적되지 않아**
+  새 worktree 에는 없다 → git 은 훅이 없다고 보고 pre-commit · pre-push 를 **에러 없이 건너뛴다.**
+  실측: `08b50203`(§quote-brief-rail-removed)이 두 훅을 모두 거치지 않고 main 에 도착했다.
+  사후 재생에서 em dash 17곳이 나왔다(`2b0064e9` 보정). push 성공은 게이트 통과가 아니다.
+
 ### 3-c. §approval-branch-isolation — 승인 대기 커밋은 main 에 두지 않는다 (2026-09-08 신설)
 
 - 🛑 **동승은 커밋 단위만이 아니라 파일 단위로도 일어난다** (2026-09-24 신설 · 호영님 판정).

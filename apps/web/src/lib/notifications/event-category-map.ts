@@ -200,6 +200,9 @@ export function buildNotificationText(item: NotificationItem): string {
 export function buildNotificationHref(item: NotificationItem): string {
   const meta = (item.event.metadata ?? {}) as Record<string, unknown>;
 
+  /* §quote-brief-rail-removed 후속 (2026-09-27 · 호영님 판정) — 견적을 가리키는 세 자리(결재 요청 · 견적 · 주문)는
+   *   목록 `?selected=` 가 아니라 견적 상세 `/quotes/{id}` 로 보낸다. 레일이 삭제돼 `?selected=` 는 행 표시뿐이다.
+   *   알림을 누른 사람은 그 견적을 보러 온 것이다(호영님). */
   switch (item.entityType) {
     /* §purchases-ui-removed (2026-09-24 · 호영님 판정) — 목적지였던 구매 운영 화면이 삭제됐다. 세 자리(결재 요청 fallback · 주문 · 승인)를 옮긴다.
      * 🛑 같은 자리에서 **죽은 파라미터**도 함께 고친다: 견적 화면이 읽는 것은 `selected` 와 `prepare` 이고
@@ -208,12 +211,12 @@ export function buildNotificationHref(item: NotificationItem): string {
     case "PURCHASE_REQUEST": {
       const quoteId = meta.quoteId as string | undefined;
       if (quoteId) {
-        return `/dashboard/quotes?selected=${encodeURIComponent(quoteId)}`;
+        return `/quotes/${encodeURIComponent(quoteId)}`;
       }
       return "/dashboard/quotes";
     }
     case "QUOTE":
-      return `/dashboard/quotes?selected=${encodeURIComponent(item.entityId)}`;
+      return `/quotes/${encodeURIComponent(item.entityId)}`;
     case "INVENTORY":
       return "/dashboard/inventory";
     case "ORDER": {
@@ -221,7 +224,7 @@ export function buildNotificationHref(item: NotificationItem): string {
        * prod 실측: ORDER 알림 metadata 에 quoteId 가 있다(2건 전부). */
       const quoteId = meta.quoteId as string | undefined;
       if (quoteId) {
-        return `/dashboard/quotes?selected=${encodeURIComponent(quoteId)}`;
+        return `/quotes/${encodeURIComponent(quoteId)}`;
       }
       return "/dashboard/quotes";
     }
