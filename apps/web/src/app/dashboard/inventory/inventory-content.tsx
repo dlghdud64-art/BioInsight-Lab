@@ -66,7 +66,21 @@ import type { QueueItem } from "@/components/inventory/priority-action-queue";
 const LabelScannerModal = dynamic(() => import("@/components/inventory/LabelScannerModal").then((m) => m.LabelScannerModal), { ssr: false });
 const LabelPrintModal = dynamic(() => import("@/components/inventory/LabelPrintModal").then((m) => m.LabelPrintModal), { ssr: false });
 const BulkImportModal = dynamic(() => import("@/components/inventory/BulkImportModal").then((m) => m.BulkImportModal), { ssr: false });
-const ImportStagingWorkbench = dynamic(() => import("@/components/inventory/import-staging-workbench").then((m) => m.ImportStagingWorkbench), { ssr: false });
+/* §inventory-import-fake-success (2026-09-26 · 호영님 지시) — 「재고 파일 가져오기」 가 **가짜 성공**이었다. 실측:
+ *   import-staging-workbench.tsx  fetch·csrfFetch·useMutation **0건**.
+ *     handleFileUpload 은 file.name/size 만 쓰고 **파일을 읽지 않는다** →
+ *     컬럼 10개를 하드코딩하고 generateMockRows() 로 행을 만든다.
+ *     즉 사용자가 검토하는 표가 **자기 파일이 아니다.**
+ *     handleApply 은 setTimeout(1500) 뒤 importStagingStatus="applied" 로 「적용 완료」 를 띄운다.
+ *   → 저장되는 것이 0인데 「N건 적용」 이 뜬다. vendor-portal 제출과 같은 등급이다(호영님).
+ *
+ *   저장 경로는 **있었다**: /api/inventory/import/preview + /commit
+ *     commit 은 ImportJob 생성 + productInventory create/update 로 실제로 쓴다.
+ *   그 경로를 부르는 UI 도 **이미 있었다**: components/inventory/import-wizard.tsx
+ *     서버가 파싱한 columns/fileId 로 매핑 → commit → 서버 ImportResult 로 성공 화면을 그린다.
+ *     그런데 importer 가 0이라 **렌더되지 않았다**(§Render-Reachability).
+ *   → 라이브 진입점을 실배선 쪽으로 붙인다. 가짜는 배선을 끊는다. */
+const ImportWizard = dynamic(() => import("@/components/inventory/import-wizard").then((m) => m.ImportWizard), { ssr: false });
 const StockLifespanGauge = dynamic(() => import("@/components/inventory/stock-lifespan-gauge").then((m) => m.StockLifespanGauge), { ssr: false });
 const InventoryTable = dynamic(() => import("@/components/inventory/InventoryTable").then((m) => m.InventoryTable), { ssr: false });
 const AddInventoryModal = dynamic(() => import("@/components/inventory/AddInventoryModal").then((m) => m.AddInventoryModal), { ssr: false });
@@ -178,7 +192,8 @@ function InventoryPageContent() {
   const [invMobileSheetOpen, setInvMobileSheetOpen] = useState(false);
   // §11.297f filter dropdown plain state.
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isImportStagingOpen, setIsImportStagingOpen] = useState(false);
+  // §inventory-import-fake-success (2026-09-26 · 호영님 지시) — 이름도 실배선 쪽으로. 「staging」 은 가짜 컴포넌트 이름이었다.
+  const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
   const [isSmartReceiveOpen, setIsSmartReceiveOpen] = useState(false);
   // §11.317 — 헤더 1줄 배너 onClick → 운영 브리핑 popup open (Phase 4 에서 category hint 추가).
   const operationalBriefPopup = useOperationalBriefPopup();
@@ -1665,7 +1680,7 @@ function InventoryPageContent() {
                 title="재고 작업"
                 items={[
                   { label: "입고 반영", description: "입고된 건을 재고로 가져오기", accent: true, icon: <PackagePlus />, onClick: () => router.push("/dashboard/receiving") },
-                  { label: "재고 파일 가져오기", description: "엑셀·CSV 일괄 등록", icon: <Upload />, onClick: () => setIsImportStagingOpen(true) },
+                  { label: "재고 파일 가져오기", description: "엑셀·CSV 일괄 등록", icon: <Upload />, onClick: () => setIsImportWizardOpen(true) },
                   { label: "QR 스캔", description: "Lot 조회 · 입출고 처리", icon: <QrCode />, onClick: () => router.push("/dashboard/inventory/scan") },
                   { label: "라벨 인쇄", description: "Lot QR 라벨 출력", icon: <Printer />, onClick: () => handleBulkLabelPrint() },
                 ]}
@@ -1761,16 +1776,27 @@ function InventoryPageContent() {
                   });
                 }}
               />
-              <ImportStagingWorkbench
-                open={isImportStagingOpen}
-                onClose={() => setIsImportStagingOpen(false)}
-                onApplyComplete={() => {
-                  queryClient.invalidateQueries({ queryKey: ["inventories"] });
-                  queryClient.invalidateQueries({
-                    queryKey: ["team-inventory"],
-                  });
-                }}
-              />
+              {/* §inventory-import-fake-success (2026-09-26 · 호영님 지시) — 같은 자리(모달)에 실배선 위저드를 올린다. 새 페이지를 만들지 않는다(same-canvas).
+                  성공 화면은 위저드 안에서 **서버 ImportResult 를 받은 뒤에만** 그려진다. */}
+              <Dialog open={isImportWizardOpen} onOpenChange={setIsImportWizardOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>재고 파일 가져오기</DialogTitle>
+                    <DialogDescription>
+                      엑셀·CSV 를 올리면 컬럼을 맞추고 등록합니다 · 등록 결과는 서버가 알려줍니다
+                    </DialogDescription>
+                  </DialogHeader>
+                  <ImportWizard
+                    onSuccess={() => {
+                      setIsImportWizardOpen(false);
+                      queryClient.invalidateQueries({ queryKey: ["inventories"] });
+                      queryClient.invalidateQueries({
+                        queryKey: ["team-inventory"],
+                      });
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
               <LabelScannerModal
                 open={isSmartReceiveOpen}
                 onOpenChange={setIsSmartReceiveOpen}
@@ -1812,7 +1838,7 @@ function InventoryPageContent() {
                 width="w-52"
                 items={[
                   { label: "입고 반영", icon: <PackagePlus className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/receiving") },
-                  { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportStagingOpen(true) },
+                  { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportWizardOpen(true) },
                   { label: "QR 스캔", icon: <QrCode className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/inventory/scan") },
                   { label: "라벨 데이터 내보내기 (엑셀)", icon: <FileDown className="h-3.5 w-3.5" />, separator: true, onClick: async () => {
                     if (isExportingLabels) return;

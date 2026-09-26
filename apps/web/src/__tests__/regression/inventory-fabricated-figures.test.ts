@@ -18,8 +18,12 @@
  *
  * ── 이 파일이 안 보는 것 (자기 한계 · 다음 검사의 시작점) ──
  *   1. 목록 밖 재고 컴포넌트. 2026-09-16 같은 스윕에서 발견했으나 **별건으로 분리**한 것:
- *      - import-staging-workbench.tsx  「재고 파일 가져오기」 · 파일을 읽지 않고 generateMockRows 로 행을 짓고,
- *                                      적용은 API 호출 없이 1.5초 뒤 「적용 완료」(placeholder success)
+ *      - ~~import-staging-workbench.tsx~~ → **닫힘 §inventory-import-fake-success (2026-09-26 · 호영님 지시)**
+ *        여기 적힌 그대로였다: 파일을 읽지 않고 generateMockRows 로 행을 짓고, API 호출 0건에 1.5초 뒤
+ *        「적용 완료」. 이 목록이 **10일간 정답을 들고 있었다** — §sentinel 자기 한계는 다음 검사의 시작점.
+ *        처방은 삭제가 아니었다: 저장 경로(/api/inventory/import/preview+commit)와 그 경로를 부르는
+ *        UI(import-wizard.tsx)가 **이미 있었고 렌더 도달이 0** 이었다 → 라이브 진입점을 그쪽으로 붙였다.
+ *        반대 명제는 regression/inventory-import-fake-success.test.ts 가 든다.
  *      - inventory-context-panel.tsx   generateMockRisks/Actions 는 이름과 달리 실제 item 필드 파생.
  *                                      단 「미개봉 {수량×0.3}ea」 는 지어낸 수 · 「최근 14일 사용속도」 는 측정 안 한 표현
  *      - priority-action-queue.tsx     items 미전달 시 generateMockQueueItems 폴백(현재 부모가 항상 전달 → 도달 불가)

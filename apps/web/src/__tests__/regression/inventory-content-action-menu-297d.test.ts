@@ -33,8 +33,12 @@ describe("§11.297d — inventory-content D1+D2+D5 ActionMenu", () => {
     expect(SRC).toMatch(/menuId="inv-content-card-actions"/);
   });
 
-  it("기존 handler 보존 — setIsImportStagingOpen / handleBulkLabelPrint / setIsSmartReceiveOpen / export-labels / setShowUsageDialog", () => {
-    expect(SRC).toMatch(/setIsImportStagingOpen\(true\)/);
+  it("기존 handler 보존 · setIsImportWizardOpen / handleBulkLabelPrint / setIsSmartReceiveOpen / export-labels / setShowUsageDialog", () => {
+    /* 승계 §inventory-import-fake-success (2026-09-26 · 호영님 지시) — 「재고 파일 가져오기」 핸들러가
+       가짜 컴포넌트(setIsImportStagingOpen)에서 실배선 위저드(setIsImportWizardOpen)로 바뀌었다.
+       명제(이 액션 메뉴가 가져오기 핸들러를 들고 있다)는 불변 · 여는 대상만 바뀌었다.
+       배선축은 regression/inventory-import-fake-success.test.ts ① 가 든다. */
+    expect(SRC).toMatch(/setIsImportWizardOpen\(true\)/);
     expect(SRC).toMatch(/handleBulkLabelPrint\(\)/);
     expect(SRC).toMatch(/setIsSmartReceiveOpen\(true\)/);
     expect(SRC).toMatch(/\/api\/inventory\/export-labels/);
