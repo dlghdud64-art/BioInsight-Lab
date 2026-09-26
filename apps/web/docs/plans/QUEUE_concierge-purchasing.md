@@ -71,3 +71,14 @@ prod 데이터 (operator-shell → Supabase xhid… Session Pooler · SELECT 만
   관리자 「주문 전환」 칩(뱃지·KPI·필터)도 같이 지웠다 — 상태값은 DB 에 남고 라벨만 「구매 완료」 로 중립화했다.
 - CLAUDE.md §유료 결제 오픈 전 게이트 — 결제가 열려야 되살아나는 것들과는 **다른 축**이다.
   이쪽은 결제가 아니라 **운영 인력(대행)** 이 있어야 켜진다.
+
+- 🛑 **복원 시 함께 되살릴 소비 측 — `PurchaseRequest` 의 생성 경로가 0 이 됐다**
+  (2026-09-26 §inventory-dead-tabs-removed · 호영님 판정).
+  `api/inventory/[id]/restock-request`(재입고 요청 = 유일한 `PurchaseRequest` 생성 지점)를 삭제했다.
+  호출자가 0 이었고 그 버튼은 `{false && (…)}` 안에 있어 누를 수 있는 사용자가 없었다(prod 행 0).
+  → **남긴 소비 측 3개는 지금 영구히 빈 화면이다**: `/admin/requests` ·
+    `POST /api/request/[id]/approve` · `POST /api/request/[id]/reject`.
+  🔑 나중에 컨시어지를 열 때 **입구가 이 두 라우트**다. 대행 주문이 승인 흐름을 타야 하면
+  생성 지점을 새로 만들지 말고 이 소비 측에 맞춰 붙인다 — 지우지 않은 이유가 그것이다.
+  ⚠️ 그때 같이 정해야 할 것: 생성 주체가 **사용자(재입고 요청)** 인지 **운영자(대행 접수)** 인지.
+  전자면 지운 라우트의 org-scope 계약을 되살려야 한다(명제는 §inventory-dead-tabs-removed 헤더에 복원해 뒀다).

@@ -57,8 +57,13 @@ describe("§inventory-redesign P3 — 위치 저장 truth = PATCH /api/inventory
   });
 
   it("편집 모달 location Input 보존 (저장 진입점)", () => {
-    const src = read(CONTENT);
-    expect(src).toMatch(/id="location"/);
+    /* 🛑 재앵커 §inventory-dead-tabs-removed (2026-09-26 · 호영님 판정).
+     *   이 단언이 물던 `id="location"` 은 `InventoryForm` 안이었고, 그 컴포넌트는
+     *   **HEAD 에서도 사용 지점 0** 이었다(이번 삭제와 무관한 원래 고아).
+     *   라이브 편집 진입점은 `AddInventoryModal.tsx` 다. */
+    expect(read("src/components/inventory/AddInventoryModal.tsx")).toMatch(/id="location"/);
+    /* 역계약 — 목록 화면에 자체 편집 폼이 다시 생기면 저장 경로가 둘로 갈린다. */
+    expect(read(CONTENT)).not.toMatch(/id="location"/);
   });
 });
 

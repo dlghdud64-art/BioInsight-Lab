@@ -2,7 +2,9 @@
  * §inventory-reorder-surface-unify P3a — 잔여 5 site rewire (preparePanel → 통합 라우팅)
  *   (PLAN: docs/plans/PLAN_inventory-reorder-surface-unify.md)
  *
- * 진입 4(모바일 리스트·테이블 행·이슈얼럿·상세 Sheet) → openReorderReview(통합 패널 reorder mode).
+ * 진입 4(모바일 리스트·테이블 행·우선 처리 큐·상세 Sheet) → openReorderReview(통합 패널 reorder mode).
+ *   🛑 「이슈얼럿」 → 「우선 처리 큐」 재앵커 (2026-09-26 §inventory-dead-tabs-removed):
+ *      이슈얼럿 진입 3곳이 전부 `{false && (…)}` 안이었다. 라이브 대체가 PriorityActionQueue 다.
  * 패널 proceed(site 5) → 추천 있으면 ReorderReviewSheet(승격) 오픈, 없으면 reorder mode flip(no-op 0).
  * content 내 aiPanel.preparePanel 직접 호출 0 (AiAssistant 직접 오픈 트리거 retire; 렌더/deep-link 정리는 P4).
  *
@@ -33,9 +35,23 @@ describe("§inventory-reorder-surface-unify P3a — 진입 4 site → openReorde
   it("모바일 리스트 onReorder → openReorderReview(inventory)", () => {
     expect(src).toMatch(/onSearchChange=\{setSearchQuery\}[\s\S]{0,200}openReorderReview\(inventory\)/);
   });
-  it("테이블 행 onReorder + 이슈얼럿 → openReorderReview (inventory/inv)", () => {
+  it("테이블 행 onReorder → openReorderReview(inventory)", () => {
     expect(src).toMatch(/openReorderReview\(inventory\)/);
-    expect(src).toMatch(/openReorderReview\(inv\)/);
+  });
+  it("우선 처리 큐 진입 → 폐기 먼저, 아니면 openReorderReview(match)", () => {
+    /* 🛑 재앵커 §inventory-dead-tabs-removed (2026-09-26 · 호영님 판정).
+     *   옛 단언은 `openReorderReview(inv)` 3곳을 물었는데 전부 `{false && (…)}` 안의
+     *   「조치 필요 항목」 블록이었다 — 이슈얼럿 진입은 렌더 0 이었다.
+     *   그 자리를 대체한 것이 `PriorityActionQueue` 이고, 진입은 handlePriorityQueueAction 이다.
+     *   🔑 그 분기가 CLAUDE.md 「reorder 가 expired lot dispose 보다 먼저 뜨지 않는다」 의
+     *      라이브 집행이다 — dispose_lot 을 먼저 가른 뒤에야 재발주로 간다. */
+    const i = src.indexOf("const handlePriorityQueueAction = (queueItem: QueueItem) => {");
+    expect(i).toBeGreaterThan(0);
+    const block = src.slice(i, src.indexOf("\n  };", i));
+    expect(block).toMatch(/actionType === "dispose_lot"[\s\S]{0,80}openDisposalDock\(match\)/);
+    expect(block).toMatch(/openReorderReview\(match\)/);
+    /* 역계약 — 죽은 블록의 진입 형태가 되살아나면 알려준다. */
+    expect(src).not.toMatch(/openReorderReview\(inv\)/);
   });
   it("상세 Sheet 재발주 = setIsSheetOpen(false) + openReorderReview(selectedItem)", () => {
     expect(src).toMatch(/setIsSheetOpen\(false\);[\s\S]{0,160}openReorderReview\(selectedItem\)/);

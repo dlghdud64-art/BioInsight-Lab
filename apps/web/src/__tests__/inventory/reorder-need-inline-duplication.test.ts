@@ -124,14 +124,14 @@ describe("§reorder-need-inline-duplication · 정본과 같은 명제를 인라
       "app/api/dashboard/summary/route.ts B<= 가드:null비교": 2,
       "app/api/inventory/route.ts B<= 가드:null비교": 1,
       // 화면 축
-      "app/dashboard/inventory/inventory-content.tsx B<= 가드:null비교": 9,
+      "app/dashboard/inventory/inventory-content.tsx B<= 가드:null비교": 6, // 9→6 · §inventory-dead-tabs-removed(2026-09-26): 죽은 `{false &&` 블록 3개 + 고아 컴포넌트 3개 삭제로 3곳이 같이 사라졌다(정본 호출로 닫은 것이 아니다)
       "app/dashboard/inventory/scan/page.tsx B<= 가드:truthy": 2, // 앞 분기 qty <= 0 이 먼저 잡는다 · 값 일치 확정
       "components/inventory/InventoryTable.tsx A<= 가드:-": 1, // 복합 판정을 "부족" 라벨 안에 복제
       "components/inventory/InventoryTable.tsx B<= 가드:null비교": 1,
       "components/inventory/ReorderReviewSheet.tsx B<= 가드:null비교": 1,
       "components/inventory/inventory-context-panel.tsx A'<= 가드:-": 1,
       "components/inventory/inventory-context-panel.tsx B<= 가드:null비교": 4,
-      "components/inventory/stock-lifespan-gauge.tsx B<= 가드:없음": 1,
+      // 제거됨: "components/inventory/stock-lifespan-gauge.tsx B<= 가드:없음" — §inventory-dead-tabs-removed(2026-09-26) 파일 삭제(importer 0)
       "hooks/use-inventory-ai-panel.ts B<= 가드:truthy": 1, // 🛑 값 갈림(safetyStock === 0 && qty <= 0) · 0 나누기 가드 겸용
       "hooks/use-inventory-ai-panel.ts B<= 가드:없음": 1, // 🛑 값 갈림(같은 구간) · 삼항 : false (:247)
       // 🛑 경계가 정본과 다르다(정본 <=, 여기 <) — 판정 대기
@@ -143,7 +143,7 @@ describe("§reorder-need-inline-duplication · 정본과 같은 명제를 인라
 
   it("🛑 임계 배수가 붙은 자리는 다른 명제다 · 복제로 세지 않는다", () => {
     expect(thresholds.map((s) => `${s.file} ×${s.threshold}`).sort()).toEqual([
-      "components/inventory/stock-lifespan-gauge.tsx ×0.3", // 위험 구간 톤
+      // 제거됨: "components/inventory/stock-lifespan-gauge.tsx ×0.3"(위험 구간 톤) — §inventory-dead-tabs-removed(2026-09-26) 파일 삭제
       "lib/inventory/flow-insight-engine.ts ×0.5",
       "lib/operational-brief/build-rationale.ts ×1.5", // 리드타임 여유 — 호영님 판정 대기 항목
     ]);
@@ -165,8 +165,7 @@ describe("§reorder-need-inline-duplication · 정본과 같은 명제를 인라
       // 값 일치 확정 — 앞 분기 `qty <= 0`("재고 없음")이 safetyStock === 0 경우를 먼저 잡는다
       "app/dashboard/inventory/scan/page.tsx 가드:truthy",
       "app/dashboard/inventory/scan/page.tsx 가드:truthy",
-      // 값 미확정 — 게이지 톤 분기. 앞뒤 분기 미독해
-      "components/inventory/stock-lifespan-gauge.tsx 가드:없음",
+      // 제거됨: 게이지 톤 분기(값 미확정) — §inventory-dead-tabs-removed(2026-09-26) 파일 삭제
       // 값 갈림(좁은 구간 safetyStock === 0 && qty <= 0) · truthy 가드가 0 나누기 겸용 → 단순 치환 금지
       "hooks/use-inventory-ai-panel.ts 가드:truthy",
       // 값 갈림(같은 구간) · 삼항 `: false` 형태 (:247) — 0 나누기 겸용은 아니다

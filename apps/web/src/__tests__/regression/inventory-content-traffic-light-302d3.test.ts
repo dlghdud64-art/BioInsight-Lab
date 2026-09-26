@@ -28,6 +28,14 @@ const SRC = readFileSync(
   "utf8",
 );
 
+/* 🛑 부분 은퇴 §inventory-dead-tabs-removed (2026-09-26 · 호영님 판정) — 「성공해서 은퇴」가 아니다.
+ *   d-3c 계열 4 describe + 「D-day color」 1건이 물던 앵커(getCardBg · 「우선 사용」 Badge ·
+ *   stock badge · issueType 버튼 · D-day 삼항)는 전부 `inventory-content.tsx` 의
+ *   `{false && (…)}` 블록 안이었다(HEAD 2474~2688). 렌더 0 이므로 **집행된 적이 없다.**
+ *   dead 파일은 걸렀지만 같은 파일 안의 dead 구역은 그 축이 보지 못했다.
+ *   살아 있는 항목(trace marker · 승인 대기 badge 부재 · Summary cards · ISSUE_CONFIG ·
+ *   302d-4/302d-5 보존)은 그대로 둔다 — 그쪽은 라이브 자리다.
+ *   카드 배경·배지 축 재앵커는 §③ 미개봉 ×0.3 트랙에서 실측 후 수행한다. */
 describe("§11.302d-3 — inventory-content 잔여 yellow 일괄 신호등 정합", () => {
   it("§11.302d-3 trace marker", () => {
     expect(SRC).toMatch(/§11\.302d-3/);
@@ -41,7 +49,7 @@ describe("§11.302d-3 — inventory-content 잔여 yellow 일괄 신호등 정�
     });
   });
 
-  describe("d-3c getCardBg switch — 신호등 spec 정합", () => {
+  describe.skip("[은퇴 2026-09-26 · {false &&} 안이었다] d-3c getCardBg switch · 신호등 spec 정합", () => {
     it('inventory-content getCardBg "expired" / "out_of_stock" → bg-red-100 border-red-200', () => {
       expect(SRC).toMatch(
         /이슈 유형별 카드 배경[\s\S]{0,400}case "out_of_stock":[\s\S]{0,200}return "bg-red-100 border-red-200"/,
@@ -61,7 +69,7 @@ describe("§11.302d-3 — inventory-content 잔여 yellow 일괄 신호등 정�
     });
   });
 
-  describe("d-3c stock badge text — lowStock yellow → red 긴급 정정", () => {
+  describe.skip("[은퇴 2026-09-26 · {false &&} 안이었다] d-3c stock badge text · lowStock yellow → red 긴급 정정", () => {
     it("stock badge — lowStock 조건도 text-red-700 (이전 text-yellow-700 정정)", () => {
       expect(SRC).toMatch(
         /inv\.currentQuantity === 0 \? "text-red-700" : inv\.safetyStock != null && inv\.currentQuantity <= inv\.safetyStock \? "text-red-700"/,
@@ -69,7 +77,7 @@ describe("§11.302d-3 — inventory-content 잔여 yellow 일괄 신호등 정�
     });
   });
 
-  describe('d-3c "우선 사용" Badge — 검토 spec 강화 + duplicate cleanup', () => {
+  describe.skip('[은퇴 2026-09-26 · {false &&} 안이었다] d-3c "우선 사용" Badge · 검토 spec 강화 + duplicate cleanup', () => {
     it("우선 사용 Badge — bg-yellow-100 + border-yellow-200 (duplicate yellow-50 패턴 0)", () => {
       expect(SRC).toMatch(
         /bg-yellow-100 text-yellow-700 border-yellow-200[\s\S]{0,300}우선 사용/,
@@ -79,7 +87,7 @@ describe("§11.302d-3 — inventory-content 잔여 yellow 일괄 신호등 정�
     });
   });
 
-  describe("d-3c button 신호등 정합 — out_of_stock 위험 + low_stock 긴급", () => {
+  describe.skip("[은퇴 2026-09-26 · {false &&} 안이었다] d-3c button 신호등 정합 · out_of_stock 위험 + low_stock 긴급", () => {
     it("button — out_of_stock 도 red 통일 (이전 blue 정정), low_stock/reorder_lead red (이전 yellow 정정)", () => {
       expect(SRC).toMatch(
         /issueType === "out_of_stock" \? "text-red-700 border-red-500\/30 hover:bg-red-50" : "text-red-700 border-red-500\/30 hover:bg-red-50"/,
@@ -112,7 +120,7 @@ describe("§11.302d-3 — inventory-content 잔여 yellow 일괄 신호등 정�
       expect(SRC).toMatch(/§11\.302d-5/);
     });
 
-    it("D-day color (expired red-700 / expiring yellow-700) 이미 spec 정합 — 변경 0", () => {
+    it.skip("[은퇴 2026-09-26 · {false &&} 안이었다] D-day color (expired red-700 / expiring yellow-700)", () => {
       expect(SRC).toMatch(
         /issueType === "expired" \? "text-red-700" : "text-yellow-700"/,
       );

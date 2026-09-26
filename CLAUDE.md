@@ -199,7 +199,20 @@ UI 에 적용하는 공통 원칙. 신규 화면 / 모바일 UX 작업 시 자�
 - 정보 (실행 가능 CTA): `bg-emerald-600 text-white` (primary), `bg-blue-600 text-white` (분석/검토)
 - ✅ 주의색 = **yellow 신호등**(§11.283a/302c/302d — 만료임박·검토·낮은재고). ❌ Tailwind `amber-*`/`orange-*` 금지 유지(16 amber-removed sentinel — 밝은 amber 눈피로로 yellow/red 통일 sweep). 위험=red, 정상=emerald.
 - ⚠️ **#b45821 muted amber 이전(2026-06-30 지향)은 미채택/보류** (호영님 2026-07-10 §P6 재결정): 라이브 yellow 신호등 + 15+ inventory sentinel(kpi-283a·priority-banner-302d4·cardbg-302d2·context-320 등)이 yellow=주의를 잠금 → 전환 시 source ~76 spot + sentinel ~15개 재작성·283/302 신호등 반전 필요(대공사, 별도 신중 배치 대상). 재개 시 근거·범위 재승인 후.
-- 📌 **302c·302d-1 은퇴→승계 (2026-08-06, §inventory-dead-file-cleanup 2차 — 호영님 분류표 승인)**: 구 302c(KPI)·302d-1(badge) 원 판본은 dead file(`inventory-main.tsx`, importer 0) 세대의 구현 내부명/라인 종속 잠금이라 은퇴. **정책(yellow=주의·amber 금지·위험=red·정상=emerald)은 불변** — yellow=주의 잠금은 라이브(`inventory-content.tsx`) 표면에서 **283a(KPI 만료임박=yellow·재주문=red·안전재고미달=red·0건 톤다운)·302d-2(getCardBg `expiring`→yellow-100)·302d-1 재앵커("우선 사용" Badge yellow-100)** 로 승계 유지(vitest GREEN 실측). 위 계열 표기 §11.283a/302c/302d 중 **302c 는 이제 색상이 아니라 dead-file 구세대 부활 차단 + isReorderNeeded canonical 로 재정의**됨(line 92 구체 나입 283a/302d4/302d2/320 은 무손상).
+- 📌 **302c·302d-1 은퇴→승계 (2026-08-06, §inventory-dead-file-cleanup 2차 — 호영님 분류표 승인)**: 구 302c(KPI)·302d-1(badge) 원 판본은 dead file(`inventory-main.tsx`, importer 0) 세대의 구현 내부명/라인 종속 잠금이라 은퇴. **정책(yellow=주의·amber 금지·위험=red·정상=emerald)은 불변** — 정책 잠금은 **283a(KPI 만료임박=yellow·재주문=red·안전재고미달=red·0건 톤다운)** 가 라이브 표면에서 유지한다(vitest GREEN 실측). 위 계열 표기 §11.283a/302c/302d 중 **302c 는 이제 색상이 아니라 dead-file 구세대 부활 차단 + isReorderNeeded canonical 로 재정의**됨(line 92 구체 나입 283a/302d4/302d2/320 은 무손상).
+
+  - 🛑 **정정 (2026-09-26 · §inventory-dead-tabs-removed · 호영님 판정)**: 위 문장은 원래
+    「**302d-2(getCardBg `expiring`→yellow-100)·302d-1 재앵커("우선 사용" Badge yellow-100)** 로
+    승계 유지(vitest GREEN 실측)」 이라고 적고 있었다. **거짓이었다.** `getCardBg` 는
+    `inventory-content.tsx` 안에 2곳뿐이었고 **둘 다 `{false && (…)}` 블록 안**이었다(「우선 사용」 Badge 도 같다).
+    렌더 0 구역이므로 그 잠금은 **집행된 적이 없다** — 그런데 GREEN 이 떴고, 그 GREEN 이 이 조항에
+    「승계 유지」 로 기록됐다. dead **파일**은 걸렀지만 같은 파일 안의 dead **구역**은 그 축이 보지 못했다.
+    → **카드 배경·배지 축의 yellow=주의 잠금은 지금 없다.** 정책 자체는 283a(KPI 축)가 계속 잠근다.
+      302d-1/d-2/d-3 의 해당 단언 13건은 그 커밋에서 은퇴(`describe.skip`·`it.skip` + 원 명제 보존)했다.
+      재앵커는 **③ 미개봉 ×0.3 트랙**에서 `inventory-context-panel.tsx`·`InventoryTable.tsx` 의 yellow 톤을
+      실측해 수행한다 — 🛑 **토큰이 있다는 것만 보지 말고 명제(yellow=주의)가 맞는지를 먼저 확인한다.**
+      맞지 않으면 그것이 ③ 트랙의 결함 1번이다.
+    🔑 같은 커밋에서 `meta/render-unreachable-block-ratchet.test.ts`(상한 0)를 세워 이 형태의 재발을 막는다.
 
 ### 10. JSX 구조 안정성 (Vercel build 회귀 방지)
 
@@ -325,6 +338,8 @@ fixture 안의 필드는 **지위가 다르다.** 섞으면 게이트가 스스�
                  → 블록 경계(여는 중괄호 ↔ 대응 닫는 중괄호 · 함수 시작 ↔ 다음 선언)로 연다
 ⑥ 껍데기 프로브  **모든 프로브 묶음의 기본 항목이다** — 단언이 건 대상의 **본문을 비워도 통과하는가**
                  → 시그니처·선언·타입만 핀하면 구현을 들어내도 GREEN 이다
+⑦ 도달 구역      **앵커는 렌더에 도달하는 구역에서만 센다. `{false &&` 안의 매치는 GREEN 이 아니다.**
+                 → 축이 파일이면 파일 안의 죽은 구역을 못 본다(2026-09-26 실측 31건 · §11.302d 계열 포함)
 ```
 
 ⑥ — **같은 날 2회** (2026-09-25 승격 · 호영님: 「한 번은 우연이지만 두 번이면 형태다」):

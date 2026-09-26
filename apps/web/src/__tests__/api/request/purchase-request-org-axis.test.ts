@@ -20,8 +20,9 @@
  *                    귀속 정확 != 행위 허용.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { execFileSync } from "node:child_process";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
 const read = (rel: string) => readFileSync(join(REPO_ROOT, rel), "utf8");
@@ -29,7 +30,14 @@ const stripComments = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 
 const SCHEMA = "prisma/schema.prisma";
-const R1 = "src/app/api/inventory/[id]/restock-request/route.ts";
+/* 🛑 R1 은퇴 §inventory-dead-tabs-removed (2026-09-26 · 호영님 판정) —
+ *   `src/app/api/inventory/[id]/restock-request/route.ts` 가 삭제됐다(호출자 0).
+ *   그 자리의 명제는 「재입고 생성 지점은 teamId 를 채우고 organizationId 를 **그 team 행에서**
+ *   파생한다 · 요청자의 organizationMember 를 확인한다 · 바디 유래 organizationId 는 없다」 였다.
+ *   생성 지점 자체가 사라졌으므로 파생 갈래 1(teamId 있음)을 쓰는 라우트는 이제 R2 하나다.
+ *   바디 유래 organizationId 0 축은 `regression/org-session-authority.test.ts` 가 전 핸들러에서 본다.
+ *   부활 차단은 아래 「은퇴한 생성 지점」 블록이 담당한다 — 파일이 돌아오면 그 자리에서 RED 다. */
+const R1_RETIRED = "src/app/api/inventory/[id]/restock-request/route.ts";
 const R2 = "src/app/api/request/route.ts";
 const R3 = "src/app/api/work-queue/purchase-conversion/[quoteId]/request-approval/route.ts";
 
@@ -45,14 +53,20 @@ describe("스키마 — organizationId 는 NOT NULL 이다", () => {
   });
 });
 
-describe("생성 3지점 — 파생 규칙 2갈래", () => {
-  it("① 재입고: teamId 있음 → team.organizationId 파생", () => {
-    const c = stripComments(read(R1));
-    expect(c).toMatch(/const reqOrgId = teamMember\.team\.organizationId;/);
-    expect(c).toMatch(/organizationId: reqOrgId,/);
-    expect(c).toMatch(/teamId: teamMember\.teamId,/);
+describe("은퇴한 생성 지점 · 재입고 요청 라우트는 없다", () => {
+  it("파일이 워킹트리와 index 두 축 모두에 없다", () => {
+    /* 축을 둘 다 본다 — `git rm` 스테이징만 된 상태에서는 HEAD 에 파일이 남아 있어
+     * HEAD 축 단언은 커밋 전까지 GREEN 이다(§파일 삭제는 두 축을 둘 다 본다). */
+    expect(existsSync(join(REPO_ROOT, R1_RETIRED))).toBe(false);
+    const indexed = execFileSync("git", ["ls-files", "--", "apps/web/" + R1_RETIRED], {
+      cwd: join(REPO_ROOT, "..", ".."),
+      encoding: "utf8",
+    }).trim();
+    expect(indexed).toBe("");
   });
+});
 
+describe("생성 2지점 · 파생 규칙 2갈래", () => {
   it("② 요청 생성: teamId 있음 → team 조회 후 team.organizationId 파생", () => {
     const c = stripComments(read(R2));
     expect(c).toMatch(/const team = await db\.team\.findUnique\(\{[\s\S]{0,120}?select: \{ organizationId: true \}/);
@@ -70,8 +84,8 @@ describe("생성 3지점 — 파생 규칙 2갈래", () => {
 });
 
 describe("🔑 판정 축 — 전 경로가 organizationMember 게이트를 통과한다", () => {
-  it("세 생성 지점 모두 요청자의 organizationMember 를 확인한다", () => {
-    for (const rel of [R1, R2, R3]) {
+  it("남은 두 생성 지점 모두 요청자의 organizationMember 를 확인한다", () => {
+    for (const rel of [R2, R3]) {
       const c = stripComments(read(rel));
       expect(c).toMatch(/db\.organizationMember\.findUnique\(\{[\s\S]{0,200}?userId_organizationId/);
       expect(c).toMatch(/Not a member of this organization/);
@@ -81,7 +95,7 @@ describe("🔑 판정 축 — 전 경로가 organizationMember 게이트를 통�
   it("🛑 바디 유래 organizationId 부재 — 클라이언트가 조직을 고르지 않는다", () => {
     /* protocol/bom 격리 감사가 뚫린 자리가 정확히 이것이다 —
      * 클라이언트 공급 organizationId 로 남의 조직에 행을 만들었다. */
-    for (const rel of [R1, R2, R3]) {
+    for (const rel of [R2, R3]) {
       const c = stripComments(read(rel));
       expect(c).not.toMatch(/const \{[^}]*organizationId[^}]*\} = body/);
       expect(c).not.toMatch(/body\.organizationId/);
@@ -91,19 +105,11 @@ describe("🔑 판정 축 — 전 경로가 organizationMember 게이트를 통�
 });
 
 describe("조건 3 — teamId 와 organizationId 정합", () => {
-  it("teamId 를 채우는 두 경로는 organizationId 를 같은 team 행에서 파생한다", () => {
+  it("teamId 를 채우는 경로는 organizationId 를 같은 team 행에서 파생한다", () => {
     /* 정의상 성립 — 런타임 검증이 아니라 파생 구조로 보장한다.
-     * 검증할 것을 줄이는 파생이 검증을 추가하는 파생보다 낫다 (호영님 판정). */
-    const c1 = stripComments(read(R1));
-    expect(c1).toMatch(/reqOrgId = teamMember\.team\.organizationId/);
-    /* 창을 create 블록으로 좁힌다 — 파일 전역으로 걸면 :75 의 인벤토리 접근 검증
-     * (`organizationId: inventory.organizationId`)이 걸린다. 그것은 다른 축이고
-     * 살아 있어야 한다. 결정은 "요청 행의 org 가 team 에서 온다" 이지
-     * "파일에 inventory.organizationId 가 없다" 가 아니다. */
-    const create1 = c1.match(/db\.purchaseRequest\.create\(\{[\s\S]*?\n    \}\)/)?.[0] ?? "";
-    expect(create1.length).toBeGreaterThan(0);
-    expect(create1).toMatch(/organizationId: reqOrgId,/);
-    expect(create1).not.toMatch(/organizationId: (inventory|session)/);
+     * 검증할 것을 줄이는 파생이 검증을 추가하는 파생보다 낫다 (호영님 판정).
+     * ⚠️ 은퇴 전에는 이 자리에 재입고 라우트(R1)의 `reqOrgId = teamMember.team.organizationId`
+     *    + create 블록 단언이 함께 있었다. 라우트 삭제로 teamId 를 채우는 경로는 R2 하나가 됐다. */
     const c2 = stripComments(read(R2));
     expect(c2).toMatch(/organizationId: team\.organizationId/);
     /* 🛑 요청자의 organizationMember 에서 파생하면 조건 3 이 런타임 검증 대상이 된다 */

@@ -17,6 +17,14 @@ function read(rel: string): string {
 }
 const PANEL = "src/components/inventory/inventory-context-panel.tsx";
 
+/* 🛑 부분 은퇴 §inventory-dead-tabs-removed (2026-09-26 · 호영님 판정) — 「성공해서 은퇴」가 아니다.
+ *   아래 it.skip 항목이 물던 앵커는 `inventory-content.tsx` 의 `{false && (…)}` 블록 또는
+ *   소비자 0 이던 `InventoryCard` 안에 있었다 — 렌더 0 이므로 **집행된 적이 없다.**
+ *   dead 파일은 걸렀지만 같은 파일 안의 dead 구역은 그 축이 보지 못했다.
+ *   명제는 그 자리에 원 단언째 남겨 둔다(복원용). 살아 있는 항목은 그대로 돈다.
+ *   복원용 원 명제: 행 메뉴 라벨 「재발주 검토」·「대체품 재발주 검토」 가 `openReorderReview(inv)` 를 부른다
+ *   (preparePanel 직접 호출 아님). 그 행 메뉴는 「조치 필요 항목」 블록 안이었고 라이브에 없다.
+ *   P1·P2·P3a 단언 9건은 라이브라 그대로 돈다. */
 describe("§inventory-panel-unify P1 — mode prop + 헤더 맥락 분기", () => {
   it("mode prop 정의('detail'|'reorder')", () => {
     const src = read(PANEL);
@@ -76,15 +84,15 @@ describe("§inventory-panel-unify P3a — 재발주 진입 통합 패널 라우�
 });
 
 describe("§inventory-panel-unify P3b-1 — 행 메뉴 재발주 진입 통합 패널 라우팅", () => {
-  it("'재발주 검토' 행 메뉴 = openReorderReview(inv) (preparePanel 직접 호출 아님)", () => {
+  it.skip("[은퇴 2026-09-26 · {false &&} 안이었다] '재발주 검토' 행 메뉴 = openReorderReview(inv)", () => {
     const src = read(CONTENT);
     expect(src).toMatch(/label: "재발주 검토",[\s\S]{0,120}onClick: \(\) => openReorderReview\(inv\)/);
   });
-  it("'대체품 재발주 검토' 행 메뉴 = openReorderReview(inv)", () => {
+  it.skip("[은퇴 2026-09-26 · {false &&} 안이었다] '대체품 재발주 검토' 행 메뉴 = openReorderReview(inv)", () => {
     const src = read(CONTENT);
     expect(src).toMatch(/label: "대체품 재발주 검토",[\s\S]{0,140}onClick: \(\) => openReorderReview\(inv\)/);
   });
-  it("회귀 0 — 두 행 메뉴 라벨 보존", () => {
+  it.skip("[은퇴 2026-09-26 · {false &&} 안이었다] 회귀 0 · 두 행 메뉴 라벨 보존", () => {
     const src = read(CONTENT);
     expect(src).toContain("재발주 검토");
     expect(src).toContain("대체품 재발주 검토");

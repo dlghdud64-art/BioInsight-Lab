@@ -101,7 +101,15 @@ describe("§loading-empty-state · 재고 KPI · 도착 전 분기가 판정보�
 describe("§loading-empty-state · 재고 목록 · 도착 전에 「없음」 을 말하지 않는다", () => {
   it("🛑 목록 로딩 판정에 isLoading 삼항을 쓰지 않는다 (세션 로딩 틈)", () => {
     expect(code(INV)).not.toMatch(/\{isLoading \? \(/);
-    expect((code(INV).match(/\{!inventoriesArrived && !inventoriesError \? \(/g) ?? []).length).toBe(3);
+    /* 🛑 3 → 1 §inventory-dead-tabs-removed (2026-09-26 · 호영님 판정).
+     *   삼항 형태 3곳 중 2곳이 `{false && (…)}` 안이었다 — 렌더 0 이므로 그 가드는 한 번도
+     *   사용자를 지켜준 적이 없다. 남은 라이브 삼항은 표 목록 1곳(2194행)이고,
+     *   모바일은 삼항이 아니라 `loading={!inventoriesArrived && !inventoriesError}` prop 전달(1661행)로
+     *   같은 명제를 지킨다 — 아래 모바일 항목이 그쪽을 따로 단언한다.
+     *   ⚠️ 처음 이 값을 2 로 적었다가 프로브에서 1 로 정정했다. 개수 핀은 「몇 개가 살아 있나」 를
+     *      묻는데 그 답을 내가 형태를 세지 않고 추정했다(§결과를 읽기 전에 경계를 먼저 확인한다).
+     *      자리 열거는 별건으로 둔다(「렌더 도달 0 census」 큐). */
+    expect((code(INV).match(/\{!inventoriesArrived && !inventoriesError \? \(/g) ?? []).length).toBe(1);
   });
 
   it("모바일 목록 · 도착 전 분기가 「등록된 재고가 없습니다」 보다 앞 · 호출부가 도착 기준을 넘긴다", () => {

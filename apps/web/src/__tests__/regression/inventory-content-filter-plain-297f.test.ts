@@ -16,6 +16,13 @@ const SRC = readFileSync(
   "utf8",
 );
 
+/* 🛑 부분 은퇴 §inventory-dead-tabs-removed (2026-09-26 · 호영님 판정) — 「성공해서 은퇴」가 아니다.
+ *   아래 it.skip 항목이 물던 앵커는 `inventory-content.tsx` 의 `{false && (…)}` 블록 또는
+ *   소비자 0 이던 `InventoryCard` 안에 있었다 — 렌더 0 이므로 **집행된 적이 없다.**
+ *   dead 파일은 걸렀지만 같은 파일 안의 dead 구역은 그 축이 보지 못했다.
+ *   명제는 그 자리에 원 단언째 남겨 둔다(복원용). 살아 있는 항목은 그대로 돈다.
+ *   복원용 원 명제: D3 필터 교체 후에도 §11.297d/e 의 ActionMenu 인스턴스 3종(utility-desktop / card / issue alert)이
+ *   남아 있다 — 그중 card / issue alert 2종이 죽은 구역이었다. 필터 축 단언 7건은 라이브라 그대로 돈다. */
 describe("§11.297f — inventory-content D3 filter (§global-filters 인라인 바로 진화)", () => {
   // 🔄 진화(2026-07-24, 호영님 승인): §11.297f 필터-드롭다운 패널(필터 버튼 → 절대배치 role=menu
   //   패널에 Select 내장) → §global-filters 데스크톱 공용 FilterBar 인라인으로 결정 교체
@@ -55,7 +62,7 @@ describe("§11.297f — inventory-content D3 filter (§global-filters 인라인 
     expect(SRC).not.toMatch(/<DropdownMenu(?:Trigger|Content|Item|Label|Separator)?\s/);
   });
 
-  it("기존 ActionMenu instance 보존 (utility-desktop/card/issue alert §11.297d/e) — utility-mobile 은 §mobile-residual-5 1a 바텀 시트로 이관", () => {
+  it.skip("[은퇴 2026-09-26 · {false &&} 안이었다] 기존 ActionMenu instance 보존 (utility-desktop/card/issue alert §11.297d/e)", () => {
     expect(SRC).toMatch(/<MobileActionSheet/);
     expect(SRC).toMatch(/menuId="inv-content-utility-desktop"/);
     expect(SRC).toMatch(/menuId="inv-content-card-actions"/);

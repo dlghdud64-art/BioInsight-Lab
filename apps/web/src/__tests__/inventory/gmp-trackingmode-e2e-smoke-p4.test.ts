@@ -2,8 +2,10 @@
  * §inventory-phaseB P4 — GMP trackingMode end-to-end smoke (종결)
  *   (PLAN: docs/plans/PLAN_inventory-phaseB-gmp-usage-trackingmode.md Phase 4)
  *
- * 전체 체인 정합 lock: P1 로직 → P2 schema → P3-server 게이팅 → P3-UI-a(차감 3 라이브 surface) → P3-UI-b(설정+API).
+ * 전체 체인 정합 lock: P1 로직 → P2 schema → P3-server 게이팅 → P3-UI-a(차감 2 라이브 surface) → P3-UI-b(설정+API).
  *   회귀 0: QUANTITY 기본(전 경로 무변경). Render-Reachability: inventory-main(dead) 제외 확정.
+ *   🛑 3 → 2 (2026-09-26 §inventory-dead-tabs-removed): 세 번째 surface 로 셌던 inventory-content 의
+ *      차감 dialog 는 `{false && (…)}` 안의 InventoryCard 에 있었다 — 라이브가 아니었다.
  */
 
 import { describe, it, expect } from "vitest";
@@ -35,10 +37,18 @@ describe("§inventory-phaseB P4 — end-to-end 체인 정합", () => {
      *   명제("trackingMode 검증 실패 시 422")는 참. OR 로 넓히지 않는다(대체 매칭 방지). */
     expect(USE_ROUTE).toMatch(/enforcement\.reject\(\s*422\b/);
   });
-  it("P3-UI-a 차감 3 라이브 surface GMP 필드", () => {
+  it("P3-UI-a 차감 2 라이브 surface GMP 필드", () => {
+    /* 🛑 3 → 2 재앵커 §inventory-dead-tabs-removed (2026-09-26 · 호영님 판정).
+     *   세 번째로 셌던 inventory-content 의 차감 dialog 는 `InventoryCard` 안에 있었고,
+     *   그 카드는 `{false && (…)}` 바깥에서 렌더된 적이 없다(소비자 0).
+     *   즉 「3 라이브 surface」 는 처음부터 거짓이었다 — 삭제가 그것을 드러냈다.
+     *   ⚠️ 아래 Render-Reachability 항목은 inventory-main 만 dead 로 적었는데,
+     *      **같은 파일 안의 구역**도 dead 일 수 있다는 것을 그 축이 보지 못했다. */
     expect(SCAN).toMatch(/trackingMode !== "QUANTITY" && \(/);
     expect(QR).toMatch(/trackingMode !== "QUANTITY" && \(/);
-    expect(CONTENT).toMatch(/usageTrackingMode !== "QUANTITY" && \(/);
+    /* 역계약 — 재고 목록 화면에 차감 dialog 가 다시 생기면 이 자리에서 알려준다
+     *   (그때는 GMP 필드를 함께 잠그고 이 수를 3 으로 올려야 한다). */
+    expect(CONTENT).not.toMatch(/usageTrackingMode/);
   });
   it("P3-UI-b 설정 Select + API 화이트리스트", () => {
     expect(MODAL).toMatch(/<Select value=\{trackingMode\} onValueChange=\{setTrackingMode\}>/);

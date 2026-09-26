@@ -20,10 +20,16 @@ function read(rel: string): string {
 const LIVE = "src/app/dashboard/inventory/inventory-content.tsx";
 
 describe("§11.366 D-8 Phase 1 — 재고 상세 마스터 필드 보강 (라이브 표면)", () => {
-  it("행/카드 트리거 = 상세 Sheet 오픈 (no-op 0 회귀 가드)", () => {
+  it("행 트리거 = 상세 Sheet 오픈 (no-op 0 회귀 가드)", () => {
+    /* 🛑 재앵커 §inventory-dead-tabs-removed (2026-09-26 · 호영님 판정).
+     *   `setSelectedItem(inv)` 는 `{false && (…)}` 안의 카드 그리드 자리였다 — 렌더 0.
+     *   라이브 트리거는 표 행의 `setSelectedItem(inventory)` 다. 「카드」 축은 존재하지 않는다.
+     *   ⚠️ 위 2026-08-06 재앵커가 dead **파일**에서 라이브 파일로 옮겼지만,
+     *      옮긴 자리가 그 파일 안의 dead **구역**이었다. 축이 파일이면 이 구분을 못 본다. */
     const src = read(LIVE);
-    expect(src).toMatch(/setSelectedItem\(inv\)/);
+    expect(src).toMatch(/setSelectedItem\(inventory\)/);
     expect(src).toMatch(/setIsSheetOpen\(true\)/);
+    expect(src).not.toMatch(/setSelectedItem\(inv\)/);
   });
 
   it("영문명(nameEn) 보강 — 값 있을 때만 표시 (가짜 금지)", () => {
