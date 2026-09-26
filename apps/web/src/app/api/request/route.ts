@@ -3,6 +3,13 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { PurchaseRequestStatus, TeamRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+/* §quote-approval-request-removed (2026-09-26 · 호영님 판정) — 결재 요청은 **결재가 열려 있을 때만** 받는다.
+ *   견적 상세의 「승인 요청」 버튼이 이 라우트를 부르면서 canRequestApproval 을 거치지 않았다 —
+ *   prod capability 는 enabled:false(policy_not_enabled)인데 이 경로만 열려 있었다(호영님 실측).
+ *   🔑 라우트는 지우지 않는다 — 재입고 요청 쪽과 PurchaseRequest 모델을 공유한다. **막기만** 한다.
+ *   판정은 request-approval 라우트의 400 두 개와 **같은 함수**가 한다(§approval-gate-single-source). */
+import { resolveApprovalCapability } from "@/lib/approval/approval-capability.server";
+import { APPROVAL_BLOCK_MESSAGE } from "@/lib/approval/approval-capability";
 
 /**
  * 구매 요청 생성 (MEMBER만 가능)
@@ -30,11 +37,27 @@ export async function POST(request: NextRequest) {
     });
     if (!enforcement.allowed) return enforcement.deny();
 
+    // §quote-approval-request-removed (2026-09-26 · 호영님 판정) — 결재 게이트. 호출자가 0이어도 라우트가 스스로 막는다.
+    const capability = await resolveApprovalCapability(session.user.id);
+    if (!capability.enabled) {
+      /* 🔑 raw NextResponse 가 아니라 enforcement.reject() 를 쓴다(§audit-reject-raw-4xx 래칫).
+         lock 을 먼저 풀고 응답을 만든다 — 내보내고 정리하면 실패 시 흔적이 없다. */
+      return enforcement.reject(400, {
+        error: "APPROVAL_NOT_AVAILABLE",
+        reason: capability.reason,
+        message: capability.reason ? APPROVAL_BLOCK_MESSAGE[capability.reason] : "결재 요청을 사용할 수 없습니다.",
+      });
+    }
+
     if (!teamId || !title || !items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { error: "Team ID, title, and items are required" },
-        { status: 400 }
-      );
+      /* §quote-approval-request-removed (2026-09-26 · 호영님 판정) — 핸들러 판정 거부는 reject() 로 낸다(§audit-reject-raw-4xx).
+         🔑 이 지점은 **원래 있던** raw 4xx 다. 위에 게이트 블록이 들어가면서
+            래칫 스캐너의 260자 창 밖으로 deny() 가 밀려 드러났다 —
+            래칫이 올라간 게 아니라 **가려져 있던 것이 보인 것**이다(§4원칙 ⑤ 고정 폭 창).
+            그 자리에서 정본 형태로 바꾼다. */
+      return enforcement.reject(400, {
+        error: "Team ID, title, and items are required",
+      });
     }
 
     // 팀 멤버인지 확인

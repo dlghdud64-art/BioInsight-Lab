@@ -197,9 +197,6 @@ export default function QuoteDetailPage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [copied, setCopied] = useState(false);
-  const [showRequestDialog, setShowRequestDialog] = useState(false);
-  const [requestMessage, setRequestMessage] = useState("");
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [purchaseBudgetId, setPurchaseBudgetId] = useState("");
   const [purchaseVendorRequestId, setPurchaseVendorRequestId] = useState("");
@@ -289,7 +286,7 @@ export default function QuoteDetailPage() {
   const vendorRequestsData = vendorQuery.data;
   const refetchVendorRequests = vendorQuery.refetch;
 
-  // ── 쿼리: 팀 (실패해도 승인 요청만 제한) ─────────────────────
+  // ── 쿼리: 팀 (실패해도 팀 표시만 제한 · §quote-approval-request-removed (2026-09-26 · 호영님 판정)) ─────────────────────
   const teamsQuery = useQuery({
     queryKey: ["user-teams"],
     queryFn: async ({ signal }) => {
@@ -381,36 +378,20 @@ export default function QuoteDetailPage() {
     setReplyItems((prev) => ({ ...prev, [itemId]: { ...prev[itemId], [field]: value } }));
   };
 
-  const purchaseRequestMutation = useMutation({
-    mutationFn: async ({ teamId, message }: { teamId: string; message: string }) => {
-      const quote = quoteData?.quote;
-      if (!quote) throw new Error("Quote not found");
-      const items = quote.items?.map((item: any) => ({
-        productId: item.productId, name: item.name, brand: item.brand,
-        catalogNumber: item.catalogNumber, quantity: item.quantity,
-        unitPrice: item.unitPrice, lineTotal: item.lineTotal,
-      })) || [];
-      const res = await csrfFetch("/api/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamId, title: quote.title || "구매 요청", message, items, quoteId: quote.id, totalAmount: quote.totalAmount }),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to create purchase request");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["quotes"] });
-      setShowRequestDialog(false);
-      setRequestMessage("");
-      toast({ title: "승인 요청이 전송되었습니다", description: "관리자의 승인을 기다려주세요." });
-    },
-    onError: (error: Error) => {
-      toast({ title: "승인 요청 실패", description: error.message, variant: "destructive" });
-    },
-  });
+  /* 🛑 은퇴 §quote-approval-request-removed (2026-09-26 · 호영님 판정) — purchaseRequestMutation (POST /api/request).
+   *   견적 상세 COMPLETED + 회원사 자리에 「승인 요청」 버튼이 살아 있었다. 세 가지가 동시에 틀렸다(호영님):
+   *     ① **결재 게이트를 거치지 않았다** — canRequestApproval 을 부르지 않는다.
+   *        prod capability 는 `enabled:false · policy_not_enabled` 인데 이 경로만 열려 있었다.
+   *     ② **승인할 사람이 그 요청을 볼 수 없다** — 승인 화면은 /admin/requests 하나뿐이고
+   *        거기는 플랫폼 관리자 전용이라 고객사 관리자는 대시보드로 돌려보내진다.
+   *     ③ **순서가 거꾸로다** — COMPLETED 는 「구매 처리」 로 이미 구매가 기록되고 예산이 차감된 상태다.
+   *        그 뒤에 승인을 요청하는 흐름이었다.
+   *   prod 실측(operator-shell → Supabase xhid… Session Pooler · SELECT 만 · 2026-09-26):
+   *     PurchaseRequest **총 0건** · PENDING **0건** → 아무도 볼 수 없는 곳에서 기다린 고객은 없다.
+   *   🔑 라우트(/api/request)는 **지우지 않았다** — 재입고 요청 쪽과 PurchaseRequest 모델을 공유한다.
+   *      대신 그 라우트에 canRequestApproval 게이트를 걸었다(§approval-gate-single-source 와 같은 함수).
+   *   딸린 상태도 함께 지웠다: showRequestDialog · requestMessage · selectedTeamId (소비자 0).
+   *   역계약: __tests__/regression/quote-approval-request-removed.test.ts */
 
   /* 🛑 은퇴 §order-entry-removed (2026-09-25 · 호영님 판정) — createOrderMutation (POST /api/orders).
    *   prod 주문 2건이 이 경로와 견적 화면 경로로 생겼고, 그 2건을 볼 화면이 지금 없다.
@@ -648,7 +629,8 @@ export default function QuoteDetailPage() {
     switch (quoteStatus) {
       case "PENDING": return { actor: "관리자", label: "견적 발송 필요" };
       case "SENT": return { actor: "벤더", label: "벤더 회신 대기" };
-      case "RESPONDED": return { actor: isAdmin ? "관리자" : "회원사", label: isAdmin ? "비교 검토 필요" : "승인 결정 필요" };
+      // §quote-approval-request-removed (2026-09-26 · 호영님 판정) — 회원사가 RESPONDED 에서 하는 일은 결재가 아니라 구매 처리다(「구매 처리」 버튼이 그 자리다).
+      case "RESPONDED": return { actor: isAdmin ? "관리자" : "회원사", label: isAdmin ? "비교 검토 필요" : "비교 후 구매 처리" };
       case "COMPLETED": return { actor: "—", label: "처리 완료" };
       case "CANCELLED": return { actor: "—", label: "취소됨" };
       default: return { actor: "—", label: "—" };
@@ -826,7 +808,9 @@ export default function QuoteDetailPage() {
                 </span>
               </div>
               <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">승인 필요</span>
+                {/* §quote-approval-request-removed (2026-09-26 · 호영님 판정) — 이 칸의 조건은 status === "RESPONDED" 일 뿐이고 결재와 무관하다.
+                    「승인」 은 지금 모든 사용자에게 꺼져 있는 결재 축의 단어다 → 참인 이름으로. */}
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">선정 필요</span>
                 {needsApproval ? (
                   <Badge variant="outline" className="text-xs px-2 py-0.5 w-fit font-semibold bg-blue-50 text-blue-700 border-blue-200">예</Badge>
                 ) : (
@@ -1532,42 +1516,8 @@ export default function QuoteDetailPage() {
                   </div>
                 )}
 
-                {/* COMPLETED + 회원사: 승인 요청 */}
-                {quoteStatus === "COMPLETED" && !quote.order && !isAdmin && (
-                  <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full sm:w-auto text-sm h-10">
-                        <Send className="h-4 w-4 mr-2 shrink-0" />승인 요청
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>승인 요청</DialogTitle>
-                        <DialogDescription>관리자에게 구매 승인을 요청합니다.</DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label>팀 선택</Label>
-                          <Select value={selectedTeamId || ""} onValueChange={setSelectedTeamId}>
-                            <SelectTrigger><SelectValue placeholder="팀을 선택하세요" /></SelectTrigger>
-                            <SelectContent>{teamsData?.teams?.map((team: any) => (<SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>))}</SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>요청 메모 (선택)</Label>
-                          <Textarea placeholder="예: 실험 A에 필요함, 긴급 주문 요청 등" value={requestMessage} onChange={(e) => setRequestMessage(e.target.value)} rows={3} />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" onClick={() => setShowRequestDialog(false)} className="flex-1">취소</Button>
-                          <Button onClick={() => { if (!selectedTeamId) { toast({ title: "팀을 선택해주세요", variant: "destructive" }); return; } purchaseRequestMutation.mutate({ teamId: selectedTeamId, message: requestMessage }); }}
-                            disabled={purchaseRequestMutation.isPending || !selectedTeamId} className="flex-1">
-                            {purchaseRequestMutation.isPending ? "전송 중..." : "요청 전송"}
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                )}
+                {/* 🛑 삭제 §quote-approval-request-removed (2026-09-26 · 호영님 판정) — COMPLETED + 회원사 「승인 요청」 버튼·다이얼로그.
+                    위 mutation 은퇴 주석에 삭제 근거 셋과 prod 실측이 있다. */}
 
                 {/* COMPLETED + 주문 완료 */}
                 {quoteStatus === "COMPLETED" && quote.order && (
