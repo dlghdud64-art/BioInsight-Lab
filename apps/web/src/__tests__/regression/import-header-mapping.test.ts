@@ -42,7 +42,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
-import { matchHeaders, STANDARD_FIELDS } from "@/components/inventory/import-wizard";
+import { matchHeaders, STANDARD_FIELDS, formatDateCell } from "@/components/inventory/import-wizard";
 
 const SRC = join(__dirname, "..", "..");
 const APPS_WEB = join(SRC, "..");
@@ -65,15 +65,29 @@ function schemaHas(model: string, field: string): boolean {
 }
 
 describe("§import-header-mapping · 결함 ② 한 컬럼이 두 필드에 가지 않는다", () => {
-  it("① 호영님이 넣은 「수량」 은 어느 쪽에도 자동 배정되지 않는다", () => {
-    /* 구 판본은 부분 문자열을 허용해 「수량」 이 재고수량·최소주문수량 둘 다에 걸렸다.
-       이제 완전 일치라 아무 필드에도 안 걸리고, 모호/미인식으로 올라간다 — 사용자가 고른다. */
+  it("① 「수량」 은 재고 수량이다 · 최소 주문 수량에는 가지 않는다", () => {
+    /* 구 판본은 부분 문자열을 허용해 「수량」 이 재고수량·최소주문수량 **둘 다**에 걸렸다(결함 ②).
+       1차 수정은 완전 일치로 바꿨는데, 「수량」 이 어느 사전에도 없어서 **미인식으로 빠졌다** —
+       필수 필드가 비어 호영님 파일이 한 줄도 등록되지 않았다(실측 2회차).
+       🔑 호영님 판정: 모호성을 없애는 방법이 사용자에게 묻는 것만은 아니다.
+          재고 가져오기에서 맨 「수량」 은 재고 수량이므로 **한쪽에만** 둔다 —
+          서로소(⑪)가 지켜지면서 모호가 애초에 생기지 않는다. */
     const r = matchHeaders(["제품명", "수량"]);
-    expect(r.mapping.currentQuantity).toBeUndefined();
+    expect(r.mapping.currentQuantity).toBe("수량");
     expect(r.mapping.minOrderQty).toBeUndefined();
-    // 사용자에게 보이는 자리로 올라간다 — 조용히 사라지지 않는다.
-    const surfaced = [...r.unrecognized, ...r.ambiguous.map((a) => a.column)];
-    expect(surfaced).toContain("수량");
+    // 미인식으로 빠지지 않는다 — 그게 「한 줄도 등록 안 됨」 의 원인이었다.
+    expect(r.unrecognized).not.toContain("수량");
+    expect(r.ambiguous.map((a) => a.column)).not.toContain("수량");
+  });
+
+  it("①-b 최소 주문 수량은 명시적 헤더만 받는다", () => {
+    /* 「수량」 이 여기로 새면 결함 ②(재고 수량 복사)가 되살아난다. */
+    for (const h of ["최소주문수량", "최소 주문", "MOQ"]) {
+      expect(matchHeaders(["제품명", "재고 수량", h]).mapping.minOrderQty, h).toBe(h);
+    }
+    const r = matchHeaders(["제품명", "수량", "최소주문수량"]);
+    expect(r.mapping.currentQuantity).toBe("수량");
+    expect(r.mapping.minOrderQty).toBe("최소주문수량");
   });
 
   it("② 어떤 컬럼도 두 필드에 동시에 배정되지 않는다 (전 컬럼 불변식)", () => {
@@ -186,5 +200,47 @@ describe("§import-header-mapping · 로트·제조사가 실제로 저장된다
     // 사전이 실제로 읽혔는지 — 빈 배열이면 위 루프가 아무것도 검사하지 않는다.
     expect(seen.size).toBeGreaterThan(40);
     expect(STANDARD_FIELDS.length).toBe(11);
+  });
+
+  it("⑫ 열 연결 컨트롤이 실재하고, 그 결과가 판정까지 간다", () => {
+    /* 🛑 앞 커밋에서 「아래에서 직접 지정하세요」 라고 안내했는데 **지정할 컨트롤이 없었다**
+          (setColumnMapping 호출처가 자동 매핑·초기화 둘뿐). 없는 것을 가리키는 안내는 그 자체로 결함이다.
+       세 가지를 함께 본다 — 하나만 있으면 여전히 못 고친다:
+         (a) 필드마다 select 가 있다      (b) 한 열을 두 항목에 못 넣는다(UI 축)
+         (c) 연결을 바꾸면 **검증이 다시 돈다** — 안 돌면 「0개 등록 가능」 이 그대로 남는다 */
+    const src = code(WIZARD);
+    expect(src).toMatch(/data-testid=\{"import-map-" \+ field\.key\}/);
+    expect(src).toMatch(/onChange=\{\(e\) => \{[\s\S]{0,400}setColumnMapping\(\(prev\) => \{/);
+    expect(src).toMatch(/가져오지 않음/);
+    expect(src).toMatch(/takenByOthers\.has\(col\)/);
+    expect(src).toMatch(/disabled=\{takenByOthers\.has\(col\)\}/);
+    // (c) 재검증 — 컨트롤의 결과가 판정에 도달하는 경로
+    expect(src).toMatch(/useEffect\(\(\) => \{[\s\S]{0,300}validatePreviewData\(previewData, columnMapping\)/);
+    expect(src).toMatch(/\}, \[previewData, columnMapping\]\)/);
+  });
+
+  it("⑬ 유효기한은 ISO 로 표시하고 해석 순서를 밝힌다", () => {
+    /* 호영님 판정 4 — `12/31/27`(미국식)로 보였다. XLSX 가 raw:false 로 시트 서식을 그대로 낸다.
+       🛑 ISO 로만 보여주면 `01/02/27` 같은 값에서 MM/DD 를 **단정**하는 것이 된다.
+          그래서 표시는 ISO 로 하고, 그 가정을 문장으로 함께 적는다. */
+    expect(formatDateCell("12/31/27")).toBe("2027-12-31");
+    expect(formatDateCell("2027-12-31")).toBe("2027-12-31");
+    expect(formatDateCell("불명")).toBe("불명"); // 파싱 불가면 원본(추측하지 않는다)
+    expect(formatDateCell("")).toBe("");
+    const src = code(WIZARD);
+    expect(src).toMatch(/field\.key === "expiryDate" \? formatDateCell\(value\)/);
+    expect(src).toMatch(/월\/일\/연 순서로 읽습니다/);
+  });
+
+  it("⑭ 오류 표시가 읽힌다 (밝은 배경 · 어두운 글자)", () => {
+    /* 호영님 판정 3 — 오류 행과 「오류 상세」 가 어두운 빨강 바탕에 어두운 글자라 못 읽혔다.
+       원인: `dark:` 접두어가 사라져 `bg-red-50 bg-red-950` 가 **둘 다** 적용됐다(뒤엣것이 이긴다).
+       같은 형태가 blue·green 에도 있었다 — 형제 슬롯 전수. */
+    const src = code(WIZARD);
+    for (const lost of ["bg-red-950", "bg-blue-950", "bg-green-950", "border-red-800", "border-blue-800", "text-blue-100", "text-blue-300"]) {
+      expect(src, lost).not.toMatch(new RegExp(lost));
+    }
+    // 오류 상세는 밝은 배경 + 읽히는 글자색을 명시한다.
+    expect(src).toMatch(/bg-red-50 border border-red-200 rounded p-2 text-red-700/);
   });
 });

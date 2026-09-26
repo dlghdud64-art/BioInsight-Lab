@@ -133,7 +133,7 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
           {/* §spend-source-honesty (2026-09-26 · 호영님 실측) — 「첫 발주」 는 제품에 없는 행위다(발주 UI 경로 0).
               지출은 PurchaseRecord 에서 오고, 그것을 만드는 것은 견적의 「구매 진행 처리」 다. */}
           <p className="text-[11px] text-slate-400 break-keep">
-            견적에서 구매 진행 처리를 하면 월별 지출 트렌드가 그려집니다.
+            견적 상세에서 구매 진행 처리를 하면 월별 지출 트렌드가 그려집니다.
           </p>
         </div>
       ) : (

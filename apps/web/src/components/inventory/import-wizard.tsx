@@ -59,14 +59,21 @@ export const STANDARD_FIELDS = [
   { key: "catalogNumber", label: "카탈로그 번호", required: false,
     synonyms: ["카탈로그번호", "카탈로그", "카달로그번호", "제품번호", "품번",
                "catno", "cat.no", "catalog", "catalogno", "catalognumber", "sku"] },
+  /* §import-mapping-usable (2026-09-26 · 호영님 실측 2회차) — 호영님 판정 1: 「수량」 은 **재고 수량**이다.
+   *   연구실 엑셀에서 가장 흔한 헤더가 「수량」 이고, 재고 가져오기에서 맨 「수량」 은 재고 수량이다.
+   *   🔑 모호성을 없애는 방법이 사용자에게 묻는 것만은 아니다(호영님) —
+   *      한쪽에만 두면 서로소(⑪)가 지켜지면서 모호가 **애초에 생기지 않는다.**
+   *   실측 2회차에서 이 헤더가 미인식으로 빠져 **한 줄도 등록되지 않았다**(필수 필드 공백). */
   { key: "currentQuantity", label: "재고 수량", required: true,
-    synonyms: ["재고", "재고량", "현재수량", "보유수량", "qty", "quantity", "stock", "currentqty"] },
+    synonyms: ["수량", "재고", "재고량", "현재수량", "보유수량", "qty", "quantity", "stock", "currentqty"] },
   { key: "unit", label: "단위", required: false,
     synonyms: ["규격단위", "uom", "unit"] },
   { key: "safetyStock", label: "안전 재고", required: false,
     synonyms: ["안전재고", "안전재고량", "safetystock", "minstock"] },
+  /* §import-mapping-usable (2026-09-26 · 호영님 실측 2회차) — 최소 주문 수량의 동의어는 **명시적인 것만** 둔다(호영님 판정 1).
+   *   「수량」 이 여기로 새면 결함 ②(재고 수량 복사)가 되살아난다. */
   { key: "minOrderQty", label: "최소 주문 수량", required: false,
-    synonyms: ["최소주문수량", "최소발주수량", "moq", "minorderqty"] },
+    synonyms: ["최소주문수량", "최소 주문", "moq", "minorderqty"] },
   { key: "location", label: "보관 위치", required: false,
     synonyms: ["보관위치", "위치", "보관장소", "장소", "location", "storage"] },
   { key: "expiryDate", label: "유통기한", required: false,
@@ -81,6 +88,23 @@ export const STANDARD_FIELDS = [
   { key: "notes", label: "비고", required: false,
     synonyms: ["메모", "특이사항", "note", "notes", "remark", "remarks", "memo"] },
 ] as const;
+
+/**
+ * §import-mapping-usable (2026-09-26 · 호영님 실측 2회차) — 호영님 판정 4: 유효기한이 `12/31/27`(미국식)로 보였다.
+ * XLSX 파서가 `raw: false` 로 읽어 시트 서식 그대로(M/D/YY) 내주기 때문이다.
+ * 🛑 표시만 ISO 로 바꾸고 **해석 순서를 숨기지 않는다** — `01/02/27` 처럼 진짜 모호한 값은
+ *    ISO 로 보여주는 순간 MM/DD 를 단정하는 것이 된다. 그래서 미리보기에 그 가정을 문장으로 함께 적는다.
+ * 파싱 불가면 원본을 그대로 보여준다(추측하지 않는다).
+ */
+export function formatDateCell(value: unknown): string {
+  const s = String(value ?? "").trim();
+  if (!s) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // 이미 ISO
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return s;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 
 /** 헤더 정규화 — 띄어쓰기·구분자·대소문자만 지운다. 글자를 빼지는 않는다. */
 function normalizeHeader(raw: string): string {
@@ -368,6 +392,16 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
     }));
   };
 
+  /* §import-mapping-usable (2026-09-26 · 호영님 실측 2회차) — 열 연결을 바꾸면 **검증을 다시 돌린다.**
+     구 배선은 업로드 시점과 행 편집 시점에만 검증했다 → 사용자가 매핑을 고쳐도
+     「총 2개 중 0개를 등록할 수 있습니다」 가 그대로 남는다. 고칠 수 있는 화면인데 고쳐지지 않은 것처럼 보인다.
+     🔑 컨트롤을 만드는 것만으로는 부족하다 — 그 컨트롤의 결과가 판정에 도달해야 한다. */
+  useEffect(() => {
+    if (!previewData) return;
+    void validatePreviewData(previewData, columnMapping);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewData, columnMapping]);
+
   const saveEdit = (rowNumber: number) => {
     setEditingRow(null);
     // Re-validate edited row
@@ -528,13 +562,13 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* 템플릿 다운로드 */}
-            <div className="bg-blue-50  bg-blue-950 border border-blue-200  border-blue-800 rounded-lg p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <div className="flex-1">
-                  <h4 className="font-medium text-blue-900  text-blue-100 mb-1">
+                  <h4 className="font-medium text-blue-900 mb-1">
                     이 양식을 사용하면 가장 정확합니다
                   </h4>
-                  <p className="text-sm text-blue-700  text-blue-300">
+                  <p className="text-sm text-blue-700">
                     샘플 양식을 다운로드하여 형식에 맞춰 작성하세요.
                   </p>
                 </div>
@@ -670,6 +704,65 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
               </div>
             )}
 
+            {/* §import-mapping-usable (2026-09-26 · 호영님 실측 2회차) — 🛑 **열 연결 컨트롤이 없었다.**
+                앞 커밋 보고에 「아래에서 직접 지정하세요」 라고 적었는데 지정할 자리가 라이브에 없었다 —
+                setColumnMapping 을 부르는 곳이 자동 매핑(1)과 초기화(1) 둘뿐이었다.
+                즉 자동으로 못 맞춘 열은 **사용자가 손쓸 방법이 0** 이었고, 파일을 고쳐 다시 올리는 것뿐이었다.
+                그 문장이 가리킨 컨트롤을 여기서 만든다 — 없는 것을 가리키는 안내는 그 자체로 결함이다. */}
+            <div className="rounded-lg border border-bd p-4">
+              <p className="text-sm font-semibold text-slate-800">열 연결</p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                자동으로 맞춘 열은 그대로 두셔도 됩니다 · 비어 있거나 잘못 맞은 항목만 고르세요
+              </p>
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {STANDARD_FIELDS.map((field) => {
+                  const selected = columnMapping[field.key] ?? "";
+                  // 다른 항목이 이미 쓴 열은 고를 수 없다 — 한 열이 두 항목에 들어가는 것을 UI 에서도 막는다.
+                  const takenByOthers = new Set(
+                    Object.entries(columnMapping)
+                      .filter(([k, v]) => k !== field.key && v)
+                      .map(([, v]) => v),
+                  );
+                  return (
+                    <label key={field.key} className="flex items-center gap-2 text-sm">
+                      <span className="w-32 shrink-0 text-slate-700">
+                        {field.label}
+                        {field.required && <span className="text-destructive ml-0.5">*</span>}
+                      </span>
+                      <select
+                        data-testid={"import-map-" + field.key}
+                        value={selected}
+                        onChange={(e) => {
+                          const col = e.target.value;
+                          setColumnMapping((prev) => {
+                            const next = { ...prev };
+                            if (col) next[field.key] = col;
+                            else delete next[field.key];
+                            return next;
+                          });
+                        }}
+                        className="h-10 min-h-[44px] flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900"
+                      >
+                        <option value="">가져오지 않음</option>
+                        {previewData.columns.map((col) => (
+                          <option key={col} value={col} disabled={takenByOthers.has(col)}>
+                            {col}
+                            {takenByOthers.has(col) ? " (다른 항목에 연결됨)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  );
+                })}
+              </div>
+              {/* §import-mapping-usable (2026-09-26 · 호영님 실측 2회차) — 판정 4: 날짜 해석 순서를 문장으로 밝힌다. ISO 로만 보여주면 MM/DD 를 단정하는 것이 된다. */}
+              {columnMapping.expiryDate && (
+                <p className="mt-3 text-xs text-slate-500">
+                  유효기한은 2027-12-31 형식으로 표시·저장합니다 · 파일이 12/31/27 처럼 적혀 있으면 월/일/연 순서로 읽습니다
+                </p>
+              )}
+            </div>
+
             {/* 미리보기 테이블 */}
             <div className="border rounded-lg overflow-auto max-h-[600px]">
               <Table>
@@ -702,7 +795,7 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                       <TableRow
                         key={idx}
                         className={`
-                          ${hasError && !isExcluded ? "bg-red-50  bg-red-950" : ""}
+                          ${hasError && !isExcluded ? "bg-red-50" : ""}
                           ${isExcluded ? "opacity-50" : ""}
                         `}
                       >
@@ -729,7 +822,8 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                                 />
                               ) : (
                                 <span className={hasError ? "text-destructive" : ""}>
-                                  {String(value)}
+                                  {/* §import-mapping-usable (2026-09-26 · 호영님 실측 2회차) — 유효기한 열은 ISO 로 보여준다(판정 4). 나머지는 원본 그대로. */}
+                                  {field.key === "expiryDate" ? formatDateCell(value) : String(value)}
                                 </span>
                               )}
                             </TableCell>
@@ -778,7 +872,7 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                   {Object.values(validationErrors).map((error) => (
                     <div
                       key={error.row}
-                      className="text-sm bg-red-50  bg-red-950 border border-red-200  border-red-800 rounded p-2"
+                      className="text-sm bg-red-50 border border-red-200 rounded p-2 text-red-700"
                     >
                       <span className="font-medium">행 {error.row}:</span>{" "}
                       {error.errors.join(", ")}
@@ -832,13 +926,13 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                 <div className="text-2xl font-bold">{importResult.totalRows}</div>
                 <div className="text-sm text-muted-foreground">총 행 수</div>
               </div>
-              <div className="border rounded-lg p-4 text-center bg-green-50  bg-green-950">
+              <div className="border rounded-lg p-4 text-center bg-green-50">
                 <div className="text-2xl font-bold text-green-600 text-green-400">
                   {importResult.successRows}
                 </div>
                 <div className="text-sm text-muted-foreground">성공</div>
               </div>
-              <div className="border rounded-lg p-4 text-center bg-red-50  bg-red-950">
+              <div className="border rounded-lg p-4 text-center bg-red-50">
                 <div className="text-2xl font-bold text-red-600 text-red-400">
                   {importResult.errorRows}
                 </div>

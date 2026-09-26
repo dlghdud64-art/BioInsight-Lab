@@ -827,7 +827,7 @@ export default function AnalyticsPage() {
               </h2>
               <p className="text-sm text-slate-300 mt-2 leading-relaxed max-w-2xl break-keep">
                 예산 소진율, 공급사 의존도, 이상 지출 신호는 모두 실제 구매 기록에서 계산됩니다.
-                지금은 0건 수집됨 · 견적에서 구매 진행 처리를 하면 아래 미리보기가 실제 차트로 전환됩니다.
+                지금은 0건 수집됨 · 견적 상세에서 구매 진행 처리를 하면 아래 미리보기가 실제 차트로 전환됩니다.
               </p>
               <div className="flex flex-col sm:flex-row gap-2.5 mt-4">
                 <Link
