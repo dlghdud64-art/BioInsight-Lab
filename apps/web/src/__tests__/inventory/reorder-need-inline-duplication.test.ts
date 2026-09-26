@@ -129,7 +129,9 @@ describe("§reorder-need-inline-duplication · 정본과 같은 명제를 인라
       "components/inventory/InventoryTable.tsx A<= 가드:-": 1, // 복합 판정을 "부족" 라벨 안에 복제
       "components/inventory/InventoryTable.tsx B<= 가드:null비교": 1,
       "components/inventory/ReorderReviewSheet.tsx B<= 가드:null비교": 1,
-      "components/inventory/inventory-context-panel.tsx A'<= 가드:-": 1,
+      // 제거됨: "components/inventory/inventory-context-panel.tsx A'<= 가드:-" — §inventory-unmeasured-figures(2026-09-26)
+      //   `daysLeft <= leadTimeDays` 형태 3곳(리스크·액션·표시)을 지웠다. 정본 호출로 닫은 것이 아니라
+      //   분모(averageDailyUsage)와 leadTimeDays 에 **생산자가 0곳**이어서 값 자체가 지어낸 수였기 때문이다.
       "components/inventory/inventory-context-panel.tsx B<= 가드:null비교": 4,
       // 제거됨: "components/inventory/stock-lifespan-gauge.tsx B<= 가드:없음" — §inventory-dead-tabs-removed(2026-09-26) 파일 삭제(importer 0)
       "hooks/use-inventory-ai-panel.ts B<= 가드:truthy": 1, // 🛑 값 갈림(safetyStock === 0 && qty <= 0) · 0 나누기 가드 겸용

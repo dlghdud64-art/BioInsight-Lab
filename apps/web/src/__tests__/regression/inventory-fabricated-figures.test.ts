@@ -24,8 +24,13 @@
  *        처방은 삭제가 아니었다: 저장 경로(/api/inventory/import/preview+commit)와 그 경로를 부르는
  *        UI(import-wizard.tsx)가 **이미 있었고 렌더 도달이 0** 이었다 → 라이브 진입점을 그쪽으로 붙였다.
  *        반대 명제는 regression/inventory-import-fake-success.test.ts 가 든다.
- *      - inventory-context-panel.tsx   generateMockRisks/Actions 는 이름과 달리 실제 item 필드 파생.
- *                                      단 「미개봉 {수량×0.3}ea」 는 지어낸 수 · 「최근 14일 사용속도」 는 측정 안 한 표현
+ *      - ~~inventory-context-panel.tsx~~ → **닫힘 §inventory-unmeasured-figures (2026-09-26 · 호영님 판정)**
+ *        여기 적힌 그대로였다. 「미개봉 {수량×0.3}ea」 는 개봉/미개봉 축이 **스키마에 없어서** 출처 0이었고,
+ *        「최근 14일 사용속도」 는 그 14일 창이 코드에 없었다(저장 필드 averageDailyUsage 대입 0곳 ·
+ *        prod 13행 중 채워진 행 0 · 최근 14일 사용 기록 0행). 두 번째로 이 목록이 정답을 들고 있었다.
+ *        처방은 「추정치」 라벨이 아니라 **숨기기**였다(호영님) — 리스크/액션 분기 2개와 「소진 예측 근거」
+ *        섹션을 지웠다. 반대 명제는 regression/inventory-unmeasured-figures.test.ts 가 든다.
+ *        ⚠️ `averageDailyUsage?: number` prop 타입은 남겼다 — 측정 경로가 생기면 그 자리로 되살린다.
  *      - priority-action-queue.tsx     items 미전달 시 generateMockQueueItems 폴백(현재 부모가 항상 전달 → 도달 불가)
  *   2. 런타임 값. 소스 형태만 본다.
  *   3. 서버가 내려주는 가짜 값(API 쪽 하드코딩)은 이 검사 밖이다.

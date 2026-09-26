@@ -185,17 +185,15 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
     });
   }
 
-  if (item.averageDailyUsage && item.averageDailyUsage > 0) {
-    const daysLeft = item.currentQuantity / item.averageDailyUsage;
-    if (daysLeft <= (item.leadTimeDays ?? 14)) {
-      risks.push({
-        type: "reorder",
-        severity: daysLeft <= 3 ? "critical" : "high",
-        label: "재주문 필요",
-        detail: `현재 사용 속도 기준 ${Math.ceil(daysLeft)}일 내 소진 예상`,
-      });
-    }
-  }
+  /* 🛑 삭제 §inventory-unmeasured-figures (2026-09-26 · 호영님 판정) — 「사용 속도 기준 N일 내 소진 예상」.
+   *   이 분기는 `item.averageDailyUsage` 를 나눗셈의 분모로 쓰는데 그 값을 **만드는 곳이 없다.**
+   *   실측: `ProductInventory.averageDailyUsage` 에 대입하는 코드 0곳(쓰기 지점 15파일 전수) ·
+   *   prod 13행 중 채워진 행 0 · leadTimeDays 채워진 행 0 (2026-09-26 17:50 KST ·
+   *   operator-shell → Supabase xhid… Transaction Pooler · SELECT 만).
+   *   추정치 라벨을 붙여 남기지 않는다 — 숨긴다.
+   *   ⚠️ 재주문 신호가 사라진 것은 아니다: 안전재고 축(`below_safety`)과 canonical
+   *      `reorderQty`(/api/inventory/reorder-recommendations)가 그대로 든다.
+   *   역계약: __tests__/regression/inventory-unmeasured-figures.test.ts */
 
   // §inventory-delta-label-kpi P2a-2 (핸드오프 §2.3) — 공급사 미지정을 리스크 섹션에 승격(재발주 관문 연결).
   //   canonical item.vendor 기반(가짜 아님). 미지정이면 재발주 CTA 실행 전 공급사 선택이 관문.
@@ -232,17 +230,11 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
 function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
   const actions: RecommendedAction[] = [];
 
-  if (item.averageDailyUsage && item.averageDailyUsage > 0) {
-    const daysLeft = item.currentQuantity / item.averageDailyUsage;
-    if (daysLeft <= (item.leadTimeDays ?? 14)) {
-      actions.push({
-        type: "reorder",
-        label: "재주문 검토",
-        reasoning: `재주문: 최근 14일 사용속도 기준 ${Math.ceil(daysLeft)}일 내 소진 — 리드타임(${item.leadTimeDays ?? 14}일) 감안 시 즉시 발주 권장`,
-        priority: "high",
-      });
-    }
-  }
+  /* 🛑 삭제 §inventory-unmeasured-figures (2026-09-26 · 호영님 판정) — 「최근 14일 사용속도 기준」.
+   *   14일이라는 창은 코드 어디에도 없었다. 저장값 `averageDailyUsage` 는 생산자가 0곳이고,
+   *   유일한 파생(/api/inventory/reorder-recommendations)은 **마지막 기록 이후 경과일**로 나눈다 —
+   *   14일이 아니다. prod 최근 14일 사용 기록 0행(전체 17행 · 2026-03-20~06-13).
+   *   측정하지 않은 창을 문구로 단언하지 않는다. */
 
   if (item.expiryDate) {
     const days = Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000);
@@ -250,7 +242,10 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
       actions.push({
         type: "dispose",
         label: "폐기 검토",
-        reasoning: `폐기: 만료 D-${days} / 미개봉 ${Math.max(1, Math.floor(item.currentQuantity * 0.3))}ea — lot ${item.lotNumber || "N/A"} 유효기한 임박으로 폐기 또는 긴급 소진 필요`,
+        /* 🛑 「미개봉 {수량×0.3}ea」 삭제 §inventory-unmeasured-figures (2026-09-26 · 호영님 판정).
+         *   개봉/미개봉을 담는 축이 **스키마에 없다** (prod information_schema 조회:
+         *   ProductInventory 에 open/seal/container 계열 컬럼 0). 0.3 은 출처 0인 지어낸 계수였다. */
+        reasoning: `폐기: 만료 D-${days} / lot ${item.lotNumber || "N/A"} 유효기한 임박으로 폐기 또는 긴급 소진 필요`,
         priority: "high",
       });
       actions.push({
@@ -1347,43 +1342,17 @@ export function InventoryContextPanel({
           </div>
         </section>
 
-        {/* ── F. Consumption & Lead Time Rationale ── */}
-        {item.averageDailyUsage && item.averageDailyUsage > 0 && (
-          <section>
-            <SectionHeader icon={Info} label="소진 예측 근거" />
-            <div className="mt-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2.5 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-500">일평균 사용량</span>
-                <span className="text-slate-600 font-medium">{item.averageDailyUsage} {item.unit}/일</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-500">예상 소진일</span>
-                <span className={`font-medium ${
-                  (item.currentQuantity / item.averageDailyUsage) <= (item.leadTimeDays ?? 14) ? "text-red-400" : "text-slate-600"
-                }`}>{Math.ceil(item.currentQuantity / item.averageDailyUsage)}일 후</span>
-              </div>
-              {item.leadTimeDays && (
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500">공급 리드타임</span>
-                  <span className="text-slate-600 font-medium">{item.leadTimeDays}일</span>
-                </div>
-              )}
-              {item.leadTimeDays && item.averageDailyUsage > 0 && (
-                <div className="mt-1.5 pt-1.5 border-t border-bd/40">
-                  <p className="text-[10px] text-slate-500 leading-relaxed">
-                    {(() => {
-                      const daysLeft = item.currentQuantity / item.averageDailyUsage;
-                      if (daysLeft <= item.leadTimeDays) {
-                        return `최근 14일 사용속도 기준 ${Math.ceil(daysLeft)}일 내 소진 예상 — 리드타임(${item.leadTimeDays}일) 감안 시 즉시 발주 권장`;
-                      }
-                      return `현재 사용 속도 유지 시 ${Math.ceil(daysLeft)}일 여유 — 리드타임 내 안전`;
-                    })()}
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
+        {/* ── F. 삭제 §inventory-unmeasured-figures (2026-09-26 · 호영님 판정) ──
+            구 「소진 예측 근거」 섹션(일평균 사용량 · 예상 소진일 · 공급 리드타임 · 최근 14일 문구).
+            네 값이 모두 `item.averageDailyUsage` · `item.leadTimeDays` 두 필드에서 나오는데
+            **둘 다 만드는 곳이 없다** — 대입 코드 0곳(ProductInventory 쓰기 지점 15파일 전수) ·
+            prod 13행 중 채워진 행 각각 0 (2026-09-26 17:50 KST · operator-shell →
+            Supabase xhid… Transaction Pooler · SELECT 만).
+            즉 이 섹션은 실데이터로는 렌더되지 않았고, 값이 들어오는 유일한 경로는
+            파일럿 고정행(inventory-content 의 averageDailyUsage: 1)이었다.
+            「추정치」 라벨을 붙여 남기지 않는다 — 숨긴다. 측정 경로가 생기면 그때 되살린다
+            (되살릴 자리: canonical 은 /api/inventory/reorder-recommendations 의 dailyUsage 파생).
+            역계약: __tests__/regression/inventory-unmeasured-figures.test.ts */}
 
         {/* ── G. Recommended Actions ── */}
         {/* §11.322 Phase 4 — E. 권장 액션 접기(default false). 3차 위계(LOT/Flow/History) 통일. */}
