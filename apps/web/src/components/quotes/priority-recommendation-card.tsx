@@ -7,7 +7,10 @@
  *   - ★ "AI" 라벨/Sparkles 금지(룰베이스). orb(spark) 제거(제품상세 P6 선례).
  *   - ★ 정직(CEO 2026-06-21): 최우선 1건 상시 노출 + 真 level(높음/보통/낮음) 표시(가짜 격상 0).
  *     케이스 0건이면 노출 0(!best). 사유는 高·中만(低는 derive reason=null → 생략).
- *   - CTA = 케이스 열기(real → rail). dead button 0. 다음 단계는 본문 텍스트로 안내(가짜 액션 금지).
+ *   - CTA = 라벨이 말하는 목적지로 간다(page 가 stage 로 가른다). dead button 0.
+ *     §quote-brief-rail-removed 후속 (2026-09-27 · 호영님 라이브 실측) — 종전 CTA 는 레일을 열었다.
+ *     레일이 사라진 뒤 이 버튼은 입구를 잃었다. 그래서 onOpen 이 stage 를 함께 넘긴다 —
+ *     라벨이 stage 에서 나오므로 목적지도 stage 에서 나와야 라벨과 동작이 갈리지 않는다.
  *   - navy: §quote-management-redesign P4 — 대시보드 NextStepBanner 토큰 재사용
  *     (linear-gradient #1b2b50→#243a72→#2f6be0 + 광택 boxShadow, 시안 정합).
  *     §11.302 색: high=red·mid=yellow·low=중립(amber/orange 금지).
@@ -31,7 +34,9 @@ const NEXT_STEP: Record<Stage, string> = {
   // §quotes-mobile-refine P1 (호영님 2026-07-21) — 압박 어휘 폐지(honesty 톤, PO surface 와 정합).
   s2: "회신 확인",
   s3: "견적 비교",
-  s4: "승인 요청",
+  /* §approval-gate-single-source 후속 (2026-09-27 · 호영님 판정) — 구 「승인 요청」. 결재는 오늘 모든 사용자에게 꺼져 있고
+     이 버튼의 실제 목적지는 입고 관리다(§quote-completed-honesty). 누를 수 없는 결재를 약속하지 않는다. */
+  s4: "입고 관리",
   s5: "발주 전환",
 };
 // 真 우선순위 라벨(가짜 격상 0).
@@ -51,7 +56,7 @@ export function PriorityRecommendationCard({
   onOpen,
 }: {
   quotes: QuoteLike[];
-  onOpen: (id: string) => void;
+  onOpen: (id: string, stage: Stage) => void;
 }) {
   // §quote-screen-sian P6.3 §07 — "나중에" 일시 보류(추천 제외). 세션 메모리(새로고침 복귀 = 일시 보류 의미).
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -114,7 +119,7 @@ export function PriorityRecommendationCard({
       {/* §quote-screen-sian P6.3 §07 — 실행 버튼(다음 액션 = next.label) + "나중에"(일시 보류). dead button 0. */}
       <button
         type="button"
-        onClick={() => onOpen(best!.id)}
+        onClick={() => onOpen(best!.id, best!.stage)}
         className="relative z-10 inline-flex flex-none items-center justify-center gap-1 rounded-lg bg-white px-2.5 py-1.5 text-[12px] font-extrabold text-[#0f1b34] shadow-sm transition-colors hover:bg-[#eef2fe] min-h-[36px]"
         aria-label={`우선 추천 케이스 ${best.name} — ${nextStep}`}
       >

@@ -149,7 +149,9 @@ describe("§purchases-ui-removed · 구매 운영 화면도 삭제됐다", () =>
       const body = c.slice(start);
       expect(body, `${label}: 구매 운영 잔존`).not.toMatch(/\/dashboard\/purchases/);
       expect(body, `${label}: 죽은 focus 파라미터`).not.toMatch(/\?focus=/);
-      expect(body, `${label}: selected 미사용`).toMatch(/\?selected=\$\{encodeURIComponent/);
+      // 승계 §quote-brief-rail-removed 후속 (2026-09-27 · 호영님 판정) — 견적 상세는 이제 목록 ?selected= 가 아니라 /quotes/{id} 다. 명제(주문 알림 → 견적 상세)는 더 강하게 성립.
+      expect(body, `${label}: 견적 상세 미사용`).toMatch(/return `\/quotes\/\$\{encodeURIComponent\(quoteId\)\}`;/);
+      expect(body, `${label}: 목록 selected 잔존`).not.toMatch(/\?selected=/);
       // ORDER 분기가 quoteId 를 읽는다
       const oi = body.indexOf('case "ORDER"');
       expect(oi, `${label}: ORDER 분기 없음`).toBeGreaterThan(-1);

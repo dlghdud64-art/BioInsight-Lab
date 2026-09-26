@@ -41,7 +41,8 @@ describe("§quote-management P4-core-B — 우선 추천 카드(룰베이스)", 
   });
   it("CTA = 다음 액션(next.label) 직접 연결 + '나중에' 보류 (§quote-screen-sian P6.3 §07, dead button 0)", () => {
     // P6.3: "케이스 열기" → next.label 실행 버튼(onOpen=다음 액션) + "나중에"(일시 보류, dead 아님).
-    expect(CARD).toMatch(/onClick=\{\(\) => onOpen\(best!\.id\)\}/);
+    // 승계 §quote-brief-rail-removed 후속 (2026-09-27 · 호영님 판정) — onOpen 이 stage 를 함께 넘긴다. 명제(CTA 가 다음 액션에 직접 연결)는 불변.
+    expect(CARD).toMatch(/onClick=\{\(\) => onOpen\(best!\.id, best!\.stage\)\}/);
     expect(CARD).toMatch(/나중에/);
     expect(CARD).toMatch(/setDismissed/);
   });

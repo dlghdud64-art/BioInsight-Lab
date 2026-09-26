@@ -180,6 +180,88 @@ describe("§quote-brief-rail-removed ⑤ 대체 진입점 (dead button 0)", () =
   });
 });
 
+/**
+ * ⑦ 후속 (2026-09-27 · 호영님 라이브 실측) — 우선 추천 띠 「회신 확인 →」 이 prod 에서 두 번 눌러도 반응이 없었다.
+ *   ①~⑥ 은 **표면이 사라졌는가** 만 봤고, **레일을 열던 입구가 어디로 갔는가** 는 행 CTA 하나만 봤다.
+ *   그래서 호출 지점을 전수로 고정한다. 레일을 열던 호출 지점(4db4abe9 기준 · openQuoteContextRail · setSelectedQuoteId 로 레일 재오픈)은:
+ *     A 행 onClick   B 행 Enter   C handleQuoteCardSelect(카드·행·띠 CTA 의 합류점)   D 우선 추천 띠 onOpen
+ *     E 발송 결과 토스트 「발송 검토 다시」   F 「회신 추적 보기」
+ *   A·B 는 행 자체라 선택이 곧 동작이다(지시문). C~F 는 **버튼**이다 — 선택만 하고 끝나면 죽은 버튼이다.
+ */
+describe("§quote-brief-rail-removed ⑦ 레일을 열던 호출 지점 전수 → 각각 실제 이동", () => {
+  const handler = (() => {
+    const i = pageCode.indexOf("const handleQuoteCardSelect = useCallback(");
+    return blockFrom(pageCode, pageCode.indexOf("{", pageCode.indexOf("=>", i)));
+  })();
+  const band = (() => {
+    const i = pageCode.indexOf("<PriorityRecommendationCard");
+    expect(i).toBeGreaterThan(0);
+    return blockFrom(pageCode, pageCode.indexOf("{", pageCode.indexOf("onOpen={(id, stage) =>", i) + 22));
+  })();
+
+  it("선택만 하는 호출은 행(A·B)과 라벨 없는 카드 클릭 3곳뿐이다 (닫힌 집합)", () => {
+    const calls = (pageCode.match(/\bselectQuoteRow\(/g) ?? []).length - 1; // 선언 1 제외
+    expect(calls).toBe(3);
+    expect(band).not.toMatch(/\bselectQuoteRow\(/);
+  });
+
+  it("C 합류점: 라벨이 있으면 어떤 분기로 떨어져도 이동한다 (마지막 폴백 = 상세)", () => {
+    const tail = handler.slice(handler.lastIndexOf("const workWindow"));
+    // 블록의 마지막 문장이 상세 이동이다(주석은 stripComments 로 비워져 있다).
+    expect(tail).toMatch(/router\.push\(`\/quotes\/\$\{quoteId\}`\);\s*\}$/);
+    expect(tail).not.toMatch(/\bselectQuoteRow\(/);
+  });
+
+  it("D 띠: 「회신 확인」(s2) → 상세 · 그 밖은 합류점 · 못 찾으면 상세", () => {
+    expect(band).toMatch(/if \(stage === "s2"\) \{ router\.push\(`\/quotes\/\$\{id\}`\); return; \}/);
+    expect(band).toMatch(/if \(q\) handleQuoteCardSelect\(id, getOpSignals\(q\)\.ctaLabel\);/);
+    expect(band).toMatch(/else router\.push\(`\/quotes\/\$\{id\}`\);/);
+    const card = stripComments(read("src/components/quotes/priority-recommendation-card.tsx"));
+    expect(card).toMatch(/onOpen: \(id: string, stage: Stage\) => void;/);
+    expect(card).toMatch(/onClick=\{\(\) => onOpen\(best!\.id, best!\.stage\)\}/);
+    expect(card).toMatch(/s2: "회신 확인",/);
+  });
+
+  it("E·F 토스트: 선택만 되돌리는 형태 0", () => {
+    expect(pageCode).not.toMatch(/if \(quoteId\) setSelectedQuoteId\(quoteId\); \}/);
+  });
+});
+
+describe("§quote-brief-rail-removed ⑧ 알림 링크 = 견적 상세", () => {
+  it("/dashboard/quotes/[quoteId] 는 /quotes/{id} 로 보낸다", () => {
+    const code = stripComments(read("src/app/dashboard/quotes/[quoteId]/page.tsx"));
+    expect(code).toMatch(/redirect\(`\/quotes\/\$\{encodeURIComponent\(quoteId\)\}`\)/);
+    expect(code).not.toMatch(/\?selected=/);
+  });
+
+  it("알림 href 생성기에 ?selected= 목적지 0 · 견적 세 자리는 상세", () => {
+    const code = stripComments(read("src/lib/notifications/event-category-map.ts"));
+    expect(code).not.toMatch(/dashboard\/quotes\?selected=/);
+    expect(code.match(/return `\/quotes\/\$\{encodeURIComponent\((quoteId|item\.entityId)\)\}`;/g) ?? []).toHaveLength(3);
+  });
+});
+
+describe("§quote-brief-rail-removed ⑨ 결재 표면은 서버 판정 뒤에 있다 (§approval-gate-single-source)", () => {
+  it("결재 작업창: 여는 쪽과 그리는 쪽 둘 다 판정한다", () => {
+    expect(pageCode).toMatch(/if \(workWindow && \(workWindow !== "approval_prep" \|\| approvalEnabledRef\.current\)\)/);
+    expect(pageCode).toMatch(/\(activeWorkWindow !== "approval_prep" \|\| approvalEnabled\) && selectedQuote && selectedSignals/);
+    expect(pageCode).toMatch(/const approvalEnabled = approvalCapability\?\.enabled === true;/);
+  });
+
+  it("결재 작업창에 가짜 성공 primary · 잰 적 없는 고정 문자열 0", () => {
+    expect(pageCode).toMatch(/primaryAction=\{activeWorkWindow === "approval_prep" \? undefined : \{/);
+    for (const s of ["승인 패키지 준비 완료", "외부 전자결재", "승인 준비 중", "문서 상태", "예산 차단", "외부 승인 패키지 전달 준비"]) {
+      expect(pageCode, s).not.toContain(s);
+    }
+  });
+
+  it("우선 추천 띠 s4 는 결재를 약속하지 않는다 (목적지 = 입고 관리)", () => {
+    const card = stripComments(read("src/components/quotes/priority-recommendation-card.tsx"));
+    expect(card).toMatch(/s4: "입고 관리",/);
+    expect(card).not.toMatch(/"승인 요청"/);
+  });
+});
+
 describe("§quote-brief-rail-removed ⑥ 레일 전용 상태·훅 소비자 0 → 삭제", () => {
   it.each([
     "activeChipId", "briefSheetOpen", "briefDetailExpanded", "factsExpanded",

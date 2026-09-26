@@ -1523,6 +1523,8 @@ function QuotesPageContent() {
   // §11.279d — 카드 [발송] CTA (ctaLabel === "견적 요청 발송") →
   //   VendorRequestModal 직접 진입 (1 tap, 호영님 spec). rail panel skip
   //   전 setSelectedQuoteId + setActiveWorkWindow("request_send") 직접 호출.
+  // 결재 가능 여부(서버 판정 · /api/approval/capability). handleQuoteCardSelect 는 deps [] 라 ref 로 최신값을 읽는다.
+  const approvalEnabledRef = useRef(false);
   const handleQuoteCardSelect = useCallback((quoteId: string, ctaLabel?: string) => {
     if (ctaLabel === undefined) {
       selectQuoteRow(quoteId);
@@ -1551,13 +1553,15 @@ function QuotesPageContent() {
       return;
     }
     const workWindow = CTA_WORK_WINDOW[ctaLabel];
-    if (workWindow) {
+    // §approval-gate-single-source 후속 (2026-09-27 · 호영님 판정) — 결재 작업창은 결재가 켜져 있을 때만 연다(서버 판정).
+    if (workWindow && (workWindow !== "approval_prep" || approvalEnabledRef.current)) {
       // §quote-brief-rail-removed — 레일을 거치지 않고 그 단계의 작업창을 바로 연다.
       setSelectedQuoteId(quoteId);
       setActiveWorkWindow(workWindow);
       return;
     }
-    selectQuoteRow(quoteId);
+    // §quote-brief-rail-removed 후속 — 라벨이 있는 호출은 버튼이다. 선택만 하고 끝내면 죽은 버튼이므로 상세로 보낸다.
+    router.push(`/quotes/${quoteId}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1755,6 +1759,8 @@ function QuotesPageContent() {
     },
     staleTime: 5 * 60 * 1000,
   });
+  const approvalEnabled = approvalCapability?.enabled === true;
+  approvalEnabledRef.current = approvalEnabled;
 
   const { data: quotesData, isLoading: quotesQueryLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["quotes", statusFilter],
@@ -2455,10 +2461,15 @@ function QuotesPageContent() {
         quotes={filteredQuotes}
         /* §quote-screen-sian P6.3 §07 — 실행 버튼 = 해당 케이스 다음 액션 직접 연결(발송 단계→발송 모달).
            라벨(카드 next.label)과 동작(signals.ctaLabel) 단계 일치 — honesty(라벨≠동작 0). */
-        onOpen={(id) => {
+        /* §quote-brief-rail-removed 후속 (2026-09-27 · 호영님 라이브 실측) — 띠 라벨은 stage(상태)에서 나오고
+           행 CTA 는 readiness 에서 나온다. SENT 는 띠에서 언제나 「회신 확인」 이지만 readiness 는 재요청·추가 회신 등으로
+           갈린다 → 라벨과 동작이 달랐다. 「회신 확인」 은 행 버튼과 같은 목적지(상세 · 수신 견적 탭)로 보낸다.
+           목적지를 못 찾으면 선택만 하지 않고 상세로 간다(버튼이 선택만 하면 죽은 버튼이다). */
+        onOpen={(id, stage) => {
+          if (stage === "s2") { router.push(`/quotes/${id}`); return; }
           const q = filteredQuotes.find((x) => x.id === id);
           if (q) handleQuoteCardSelect(id, getOpSignals(q).ctaLabel);
-          else selectQuoteRow(id);
+          else router.push(`/quotes/${id}`);
         }}
       />
         </>
@@ -3730,18 +3741,20 @@ function QuotesPageContent() {
       />
 
       {/* ═══ Center Work Window — rail CTA에서 열리는 task surface ═══ */}
-      {activeWorkWindow && activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && (
+      {/* §approval-gate-single-source 후속 (2026-09-27 · 호영님 판정) — approval_prep 은 결재가 켜져 있을 때만 그린다.
+          handleQuoteCardSelect 가 이미 막지만, 작업창을 여는 경로가 늘어나도 결재 표면이 새지 않도록 렌더에서도 판정한다. */}
+      {activeWorkWindow && activeWorkWindow !== "request_send" && (activeWorkWindow !== "approval_prep" || approvalEnabled) && selectedQuote && selectedSignals && (
         <CenterWorkWindow
           open={true}
           onClose={() => setActiveWorkWindow(null)}
           title={selectedSignals.railCtaLabel}
           subtitle={`${selectedQuote.title} · ${selectedSignals.badge}`}
           phase="ready"
-          primaryAction={{
+          /* §approval-gate-single-source 후속 — 구 approval_prep primary 「승인 패키지 준비 완료」 는 창을 닫기만 했다(가짜 성공).
+             결재 작업창에는 primary 를 두지 않는다 · 닫기(secondary)만 남는다. */
+          primaryAction={activeWorkWindow === "approval_prep" ? undefined : {
             label: activeWorkWindow === "compare_review"
               ? (quoteReadiness(selectedQuote).respondedCount >= COMPARE_MIN_RESPONSES ? "선택안 확정" : "추가 회신 확보")
-              : activeWorkWindow === "approval_prep"
-              ? "승인 패키지 준비 완료"
               : selectedSignals.ctaLabel,
             onClick: () => {
               // §11.363 — "추가 회신 확보"/재요청 = 추가 발송 intent.
@@ -3895,51 +3908,11 @@ function QuotesPageContent() {
                         <p className="text-xs text-slate-700">{sqrc}곳 회신</p>
                       </div>
                     </div>
-                    <p className="text-[11px] text-slate-500 leading-snug">현재 선택안은 확정되었고 외부 승인 패키지 전달 준비 단계입니다</p>
                   </div>
-
-                  {/* B. Approval Readiness & Exception */}
-                  <div className="rounded-lg border border-bd bg-pn p-4">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">승인 준비 상태</p>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">선택안 확정</span>
-                        <span className={bestPrice ? "text-emerald-400" : "text-yellow-600"}>{bestPrice ? "준비 완료" : "확인 필요"}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">문서 상태</span>
-                        <span className="text-emerald-400">준비 완료</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">예산 차단</span>
-                        <span className="text-emerald-400">차단 없음</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">승인 정책</span>
-                        <span className="text-slate-700">외부 승인 필요</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* C. Handoff Recording */}
-                  <div className="rounded-lg border border-bd bg-pn p-4">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">승인 전달 기록</p>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">전달 채널</span>
-                        <span className="text-slate-700">외부 전자결재</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">현재 상태</span>
-                        <span className="text-yellow-600">승인 준비 중</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">승인 완료 후</span>
-                        {/* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 상태 이름이 「견적 완료」 로 바뀌었다(선정 기록이 없으므로). */}
-                        <span className="text-slate-700">견적 완료</span>
-                      </div>
-                    </div>
-                  </div>
+                  {/* 🛑 삭제 §approval-gate-single-source 후속 (2026-09-27 · 호영님 판정) — 잰 적 없는 값을 단정하던 줄 전부.
+                      「현재 선택안은 확정되었고…」 · 선택안 확정 「준비 완료」(가격이 있다는 것만 봤다 · 선정 기록 아님) ·
+                      문서 상태 「준비 완료」 · 예산 차단 「차단 없음」 · 승인 정책 · 전달 채널 · 현재 상태 · 승인 완료 후 —
+                      전부 고정 문자열이었다. 결재가 켜지는 날 실제 판정 결과로 다시 채운다(배선 없이 되살리지 않는다). */}
                 </div>
               );
             })()}

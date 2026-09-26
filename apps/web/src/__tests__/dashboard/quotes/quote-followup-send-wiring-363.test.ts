@@ -26,10 +26,10 @@ const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.363 — CenterWorkWindow 추가발송 wiring", () => {
   it("primaryAction.onClick 이 추가발송 intent 에서 request_send 로 전이한다 (dead button 제거)", () => {
-    // CenterWorkWindow primaryAction.label 은 "승인 패키지 준비 완료" 를 포함(유니크 앵커).
-    // 그 onClick 안에서 setActiveWorkWindow("request_send") 로 라우팅되어야 한다.
+    // 승계 §quote-brief-rail-removed 후속 (2026-09-27 · 호영님 판정) — 앵커였던 「승인 패키지 준비 완료」(가짜 성공 primary)는 결재 게이트 작업에서 삭제됐다.
+    //   앵커를 primaryAction 블록 자체로 옮긴다. 명제(추가발송 intent 가 request_send 로 전이)는 불변.
     expect(page).toMatch(
-      /"승인 패키지 준비 완료"[\s\S]{0,800}setActiveWorkWindow\("request_send"\)/
+      /primaryAction=\{activeWorkWindow === "approval_prep" \? undefined : \{[\s\S]{0,1200}setActiveWorkWindow\("request_send"\)/
     );
   });
 

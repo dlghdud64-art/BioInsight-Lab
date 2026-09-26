@@ -55,7 +55,8 @@ describe("§quotes-mobile-density P3 — canonical 보존(회귀 0)", () => {
     expect(code).not.toMatch(/Sparkles/);
   });
   it("CTA(onOpen) + 나중에(setDismissed) + !best return null 보존(dead button 0)", () => {
-    expect(CARD).toMatch(/onClick=\{\(\) => onOpen\(best!\.id\)\}/);
+    // 승계 §quote-brief-rail-removed 후속 (2026-09-27 · 호영님 판정) — onOpen 이 stage 를 함께 넘긴다(띠 라벨이 stage 에서 나오므로 목적지도 stage 로 가른다).
+    expect(CARD).toMatch(/onClick=\{\(\) => onOpen\(best!\.id, best!\.stage\)\}/);
     expect(CARD).toMatch(/나중에/);
     expect(CARD).toMatch(/setDismissed/);
     expect(CARD).toMatch(/if \(!best\) return null/);
