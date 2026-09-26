@@ -91,7 +91,11 @@ describe("§11.321 — 재고 탭 세그먼트 컨트롤 스타일", () => {
     // WCAG touch target
     expect(src).toMatch(/min-h-\[44px\]/);
     // showLotIssueDecisionStrip 분기 보존
-    expect(src).toMatch(/showLotIssueDecisionStrip\s*\?\s*"폐기 검토"\s*:\s*"운영 현황"/);
+    /* 🛑 §inventory-state-tone 후속 재앵커 (2026-09-26 · 호영님 판정) — **결정이 바뀌었다.** 탭 이름은 하나(「운영 현황」)로 고정됐다.
+     *   §11.321 의 명제는 **세그먼트 컨트롤 구조**(4 탭 key · aria · testid · 터치 영역)이고 그건 불변이다.
+     *   라벨 분기는 그 명제의 일부가 아니었다 — 같이 물려 있었을 뿐이다. */
+    expect(src).toMatch(/label: "운영 현황",/);
+    expect(src).toMatch(/badge: showLotIssueDecisionStrip \? null :/);
   });
 
   it("모바일 flex-1 균등 분할 (4 탭 폭 1/4 씩)", () => {

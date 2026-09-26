@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { inventoryToneClass, type InventoryToneState } from "@/lib/inventory/state-tone";
 import {
   AlertTriangle,
   Calendar,
@@ -44,23 +45,43 @@ export interface QueueItem {
 }
 
 /* ── Config maps ── */
-// §11.360 — severity 팔레트. bg=배지, cardBg=카드 행 배경(약한 채도 + 좌측 보더 강조).
-//   배지(강)와 카드(약)가 같은 severity 팔레트를 공유해 색 언어 일원화. 하드코딩 단일색 제거.
-//   §11.302 정합: amber 금지 → high=yellow. 카드 전체 강채도는 과함 → 50 배경 + 좌측 보더 + 텍스트/아이콘으로 강조.
-const RISK_CONFIG: Record<QueueRiskLevel, { label: string; dot: string; bg: string; cardBg: string }> = {
-  critical: { label: "긴급", dot: "bg-red-500", bg: "bg-red-50 text-red-600 border-red-200", cardBg: "border-l-2 border-l-red-400 bg-red-50/40 hover:bg-red-50" },
-  high:     { label: "높음", dot: "bg-yellow-500", bg: "bg-yellow-50 text-yellow-600 border-yellow-200", cardBg: "border-l-2 border-l-yellow-400 bg-yellow-50/40 hover:bg-yellow-50" },
-  medium:   { label: "보통", dot: "bg-blue-500", bg: "bg-blue-50 text-blue-600 border-blue-200", cardBg: "border-l-2 border-l-blue-300 bg-blue-50/30 hover:bg-blue-50" },
-  low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-slate-50 text-slate-500 border-slate-200", cardBg: "border-l-2 border-l-slate-200 hover:bg-slate-50/80" },
+/* 🛑 §inventory-state-tone 후속 (2026-09-26 · 호영님 라이브 실측) — **색 맵을 이 파일에서 빼냈다.**
+ *   실측: 안전재고 미만 품목의 큐 카드가 yellow 배경·점·「높음」 으로 떴다. 바로 위 「재주문 필요」 칩은
+ *   red 였다 — 같은 화면에서 또 두 색이었다. 이 컴포넌트가 **다섯 번째 표면**이었고 톤 함수를 안 거쳤다.
+ *   원인은 패널과 같다: 색을 **risk(severity)** 축에서 골랐다. 색은 **무슨 상태인가**에서 나온다.
+ *   → risk 는 정렬·라벨(긴급/높음/보통/낮음)만 담당하고, 색은 category → 상태 → 톤으로 정해진다.
+ *   역계약: __tests__/regression/inventory-state-tone-single-source.test.ts */
+
+/** risk 는 색이 아니라 **순위 라벨**이다. */
+const RISK_LABEL: Record<QueueRiskLevel, string> = {
+  critical: "긴급",
+  high: "높음",
+  medium: "보통",
+  low: "낮음",
 };
 
-const CATEGORY_CONFIG: Record<QueueCategory, { label: string; icon: React.ElementType; color: string }> = {
-  expiring_soon:    { label: "만료 임박",       icon: Calendar,     color: "text-red-500" },
-  disposal_review:  { label: "폐기 처리",       icon: Trash2,       color: "text-red-500" },
-  reorder_priority: { label: "재주문 우선",     icon: ShoppingCart,  color: "text-yellow-500" },
-  no_location:      { label: "위치 미지정",     icon: MapPin,        color: "text-blue-500" },
-  label_reprint:    { label: "라벨 재출력",     icon: Printer,       color: "text-violet-500" },
-  receiving_pending:{ label: "입고 미정리",     icon: PackageCheck,  color: "text-emerald-500" },
+/** 큐 분류 → 상태 축. 색은 정본이 정한다. */
+const CATEGORY_STATE: Record<QueueCategory, InventoryToneState> = {
+  /* 판정표에 있는 줄 */
+  expiring_soon: "expiring_soon", // 주시(yellow) — 옛 판본은 red 였다(뒤바뀌어 있었다)
+  disposal_review: "disposal_target", // 조치 필요(red)
+  reorder_priority: "reorder_needed", // 조치 필요(red) — 옛 판본은 yellow 였다
+  /* ⚠️ 판정표에 없는 줄 — 정본의 needs_review/unknown 에 둔다(정본 헤더의 판정 대기 항목과 같은 축).
+   *   no_location · receiving_pending 은 「보완 필요」 라 주시(yellow),
+   *   label_reprint 은 재고 상태가 아니라 utility 라 중립. 옛 판본은 각각 blue · emerald · violet 이었다 —
+   *   특히 receiving_pending 의 emerald 는 우선 처리 큐에서 「정상」 으로 읽혀 뜻이 반대였다. */
+  no_location: "needs_review",
+  label_reprint: "unknown",
+  receiving_pending: "needs_review",
+};
+
+const CATEGORY_CONFIG: Record<QueueCategory, { label: string; icon: React.ElementType }> = {
+  expiring_soon: { label: "만료 임박", icon: Calendar },
+  disposal_review: { label: "폐기 처리", icon: Trash2 },
+  reorder_priority: { label: "재주문 우선", icon: ShoppingCart },
+  no_location: { label: "위치 미지정", icon: MapPin },
+  label_reprint: { label: "라벨 재출력", icon: Printer },
+  receiving_pending: { label: "입고 미정리", icon: PackageCheck },
 };
 
 /* ── Mock data generator ── */
@@ -261,35 +282,36 @@ export function PriorityActionQueue({
       {/* Queue items */}
       <div className="divide-y divide-slate-100">
         {sorted.map((item) => {
-          const riskCfg = RISK_CONFIG[item.risk];
           const catCfg = CATEGORY_CONFIG[item.category];
+          /* 색은 상태에서, 순위 라벨은 risk 에서. */
+          const tone = inventoryToneClass(CATEGORY_STATE[item.category]);
           const CatIcon = catCfg.icon;
 
           return (
             <div
               key={item.id}
-              // §11.360 — severity 기반 카드 배경(약채도 + 좌측 보더). 배지와 동일 팔레트로 위계 일원화.
-              className={`px-4 py-3 transition-colors cursor-pointer group ${riskCfg.cardBg}`}
+              // §11.360 승계 — 카드 배경(약채도 + 좌측 보더)은 유지하고, 팔레트만 정본에서 온다.
+              className={`px-4 py-3 transition-colors cursor-pointer group border-l-2 ${tone.leftAccent} ${tone.softBg}`}
               onClick={() => onItemClick?.(item)}
             >
               {/* Line 1: Risk dot + Product + Risk badge */}
               <div className="flex items-center gap-2 mb-1">
-                <span className={`h-2 w-2 rounded-full shrink-0 ${riskCfg.dot}`} />
+                <span className={`h-2 w-2 rounded-full shrink-0 ${tone.dot}`} />
                 <span className="text-[13px] font-bold text-slate-900 truncate flex-1">
                   {item.productName}
                 </span>
                 <Badge
                   variant="outline"
-                  className={`text-[10px] px-1.5 py-0 border shrink-0 font-bold ${riskCfg.bg}`}
+                  className={`text-[10px] px-1.5 py-0 border shrink-0 font-bold ${tone.badge}`}
                 >
-                  {riskCfg.label}
+                  {RISK_LABEL[item.risk]}
                 </Badge>
               </div>
 
               {/* Line 2: 상태 + 리스크 1줄 + lot (축약) */}
               <div className="flex items-center gap-1.5 ml-4 text-[11px]">
-                <CatIcon className={`h-3 w-3 shrink-0 ${catCfg.color}`} />
-                <span className={`font-bold ${catCfg.color}`}>{catCfg.label}</span>
+                <CatIcon className={`h-3 w-3 shrink-0 ${tone.text}`} />
+                <span className={`font-bold ${tone.text}`}>{catCfg.label}</span>
                 <span className="text-slate-300">·</span>
                 <span className="text-slate-500 truncate">{item.reason}</span>
                 {item.lotNumber && (

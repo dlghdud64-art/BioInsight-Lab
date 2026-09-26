@@ -81,7 +81,14 @@ describe("§11.317 — 재고 헤더: 폐기 strip 제거 + KPI 4 + 1줄 배너"
 
   it("폐기 검토 탭 라벨 자체 보존 (작업 surface, 운영 브리핑과 별개)", () => {
     const src = read(INVENTORY_CONTENT);
-    expect(src).toMatch(/label:\s*showLotIssueDecisionStrip\s*\?\s*"폐기 검토"\s*:\s*"운영 현황"/);
+    /* 🛑 §inventory-state-tone 후속 재앵커 (2026-09-26 · 호영님 판정) — **결정이 바뀌었다.**
+     *   호영님 라이브 실측: 비활성 「운영 현황 4」 가 누르면 「폐기 검토」 로 바뀌는데 내용은 재주문 큐였다.
+     *   → 「탭 이름은 하나로 고정합니다」. §11.317 의 「폐기 검토 탭 라벨 보존」 은 이 판정으로 은퇴한다.
+     *   보존되는 것은 **탭이 작업 surface 로 남는다**는 명제이고, 그것은 아래 분기 logic 이 든다. */
+    expect(src).toMatch(/label: "운영 현황",/);
+    expect(src).not.toMatch(/label:\s*showLotIssueDecisionStrip/);
+    /* 분기 logic 자체는 살아 있다 — 라벨이 아니라 badge·suffix·title 에서 쓰인다. */
+    expect(src).toMatch(/badge: showLotIssueDecisionStrip \? null :/);
   });
 });
 

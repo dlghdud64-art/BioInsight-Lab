@@ -84,6 +84,10 @@ export interface InventoryToneClass {
   bar: string;
   /** 행 배경 틴트 (정상·중립은 없음) */
   rowTint: string;
+  /** 큐 카드 좌측 강조선 */
+  leftAccent: string;
+  /** 큐 카드 약한 배경 + hover */
+  softBg: string;
 }
 
 export const INVENTORY_TONE_CLASS: Record<InventoryTone, InventoryToneClass> = {
@@ -95,6 +99,8 @@ export const INVENTORY_TONE_CLASS: Record<InventoryTone, InventoryToneClass> = {
     border: "border-red-200",
     bar: "bg-red-500",
     rowTint: "bg-red-500/5",
+    leftAccent: "border-l-red-400",
+    softBg: "bg-red-50/40 hover:bg-red-50",
   },
   yellow: {
     badge: "bg-yellow-100 text-yellow-700 border-yellow-200",
@@ -104,6 +110,8 @@ export const INVENTORY_TONE_CLASS: Record<InventoryTone, InventoryToneClass> = {
     border: "border-yellow-200",
     bar: "bg-yellow-500",
     rowTint: "bg-yellow-500/5",
+    leftAccent: "border-l-yellow-400",
+    softBg: "bg-yellow-50/40 hover:bg-yellow-50",
   },
   emerald: {
     badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -113,6 +121,8 @@ export const INVENTORY_TONE_CLASS: Record<InventoryTone, InventoryToneClass> = {
     border: "border-emerald-200",
     bar: "bg-emerald-500",
     rowTint: "",
+    leftAccent: "border-l-emerald-400",
+    softBg: "bg-emerald-50/40 hover:bg-emerald-50",
   },
   neutral: {
     badge: "bg-slate-50 text-slate-600 border-slate-200",
@@ -122,6 +132,8 @@ export const INVENTORY_TONE_CLASS: Record<InventoryTone, InventoryToneClass> = {
     border: "border-slate-200",
     bar: "bg-slate-200",
     rowTint: "",
+    leftAccent: "border-l-slate-200",
+    softBg: "hover:bg-slate-50/80",
   },
 };
 

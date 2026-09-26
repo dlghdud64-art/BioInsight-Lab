@@ -100,7 +100,8 @@ describe("inventory lot issue priority strip", () => {
   });
 
   it("removes the weak operations summary tab copy while lot issue review is active", () => {
-    expect(source).toContain('label: showLotIssueDecisionStrip ? "폐기 검토" : "운영 현황"');
+    /* 🛑 §inventory-state-tone 후속 재앵커 (2026-09-26 · 호영님 판정) — **결정이 바뀌었다.** 탭 이름은 하나(「운영 현황」)로 고정됐다. */
+    expect(source).toContain('label: "운영 현황",');
     expect(source).toContain("badge: showLotIssueDecisionStrip ? null : issuesCount > 0 ? issuesCount : null");
     expect(source).toContain('suffix: showLotIssueDecisionStrip ? null : "S"');
   });
@@ -118,7 +119,9 @@ describe("inventory lot issue priority strip", () => {
     );
     expect(source).toContain('tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip');
     expect(source).toContain("handleLotIssueDecisionAction();");
-    expect(source).toContain("현재 운영 현황입니다. 클릭하면 lot_issue 폐기 검토를 엽니다.");
+    /* 🛑 재앵커 §inventory-state-tone (2026-09-26 · 호영님 판정) — 탭 이름을 하나로 고정하면서
+     *   title 문구도 내용에 맞췄다. 명제는 「활성 탭이 no-op 이 되지 않고 무엇을 하는지 말한다」 이고 불변이다. */
+    expect(source).toContain("현재 운영 현황입니다. 클릭하면 폐기·재주문 우선 처리 목록으로 필터합니다.");
   });
 
   it("renders the active item management tab as a disabled current state instead of a no-op CTA", () => {

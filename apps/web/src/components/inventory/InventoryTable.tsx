@@ -319,6 +319,9 @@ export function InventoryTable({
               const someExpiredMobile = expiredLotCountMobile > 0;
               const expiryStatus = someExpiredMobile ? "만료" : isExpired(group.earliestExpiry) ? "만료" : isExpiringSoon(group.earliestExpiry) ? "임박" : null;
               const displayStatus = expiryStatus ?? groupStatus;
+              /* §inventory-state-tone 후속(2026-09-26 · 호영님 라이브 실측) — 수량 숫자의 톤.
+                 라벨 축이 상태를 알려 주고, 「정상」 이면 수량 숫자는 색을 쓰지 않는다(중립 검정). */
+              const quantityToneState = inventoryStatusLabelToState(displayStatus);
               const expiryDays = getExpiryDays(group.earliestExpiry);
               const isRisky = displayStatus === "부족" || displayStatus === "만료" || displayStatus === "임박";
               const isExpanded = expandedProducts.has(group.productId);
@@ -344,10 +347,10 @@ export function InventoryTable({
                     {/* 2행: 총 수량 · D-day · Lot 개수 */}
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2.5">
                       <span className="flex items-center gap-1">
+                        {/* §inventory-state-tone 후속(2026-09-26 · 호영님 라이브 실측) — 수량 숫자도 정본 톤.
+                            옛 판본은 부족·주의를 둘 다 yellow 로 찍어, 같은 행의 배지가 red 인데 숫자만 yellow 였다. */}
                         <span className={`font-bold text-sm ${
-                          groupStatus === "부족" ? "text-yellow-700" :
-                          groupStatus === "주의" ? "text-yellow-700" :
-                          "text-slate-900"
+                          quantityToneState === "normal" ? "text-slate-900" : inventoryToneClass(quantityToneState).text
                         }`}>
                           총 {group.totalQuantity}
                         </span>
@@ -402,7 +405,7 @@ export function InventoryTable({
                         }
                         if (isExpiringItem) {
                           return (
-                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-yellow-700 border-yellow-500/30 hover:bg-yellow-500/10 font-medium" onClick={() => onReorder(group.lots[0])}>
+                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-slate-500 border-slate-200 hover:bg-slate-600 hover:text-white font-medium" onClick={() => onReorder(group.lots[0])}>
                               <Clock className="h-3 w-3 shrink-0" />교체 주문
                             </Button>
                           );
@@ -620,6 +623,9 @@ export function InventoryTable({
                 const someExpired = expiredLotCount > 0;
                 const expiryStatus = someExpired ? "만료" : isExpiringSoon(group.earliestExpiry) ? "임박" : null;
                 const displayStatus = expiryStatus ?? groupStatus;
+                /* §inventory-state-tone 후속(2026-09-26 · 호영님 라이브 실측) — 수량 숫자의 톤.
+                   라벨 축이 상태를 알려 주고, 「정상」 이면 수량 숫자는 색을 쓰지 않는다(중립 검정). */
+                const quantityToneState = inventoryStatusLabelToState(displayStatus);
                 const expiryDays = getExpiryDays(group.earliestExpiry);
                 const isRisky = displayStatus === "부족" || displayStatus === "만료" || displayStatus === "임박";
 
@@ -688,10 +694,9 @@ export function InventoryTable({
 
                       {/* 총 수량 */}
                       <TableCell className="text-right whitespace-nowrap">
+                        {/* §inventory-state-tone 후속 — 위와 같은 자리(표 행). 숫자만 yellow 로 남지 않게. */}
                         <span className={`font-bold text-base ${
-                          groupStatus === "부족" ? "text-yellow-600" :
-                          groupStatus === "주의" ? "text-yellow-600" :
-                          "text-slate-900"
+                          quantityToneState === "normal" ? "text-slate-900" : inventoryToneClass(quantityToneState).text
                         }`}>
                           {group.totalQuantity}
                         </span>
@@ -791,11 +796,10 @@ export function InventoryTable({
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className={`h-7 px-2 text-[11px] gap-1 ${
-                                        groupStatus === "부족"
-                                          ? "text-yellow-600 border-yellow-300 hover:bg-yellow-600 hover:text-white"
-                                          : "text-blue-600 border-blue-300 hover:bg-blue-600 hover:text-white"
-                                      }`}
+                                      // §inventory-state-tone 후속(2026-09-26 · 호영님 판정) — 조치 버튼은
+                                      //   **상태색을 쓰지 않는다.** 옛 판본은 부족이면 yellow(이제 red 인 상태),
+                                      //   아니면 blue(§9 의 정보 축)였다. 중립 버튼으로 고정한다.
+                                      className="h-7 px-2 text-[11px] gap-1 text-slate-500 border-slate-200 hover:bg-slate-600 hover:text-white"
                                       onClick={() => onReorder(group.lots[0])}
                                     >
                                       <RotateCcw className="h-3 w-3 shrink-0" />
@@ -1025,13 +1029,9 @@ export function InventoryTable({
                                           <Button
                                             variant="outline"
                                             size="sm"
-                                            className={`h-7 px-2 text-[11px] gap-1 ${
-                                              lotNeedsUrgent
-                                                ? lotDisplayStatus === "부족" || lotDisplayStatus === "만료"
-                                                  ? "text-yellow-600 border-yellow-300 hover:bg-yellow-50 hover:text-yellow-700"
-                                                  : "text-blue-600 border-blue-300 hover:bg-blue-50"
-                                                : "text-slate-500 border-slate-200 hover:bg-slate-100"
-                                            }`}
+                                            // §inventory-state-tone 후속 — 「출고」 도 조치 버튼이라 상태색을 쓰지 않는다.
+                                            //   옛 판본은 부족·만료면 yellow(그 둘은 이제 red 다), 아니면 blue 였다.
+                                            className="h-7 px-2 text-[11px] gap-1 text-slate-500 border-slate-200 hover:bg-slate-100"
                                             onClick={() => onConsume(lot)}
                                           >
                                             <Truck className="h-3 w-3 shrink-0" />

@@ -48,6 +48,7 @@ const CONTENT = code("app/dashboard/inventory/inventory-content.tsx");
 const TABLE = code("components/inventory/InventoryTable.tsx");
 const PANEL = code("components/inventory/inventory-context-panel.tsx");
 const LIB = code("lib/inventory/state-tone.ts");
+const QUEUE = code("components/inventory/priority-action-queue.tsx");
 
 /**
  * 여는 중괄호부터 대응 닫는 중괄호까지 — 고정 폭 슬라이스 금지(§4원칙 ⑤).
@@ -120,6 +121,13 @@ describe("§inventory-state-tone · 판정표 그대로 (함수 입출력)", () 
     expect(INVENTORY_TONE_CLASS.yellow.text).toBe("text-yellow-700");
     expect(INVENTORY_TONE_CLASS.emerald.dot).toBe("bg-emerald-500");
     expect(INVENTORY_TONE_CLASS.neutral.dot).toBe("bg-slate-300");
+    /* 큐 카드 슬롯 — 비워도 통과하던 자리(프로브 실측 1건). 값까지 고정한다. */
+    expect(INVENTORY_TONE_CLASS.red.leftAccent).toBe("border-l-red-400");
+    expect(INVENTORY_TONE_CLASS.yellow.leftAccent).toBe("border-l-yellow-400");
+    expect(INVENTORY_TONE_CLASS.red.softBg).toBe("bg-red-50/40 hover:bg-red-50");
+    for (const t of ["red", "yellow", "emerald", "neutral"] as const) {
+      expect(INVENTORY_TONE_CLASS[t].leftAccent).not.toBe("");
+    }
     const all = JSON.stringify(INVENTORY_TONE_CLASS);
     expect(all).not.toMatch(/amber-/);
     expect(all).not.toMatch(/orange-/);
@@ -146,7 +154,7 @@ describe("§inventory-state-tone · 판정표 그대로 (함수 입출력)", () 
   });
 });
 
-describe("§inventory-state-tone · 세 표면에 로컬 상태→색 맵이 없다", () => {
+describe("§inventory-state-tone · 다섯 표면에 로컬 상태→색 맵이 없다", () => {
   it("패널의 구 색 맵 3종이 사라졌다", () => {
     for (const name of ["SEVERITY_STYLE", "RISK_CARD_STYLE", "LOT_STATUS_STYLE"]) {
       expect(PANEL).not.toMatch(new RegExp(name));
@@ -161,6 +169,8 @@ describe("§inventory-state-tone · 세 표면에 로컬 상태→색 맵이 없
       ["inventory-content.tsx", CONTENT],
       ["InventoryTable.tsx", TABLE],
       ["inventory-context-panel.tsx", PANEL],
+      /* 🛑 다섯 번째 표면 — 호영님 라이브 실측으로 드러났다(우선 처리 큐가 함수를 우회했다). */
+      ["priority-action-queue.tsx", QUEUE],
     ] as const) {
       for (const m of src.matchAll(/const (\w+)\s*:\s*Record<[^>]*>\s*=\s*\{/g)) {
         const block = blockFrom(src, m.index ?? 0);
@@ -206,6 +216,47 @@ describe("§inventory-state-tone · 세 표면에 로컬 상태→색 맵이 없
     expect(CONTENT).not.toMatch(/text-rose-700/);
     expect(CONTENT).not.toMatch(/text-\[#b91c1c\]/);
     expect(CONTENT).not.toMatch(/bg-\[#b91c1c\]/);
+  });
+});
+
+describe("§inventory-state-tone · 후속 4건 (호영님 라이브 실측 2026-09-26)", () => {
+  it("① 표 수량 숫자가 정본 톤을 쓴다 (숫자만 yellow 로 남지 않는다)", () => {
+    /* 실측: 안전재고 미만 행의 배지는 red 인데 수량 숫자 「1」 이 text-yellow-600 이었다. */
+    expect(TABLE).toMatch(/const quantityToneState = inventoryStatusLabelToState\(displayStatus\);/);
+    const hits = [...TABLE.matchAll(/quantityToneState === "normal" \? "text-slate-900" : inventoryToneClass\(quantityToneState\)\.text/g)];
+    /* 렌더 경로가 둘(표 행 · 카드 행)이라 둘 다 본다 — 경로는 OR 로 묶지 않는다. */
+    expect(hits).toHaveLength(2);
+    expect(TABLE).not.toMatch(/groupStatus === "부족" \? "text-yellow-/);
+  });
+
+  it("② 조치 버튼은 상태색을 쓰지 않는다 (중립 고정)", () => {
+    /* 재발주 · 교체 주문 · 출고 — 조치 버튼이 「주시」 색을 입으면 같은 행의 red 배지와 어긋난다. */
+    expect(TABLE).not.toMatch(/text-yellow-600 border-yellow-300/);
+    expect(TABLE).not.toMatch(/border-yellow-500\/30/);
+    expect(TABLE).not.toMatch(/text-blue-600 border-blue-300/);
+    /* 버튼 색이 상태 분기에서 나오는 형태 자체를 막는다. */
+    expect(TABLE).not.toMatch(/groupStatus === "부족"[\s\S]{0,40}\? "text-/);
+  });
+
+  it("③ 우선 처리 큐가 정본을 쓴다 · risk 는 색이 아니라 순위 라벨이다", () => {
+    expect(QUEUE).toMatch(/const tone = inventoryToneClass\(CATEGORY_STATE\[item\.category\]\);/);
+    expect(QUEUE).toMatch(/\$\{tone\.leftAccent\} \$\{tone\.softBg\}/);
+    expect(QUEUE).toMatch(/\$\{tone\.dot\}/);
+    expect(QUEUE).toMatch(/\$\{tone\.badge\}/);
+    expect(QUEUE).toMatch(/\{RISK_LABEL\[item\.risk\]\}/);
+    /* 구 severity 팔레트 부활 차단. */
+    expect(QUEUE).not.toMatch(/RISK_CONFIG/);
+    expect(QUEUE).not.toMatch(/riskCfg/);
+    /* 분류 → 상태 배정이 판정표와 맞는가 — 뒤바뀐 두 줄을 그 자리에서 잠근다. */
+    expect(QUEUE).toMatch(/reorder_priority: "reorder_needed"/);
+    expect(QUEUE).toMatch(/expiring_soon: "expiring_soon"/);
+    expect(QUEUE).toMatch(/disposal_review: "disposal_target"/);
+  });
+
+  it("④ 탭 이름이 하나다 (내용과 이름이 어긋나지 않는다)", () => {
+    /* 실측: 비활성 「운영 현황 4」 → 누르면 「폐기 검토」 인데 내용은 재주문 큐였다. */
+    expect(CONTENT).toMatch(/label: "운영 현황",/);
+    expect(CONTENT).not.toMatch(/label: showLotIssueDecisionStrip \? "폐기 검토"/);
   });
 });
 

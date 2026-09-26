@@ -1966,7 +1966,11 @@ function InventoryPageContent() {
                 {
                   key: "overview",
                   icon: <LayoutGrid className="w-5 h-5" />,
-                  label: showLotIssueDecisionStrip ? "폐기 검토" : "운영 현황",
+                  // §inventory-state-tone 후속(2026-09-26 · 호영님 판정) — **탭 이름은 하나로 고정한다.**
+                  //   옛 판본은 비활성이면 「운영 현황」, 누르면 「폐기 검토」 로 바뀌었는데 내용은 재주문 큐였다.
+                  //   이름이 내용과 맞지 않았다. 이 탭은 PriorityActionQueue(폐기·재주문 혼합)를 렌더하므로
+                  //   중립 이름인 「운영 현황」 으로 고정한다. 필터 상태는 이름이 아니라 aria-pressed·칩이 말한다.
+                  label: "운영 현황",
                   badge: showLotIssueDecisionStrip ? null : issuesCount > 0 ? issuesCount : null,
                 },
                 {
@@ -1999,7 +2003,7 @@ function InventoryPageContent() {
                     aria-current={isActive ? "page" : undefined}
                     aria-disabled={tab.key === "manage" && activeInventoryTab === "manage" ? true : undefined}
                     disabled={tab.key === "manage" && activeInventoryTab === "manage"}
-                    title={tab.key === "manage" && activeInventoryTab === "manage" ? "현재 품목 관리 화면입니다. 운영 현황이나 조치 시작을 선택하면 화면이 전환됩니다." : tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip ? "현재 운영 현황입니다. 클릭하면 lot_issue 폐기 검토를 엽니다." : undefined}
+                    title={tab.key === "manage" && activeInventoryTab === "manage" ? "현재 품목 관리 화면입니다. 운영 현황이나 조치 시작을 선택하면 화면이 전환됩니다." : tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip ? "현재 운영 현황입니다. 클릭하면 폐기·재주문 우선 처리 목록으로 필터합니다." : undefined}
                     className={`flex-1 inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 py-2 text-sm rounded-md transition-all duration-150 whitespace-nowrap disabled:cursor-default disabled:opacity-100 ${isActive ? "bg-white text-slate-900 shadow-sm font-semibold" : "bg-transparent text-gray-600 hover:bg-gray-200"}`}
                   >
                     <span className={isActive ? "text-blue-600" : "text-gray-500"}>{tab.icon}</span>

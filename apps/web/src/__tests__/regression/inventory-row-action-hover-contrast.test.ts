@@ -13,9 +13,14 @@ import { resolve } from "node:path";
 const TABLE = readFileSync(resolve(__dirname, "../..", "components/inventory/InventoryTable.tsx"), "utf8");
 
 describe("§inventory-row-hover-solid — 재발주/입고 솔리드 채움 hover (d086784a supersede)", () => {
-  it("재발주(부족 yellow / 긴급 blue) → 솔리드 채움 + 흰 글자", () => {
-    expect(TABLE).toMatch(/text-yellow-600 border-yellow-300 hover:bg-yellow-600 hover:text-white/);
-    expect(TABLE).toMatch(/text-blue-600 border-blue-300 hover:bg-blue-600 hover:text-white/);
+  /* 🛑 §inventory-state-tone 후속 재앵커 (2026-09-26 · 호영님 판정) — **결정이 바뀌었다.**
+   *   호영님 판정: 「재발주」 같은 **조치 버튼은 상태색을 쓰지 않고 중립 버튼으로 둔다.**
+   *   옛 명제(부족 yellow / 긴급 blue)는 두 가지로 어긋났다 — 부족은 이제 red 이고, blue 는 §9 의 정보 축이다.
+   *   보존되는 명제는 **솔리드 채움 hover + 흰 글자**(대비 확보)이고, 그것은 중립 톤으로 유지된다. */
+  it("재발주 → 중립 솔리드 채움 hover + 흰 글자 (상태색 0)", () => {
+    expect(TABLE).toMatch(/text-slate-500 border-slate-200 hover:bg-slate-600 hover:text-white/);
+    expect(TABLE).not.toMatch(/text-yellow-600 border-yellow-300/);
+    expect(TABLE).not.toMatch(/text-blue-600 border-blue-300/);
   });
 
   it("입고(emerald) → 솔리드 채움 + 흰 글자 3곳(부족·정상·컴팩트)", () => {
