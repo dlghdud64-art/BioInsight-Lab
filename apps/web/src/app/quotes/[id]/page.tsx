@@ -1486,14 +1486,18 @@ export default function QuoteDetailPage() {
                   </Button>
                 )}
 
-                {/* 회원사: 승인 */}
+                {/* §purchase-cta-honesty (2026-09-26 · 호영님 판정) — 라벨이 「승인」 이었는데 누르면 **구매 확정 다이얼로그**가 열리고
+                    PurchaseRecord 가 생기며 예산이 차감된다. 이름은 결재를 말하고 동작은 구매였다.
+                    게다가 「승인」 은 지금 **모든 사용자에게 꺼져 있는 결재 축**의 단어라
+                    §approval-gate-single-source(결재 약속 표면) 조항에도 걸린다(호영님).
+                    관리자 축 「구매 진행 처리」 와 같은 말로 맞춘다 — 같은 다이얼로그를 여는 두 버튼이다. */}
                 {!isAdmin && quoteStatus === "RESPONDED" && (
                   <Button
                     onClick={handleMarkAsCompleted}
                     className="w-full sm:w-auto text-sm h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
                   >
-                    <CheckCircle2 className="h-4 w-4 mr-2 shrink-0" />
-                    승인
+                    <Package className="h-4 w-4 mr-2 shrink-0" />
+                    구매 처리
                   </Button>
                 )}
 
@@ -1613,7 +1617,18 @@ export default function QuoteDetailPage() {
             <DialogTitle className="flex items-center gap-2">
               <Package className="h-5 w-5 text-blue-600" />구매 진행 처리
             </DialogTitle>
-            <DialogDescription>차감할 예산을 선택하세요. 구매 내역과 예산 사용액이 자동으로 기록됩니다.</DialogDescription>
+            {/* §purchase-cta-honesty (2026-09-26 · 호영님 판정) — 돈이 움직이는 버튼은 누르기 전에 **무엇이 움직이는지** 보여야 한다(호영님).
+                예산을 고르기 전에는 고르라고만 말하고, 고른 뒤에는 이름과 금액을 그대로 적는다 —
+                금액은 화면 다른 자리(차감 금액)와 **같은 변수**(purchaseTotal)를 쓴다. */}
+            <DialogDescription>
+              {(() => {
+                const sel = budgets.find((b: { id: string }) => b.id === purchaseBudgetId) as
+                  | { name?: string }
+                  | undefined;
+                if (!sel) return "차감할 예산을 선택하세요 · 구매 내역과 예산 사용액이 함께 기록됩니다";
+                return `이 견적을 구매한 것으로 기록합니다 · 예산 ${sel.name ?? "선택한 예산"}에서 ₩${purchaseTotal.toLocaleString("ko-KR")}이 차감됩니다`;
+              })()}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2 overflow-y-auto pr-1 flex-1">
             {respondedVendors.length > 1 && (
