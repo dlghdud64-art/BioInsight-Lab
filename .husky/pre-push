@@ -3,8 +3,27 @@
 #
 # §gate-to-pre-commit (호영님 2026-09-11) — 신규 파일 eslint · em dash 검사는 pre-commit 으로 옮겼다.
 #   여기서는 그 검사가 구조적으로 무력했다: 공유 워킹트리에서 A 세션 커밋을 B 세션이 push 하면
-#   A 의 pre-push 는 돌지 않는다(2026-09-11 실측 · 2c398691 이 em dash 를 실은 채 원격 도착).
+#   A 의 pre-push 는 돌지 않는다(2026-09-11 실측 · 2c398691 이 em dash 를 실은 채 원격 도달).
 #   커밋 시점에 걸면 누가 push 하든 게이트를 통과한 커밋만 존재한다.
 #
-# build 는 파일 단위로 판정할 수 없어(워킹트리 전체 · 타입 · export) 여기 남는다.
-cd apps/web && npm run build || exit 1
+# build 는 파일 단위로 판정할 수 없어(워크스페이스 전체 · 타입맵 · export) 여기 남는다.
+#
+# §prepush-build-scope (호영님 판정 2026-09-26) — **빌드가 필요 없는 push 에서는 돌리지 않는다.**
+#   실측: API 라우트 311 + 페이지 109 · dist 1.7GB · 같은 커밋의 Vercel 빌드 302초.
+#   push 지연의 전부가 이 빌드였고, 오늘 3회 push 중 빌드가 실제로 필요한 것은 1회였다.
+#   🛑 기본값은 빌드다. 건너뛰는 경로만 허용 목록에 적는다(scripts/prepush-needs-build.sh).
+#      「앱 소스 목록」 을 만들어 그것만 빌드하면 목록에서 빠지기 쉬운 파일이 빌드 없이 나간다.
+#   🛑 비교 기준은 `@{push}..HEAD` **전체 범위**다. 마지막 커밋 하나만 보면 커밋 여러 개를
+#      한꺼번에 push 할 때 앞 커밋의 소스 변경을 놓친다.
+#   ⚠️ 범위를 못 구하면 빌드한다 — 판별 불가를 통과로 세지 않는다.
+
+range=""
+if git --no-optional-locks rev-parse --verify --quiet '@{push}' >/dev/null 2>&1; then
+  range="@{push}..HEAD"
+elif git --no-optional-locks rev-parse --verify --quiet '@{u}' >/dev/null 2>&1; then
+  range="@{u}..HEAD"
+fi
+
+if sh scripts/prepush-needs-build.sh "$range"; then
+  cd apps/web && npm run build || exit 1
+fi
