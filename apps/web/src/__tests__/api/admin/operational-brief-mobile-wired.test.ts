@@ -8,7 +8,7 @@ import { resolve } from "node:path";
 
 const SURFACES = [
   // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): Purchase Conversion — 표면 삭제. 나머지 surface 의 명제는 무손상.
-  { path: "../../../app/dashboard/quotes/page.tsx",                label: "RFQ-Quote" },
+  // 제거 §quote-brief-rail-removed (2026-09-26 · 호영님 판정): RFQ-Quote — 견적 모바일 브리핑 시트 삭제. 나머지 surface 의 명제는 무손상.
   { path: "../../../app/dashboard/inbox/page.tsx",                 label: "Inbox" },
   { path: "../../../app/dashboard/inventory/inventory-content.tsx", label: "Inventory" },
 ];

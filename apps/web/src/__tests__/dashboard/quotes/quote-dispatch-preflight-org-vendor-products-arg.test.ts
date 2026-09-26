@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 1건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * #quote-dispatch-preflight-org-vendor-products-arg — P0 production hot fix.
  *
@@ -56,7 +59,7 @@ describe("#quote-dispatch-preflight-org-vendor-products-arg — 시그니처 확
 });
 
 describe("#quote-dispatch-preflight-org-vendor-products-arg — 3 caller forward", () => {
-  it("selectedQuote caller (single quote preflight) — 3 인자", () => {
+  it.skip("selectedQuote caller (single quote preflight) — 3 인자", () => {
     // line 941 근처 — getQuoteDispatchPreflight(selectedQuote, organizationVendors, organizationVendorProducts)
     expect(page).toMatch(
       /getQuoteDispatchPreflight\(\s*selectedQuote,\s*organizationVendors,\s*organizationVendorProducts/,

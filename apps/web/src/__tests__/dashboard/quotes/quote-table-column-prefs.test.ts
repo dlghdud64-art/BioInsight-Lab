@@ -163,9 +163,10 @@ describe("§11.230b invariant 보존 (cluster lineage)", () => {
     expect(page).toMatch(/getQuoteDispatchPreflight\([\s\S]{0,200}organizationVendorProducts/);
   });
 
-  it("openQuoteContextRail / closeQuoteContextRail 보존 (canonical mutation)", () => {
-    expect(page).toMatch(/openQuoteContextRail/);
-    expect(page).toMatch(/closeQuoteContextRail/);
+  // 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 레일 삭제로 open/closeQuoteContextRail 이 selectQuoteRow/clearQuoteSelection 으로 바뀌었다. 명제(Enter=행 선택 · Escape=해제 · 행 클릭=선택)는 불변.
+  it("selectQuoteRow / clearQuoteSelection 보존 (구 open/closeQuoteContextRail)", () => {
+    expect(page).toMatch(/selectQuoteRow/);
+    expect(page).toMatch(/clearQuoteSelection/);
   });
 
   it("cluster trace marker (§11.230b)", () => {

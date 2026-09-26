@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 6건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.264d #quote-bottom-sheet-object-label — 견적 바텀시트에 견적명 표시 (호영님 spec #3-2 P1)
  *
@@ -28,11 +31,11 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.264d #1 — objectLabel 견적명 동적 결합", () => {
-  it("§11.264d trace marker comment 존재", () => {
+  it.skip("§11.264d trace marker comment 존재", () => {
     expect(page).toMatch(/§11\.264d/);
   });
 
-  it("objectLabel 동적: `선택한 견적 · ${selectedQuote.title}` 패턴", () => {
+  it.skip("objectLabel 동적: `선택한 견적 · ${selectedQuote.title}` 패턴", () => {
     // 기존 정적: objectLabel="선택한 견적"
     // 신규 동적: objectLabel={`선택한 견적 · ${selectedQuote.title}`}
     expect(page).toMatch(
@@ -46,7 +49,7 @@ describe("§11.264d #1 — objectLabel 견적명 동적 결합", () => {
 });
 
 describe("§11.264d #2 — invariant 보존 (canonical truth)", () => {
-  it("MobileOperationalBriefSheet import 보존", () => {
+  it.skip("MobileOperationalBriefSheet import 보존", () => {
     expect(page).toMatch(
       /import\s+\{\s*MobileOperationalBriefSheet\s*\}\s+from\s+"@\/components\/operational-brief\/mobile-bottom-sheet"/,
     );
@@ -59,7 +62,7 @@ describe("§11.264d #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/selectedQuote && selectedSignals && \(/);
   });
 
-  it("open + onClose prop 형식 보존 (§11.264i supersede — briefSheetOpen 분리)", () => {
+  it.skip("open + onClose prop 형식 보존 (§11.264i supersede — briefSheetOpen 분리)", () => {
     // §11.264i 이후: open={briefSheetOpen} + onClose={() => setBriefSheetOpen(false)}
     //   (기존 §11.264d: open={!!selectedQuote} + onClose=closeQuoteContextRail
     //   — §11.264i 가 supersede. 사유: §11.248e mobile context sheet 와 2중 겹침 fix.)
@@ -67,7 +70,7 @@ describe("§11.264d #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/onClose=\{\(\) => setBriefSheetOpen\(false\)\}/);
   });
 
-  it("chips override (§11.264a 4 entry) 보존: 상태 요약 / 회신 현황 / 리스크 / 발주 전환", () => {
+  it.skip("chips override (§11.264a 4 entry) 보존: 상태 요약 / 회신 현황 / 리스크 / 발주 전환", () => {
     expect(page).toMatch(/\{ id: "summary",\s+label: "상태 요약" \}/);
     expect(page).toMatch(/\{ id: "facts",\s+label: "회신 현황" \}/);
     expect(page).toMatch(/\{ id: "risks",\s+label: "리스크" \}/);
@@ -75,7 +78,7 @@ describe("§11.264d #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/\{ id: "next",\s+label: "다음 단계" \}/);
   });
 
-  it("summary / facts / risks / next prop 전달 보존", () => {
+  it.skip("summary / facts / risks / next prop 전달 보존", () => {
     expect(page).toMatch(/summary=\{<p[\s\S]{0,200}selectedSignals\.summary/);
     expect(page).toMatch(/facts=\{/);
     expect(page).toMatch(/risks=\{/);

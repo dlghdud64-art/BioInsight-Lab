@@ -100,10 +100,10 @@ describe("§quote-completed-honesty · 완료 견적이 선정을 단정하지 �
     /* 승계 §intro-flow-honesty (2026-09-25 · 호영님 판정) — 완료용 문구를 그 자리에 넣었더니 **바로 윗줄(urgency)과 같은 말이 두 줄**로 쌓였다
        (호영님 라이브 실측). 리드 줄은 urgency 가 못 말하는 것을 말할 때만 뜻이 있으므로
        완료 상태에서는 **줄 자체를 내지 않는다**. 명제(「첫 액션」 은 PENDING 에서만 나온다)는 불변. */
-    expect(pageCode).toMatch(/selectedQuote\.status \!== "COMPLETED" && \(/);
-    expect(pageCode).toMatch(
-      /selectedQuote\.status\s*===\s*"PENDING"[\s\S]{0,80}첫 액션이 필요합니다/,
-    );
+    /* 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 그 리드 줄은 레일 헤더에 있었고 레일과 함께 삭제됐다.
+       남은 출처는 상태 표의 urgency 하나다. 명제(「첫 액션」 은 PENDING=request_not_sent 에서만 나온다)를 그 표에 건다. */
+    expect(pageCode.match(/첫 액션이 필요합니다/g) ?? []).toHaveLength(1);
+    expect(pageCode).toMatch(/request_not_sent: \{[\s\S]{0,200}urgency: "첫 액션이 필요합니다"/);
     // 중복이던 짧은 문구는 사라졌고, 완전한 문장(urgency)만 남는다.
     expect(pageCode).not.toMatch(/"공급사를 고른 뒤 구매하세요"/);
     expect(pageCode).toMatch(/공급사를 고른 뒤 구매하고, 입고 관리에서 입고를 등록하세요/);
@@ -128,11 +128,11 @@ describe("§quote-completed-honesty · 완료 견적이 선정을 단정하지 �
   it("④ 완료 CTA 가 작업창을 거치지 않고 입고 관리로 간다", () => {
     // 도달 경로 0이 된 작업창 렌더는 남기지 않는다(다음 사람이 배선 없이 되살린다).
     expect(pageCode).not.toMatch(/activeWorkWindow\s*===\s*"po_conversion"\s*&&/);
-    // 레일 sticky · 모바일 시트 · 하단 시트 primary — **세 자리 전부**. 하나가 끊겨도 회귀다.
-    const direct = pageCode.match(
-      /selectedSignals\.actionKey\s*===\s*"po_conversion"\s*\)\s*\{\s*router\.push\("\/dashboard\/receiving"\)/g,
-    );
-    expect(direct ?? []).toHaveLength(3);
+    /* 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 구 단언은 「레일 sticky · 모바일 시트 · 하단 시트 primary
+       세 자리 전부」 였다. 세 자리가 모두 레일·시트 안이었고 함께 삭제됐다. 레일 CTA 가 다시 생기면 그것은
+       quote-brief-rail-removed 역계약 위반이므로 여기서는 **0** 을 단언한다. 남은 경로(행 CTA)는 아래가 본다. */
+    const direct = pageCode.match(/selectedSignals\.actionKey\s*===\s*"po_conversion"/g);
+    expect(direct ?? []).toHaveLength(0);
     // 행 CTA 도 같은 목적지.
     expect(pageCode).toMatch(
       /ctaLabel\s*===\s*"입고 관리 열기"\s*\)\s*\{\s*router\.push\("\/dashboard\/receiving"\)/,

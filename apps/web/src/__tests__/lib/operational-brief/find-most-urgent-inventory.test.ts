@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 3건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * #quote-rationale-inventory-context Phase 2a — match helper RED test.
  *
@@ -137,7 +140,7 @@ describe("#quote-rationale-inventory-context Phase 2a — findMostUrgentInventor
 });
 
 describe("#quote-rationale-inventory-context Phase 2b — caller wiring (quotes/page.tsx)", () => {
-  it("quotes/page.tsx 에 buildBriefRationaleSummary import", () => {
+  it.skip("quotes/page.tsx 에 buildBriefRationaleSummary import", () => {
     const fs = require("node:fs") as typeof import("node:fs");
     const path = require("node:path") as typeof import("node:path");
     const src = fs.readFileSync(
@@ -147,7 +150,7 @@ describe("#quote-rationale-inventory-context Phase 2b — caller wiring (quotes/
     expect(src).toMatch(/buildBriefRationaleSummary/);
   });
 
-  it("quotes/page.tsx 에 findMostUrgentInventoryForQuote 사용 또는 inline 매칭", () => {
+  it.skip("quotes/page.tsx 에 findMostUrgentInventoryForQuote 사용 또는 inline 매칭", () => {
     const fs = require("node:fs") as typeof import("node:fs");
     const path = require("node:path") as typeof import("node:path");
     const src = fs.readFileSync(
@@ -157,7 +160,7 @@ describe("#quote-rationale-inventory-context Phase 2b — caller wiring (quotes/
     expect(src).toMatch(/findMostUrgentInventoryForQuote|inventoryContext/);
   });
 
-  it("quotes/page.tsx 에 /api/inventory useQuery", () => {
+  it.skip("quotes/page.tsx 에 /api/inventory useQuery", () => {
     const fs = require("node:fs") as typeof import("node:fs");
     const path = require("node:path") as typeof import("node:path");
     const src = fs.readFileSync(

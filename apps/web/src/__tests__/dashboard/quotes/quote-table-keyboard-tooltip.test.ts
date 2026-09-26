@@ -70,12 +70,13 @@ describe("§11.230a #2 — 키보드 navigation (tbody tr)", () => {
     expect(page).toMatch(/(ArrowDown|"ArrowDown"|'ArrowDown')/);
   });
 
-  it("onKeyDown body — Enter 분기 (openQuoteContextRail 호출)", () => {
-    expect(page).toMatch(/(Enter|"Enter"|'Enter')[\s\S]{0,600}openQuoteContextRail/);
+  // 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 레일 삭제로 open/closeQuoteContextRail 이 selectQuoteRow/clearQuoteSelection 으로 바뀌었다. 명제(Enter=행 선택 · Escape=해제 · 행 클릭=선택)는 불변.
+  it("onKeyDown body — Enter 분기 (selectQuoteRow 호출)", () => {
+    expect(page).toMatch(/(Enter|"Enter"|'Enter')[\s\S]{0,600}selectQuoteRow/);
   });
 
-  it("onKeyDown body — Escape 분기 (closeQuoteContextRail 호출)", () => {
-    expect(page).toMatch(/(Escape|"Escape"|'Escape')[\s\S]{0,600}close[a-zA-Z]*\(/);
+  it("onKeyDown body — Escape 분기 (clearQuoteSelection 호출)", () => {
+    expect(page).toMatch(/(Escape|"Escape"|'Escape')[\s\S]{0,600}clearQuoteSelection\(/);
   });
 
   it("tbody tr 에 aria-label (행 정보)", () => {
@@ -103,15 +104,15 @@ describe("§11.230a invariant 보존 (cluster lineage)", () => {
     expect(page).toMatch(/getQuoteDispatchPreflight\([\s\S]{0,200}organizationVendorProducts/);
   });
 
-  it("openQuoteContextRail / closeQuoteContextRail 함수 보존 (canonical mutation)", () => {
-    expect(page).toMatch(/openQuoteContextRail/);
-    expect(page).toMatch(/close[a-zA-Z]*QuoteContextRail|closeQuoteContextRail/);
+  it("selectQuoteRow / clearQuoteSelection 함수 보존 (구 open/closeQuoteContextRail)", () => {
+    expect(page).toMatch(/function selectQuoteRow\(/);
+    expect(page).toMatch(/const clearQuoteSelection = /);
   });
 
   it("tbody tr onClick 기존 동작 보존 (마우스 클릭 흐름)", () => {
     // §11.241 — onClick body 가 Shift+클릭 분기 추가로 확장 → openQuoteContextRail 거리 ↑.
     //   <tr> 시작부터 onClick 까지 + onClick 안 inline arrow expand 으로 거리 1600+.
-    expect(page).toMatch(/<tr[\s\S]{0,1600}onClick=\{[\s\S]{0,1600}openQuoteContextRail/);
+    expect(page).toMatch(/<tr[\s\S]{0,1600}onClick=\{[\s\S]{0,1600}selectQuoteRow/);
   });
 
   it("cluster trace marker (§11.230a)", () => {

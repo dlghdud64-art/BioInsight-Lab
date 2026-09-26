@@ -31,9 +31,11 @@ describe("§ops-briefing-scope 케이스3 — 발송 검토 모달 위/후 견�
     expect(src).toMatch(/activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && selectedOpStatus && \(\(\) => \{/);
   });
 
-  it("발송 모달 닫을 때 closeQuoteContextRail 로 selectedQuoteId 정리(rail 이어짐 방지)", () => {
+  /* 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — closeQuoteContextRail 은 레일과 함께 clearQuoteSelection 으로 바뀌었다.
+     명제(발송 모달을 닫으면 선택 견적까지 정리한다)는 불변. */
+  it("발송 모달 닫을 때 clearQuoteSelection 으로 selectedQuoteId 정리", () => {
     const src = read(PAGE);
-    expect(src).toMatch(/if \(!open\) closeQuoteContextRail\("dispatch_close"\)/);
+    expect(src).toMatch(/if \(!open\) clearQuoteSelection\(\);/);
     expect(src).not.toMatch(/if \(!open\) setActiveWorkWindow\(null\); \}\}/);
   });
 });

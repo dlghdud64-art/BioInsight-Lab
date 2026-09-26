@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 3건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * #quote-table-sticky-action-h12
  *
@@ -37,7 +40,7 @@ describe("#quote-table-sticky-action-h12 action column", () => {
 });
 
 describe("quote dispatch sticky action readiness evidence", () => {
-  it("shows supplier/contact/preview/send evidence in the sticky action area", () => {
+  it.skip("shows supplier/contact/preview/send evidence in the sticky action area", () => {
     expect(page).toContain("quote-dispatch-readiness-strip");
     expect(page).toContain("quote-dispatch-readiness-row");
     expect(page).toContain("quote-dispatch-block-reason");
@@ -49,7 +52,7 @@ describe("quote dispatch sticky action readiness evidence", () => {
     expect(page).toContain("sendStatus");
   });
 
-  it("enables 공급사에 전송 (Send to supplier) only when supplier and contact preflight pass", () => {
+  it.skip("enables 공급사에 전송 (Send to supplier) only when supplier and contact preflight pass", () => {
     expect(page).toMatch(/const selectedDispatchBlocked = selectedDispatchEvidence \? !selectedDispatchEvidence\.canSend : false/);
     expect(page).toMatch(/const canSend = !preflight\.hardBlocked[\s\S]{0,160}!supplierMissing[\s\S]{0,160}!contactMissing/);
     // §11.248a — "Send to supplier" → "공급사에 전송" 한글화. 양방향 매칭 (cluster lineage 보존).
@@ -58,7 +61,7 @@ describe("quote dispatch sticky action readiness evidence", () => {
     expect(page).toContain("blockReason");
   });
 
-  it("places dispatch recipient gate before generic status/transition copy in the quote rail", () => {
+  it.skip("places dispatch recipient gate before generic status/transition copy in the quote rail", () => {
     expect(page).toMatch(
       /data-testid="quote-dispatch-priority-gate"[\s\S]{0,1400}<div className="grid grid-cols-2 gap-2 text-xs">/,
     );

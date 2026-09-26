@@ -36,7 +36,10 @@ describe("§quotes-brief-suppress — 회귀 0", () => {
     expect(QUOTES).toMatch(/useOperationalBriefPopup\(\)/);
     expect(QUOTES).toMatch(/close: closeOperationalBrief/);
   });
-  it('"공급사 발송 검토" 모달·mobile bottom sheet 보존', () => {
-    expect(QUOTES).toMatch(/MobileOperationalBriefSheet/);
+  /* 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 원 명제 「"공급사 발송 검토" 모달·mobile bottom sheet 보존」.
+     mobile bottom sheet(MobileOperationalBriefSheet)는 삭제 대상이 됐다(레일의 모바일판). 모달 보존만 남는다. */
+  it('"공급사 발송 검토" 모달 보존 · mobile bottom sheet 는 삭제', () => {
+    expect(QUOTES).toMatch(/<VendorRequestModal/);
+    expect(QUOTES).not.toMatch(/MobileOperationalBriefSheet/);
   });
 });

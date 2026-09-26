@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 3건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * #operational-brief-emoji-sweep — Phase 1 RED (caller wiring)
  *
@@ -14,11 +17,11 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("#operational-brief-emoji-sweep — quotes/page.tsx caller", () => {
-  it("새 structured helper buildBriefRationale import", () => {
+  it.skip("새 structured helper buildBriefRationale import", () => {
     expect(page).toMatch(/buildBriefRationale[^A-Za-z]/);
   });
 
-  it("desktop + mobile 두 곳 buildBriefRationale 호출", () => {
+  it.skip("desktop + mobile 두 곳 buildBriefRationale 호출", () => {
     const matches = page.match(/buildBriefRationale\s*\(/g) || [];
     expect(matches.length).toBeGreaterThanOrEqual(2);
   });
@@ -42,7 +45,7 @@ describe("#operational-brief-emoji-sweep — quotes/page.tsx caller", () => {
     expect(page).toMatch(/Send|Inbox|CheckCircle2|AlertTriangle|Clock/);
   });
 
-  it("cluster trace marker", () => {
+  it.skip("cluster trace marker", () => {
     expect(page).toMatch(/#operational-brief-emoji-sweep|이모지 제거|emoji-sweep|B2B 톤/);
   });
 });

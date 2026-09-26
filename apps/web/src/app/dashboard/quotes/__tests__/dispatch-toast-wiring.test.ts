@@ -25,10 +25,14 @@ describe("§action-toast P3 — 견적 개별 발송 결과 토스트(실 API �
     expect(src).toMatch(/const failed = result\?\.failed \?\? 0/);
   });
 
-  it("발송 후 견적 rail 정리(§ops-briefing 케이스3) + 액션 실 onClick(dead 아님)", () => {
+  /* 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 두 액션은 종전 선택만 되돌려 **레일**을 다시 열었다.
+     레일이 삭제돼 그 형태 그대로면 누르면 선택만 되는 죽은 버튼이 된다. 명제(액션이 실제로 무언가를 연다)를 새 목적지에 건다. */
+  it("발송 후 선택 정리(§ops-briefing 케이스3) + 액션 실 onClick(dead 아님)", () => {
     const src = read(PAGE);
     expect(src).toMatch(/setSelectedQuoteId\(null\)/);
-    expect(src).toMatch(/onClick: \(\) => \{ if \(quoteId\) setSelectedQuoteId\(quoteId\); \}/);
+    expect(src).not.toMatch(/onClick: \(\) => \{ if \(quoteId\) setSelectedQuoteId\(quoteId\); \}/);
+    expect(src).toMatch(/label: "발송 검토 다시"[^\n]*setSelectedQuoteId\(quoteId\); setActiveWorkWindow\("request_send"\);/);
+    expect(src).toMatch(/label: "회신 추적 보기"[^\n]*router\.push\(`\/quotes\/\$\{quoteId\}`\)/);
   });
 });
 

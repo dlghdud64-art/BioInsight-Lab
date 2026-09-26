@@ -21,8 +21,9 @@ const PAGE = readFileSync(
 );
 
 describe("§quote-management P4-label (AI 판단 micro-batch) — rail 섹션 헤더 정정", () => {
-  it("rail '운영 판단' 헤더 + 'AI 판단' 라벨 0(가드②)", () => {
-    expect(PAGE).toMatch(/>운영 판단<\/div>/);
+  /* 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 원 제목 「rail '운영 판단' 헤더 + 'AI 판단' 라벨 0」.
+     그 헤더는 레일 안에 있었고 레일과 함께 삭제됐다. 가드②(룰베이스를 AI 로 부르지 않는다)는 page-wide 0 으로 유지. */
+  it("'AI 판단' 라벨 0(가드②) · rail 헤더는 레일과 함께 삭제", () => {
     expect(PAGE).not.toMatch(/AI 판단/); // 헤더·주석 전수 정정 → page-wide 0
   });
 });

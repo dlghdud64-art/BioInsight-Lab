@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 3건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.264g #quote-card-compact-collapse — 견적 카드 2단계 접힘/펼침 (호영님 spec 견적 모바일 #2 P1)
  *
@@ -136,7 +139,7 @@ describe("§11.264g #3 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("§11.264i briefSheetOpen + ✦ 운영 브리핑 + KPI 도트 보존", () => {
+  it.skip("§11.264i briefSheetOpen + ✦ 운영 브리핑 + KPI 도트 보존", () => {
     expect(page).toMatch(
       /const\s+\[briefSheetOpen,\s+setBriefSheetOpen\]\s*=\s*useState/,
     );
@@ -146,12 +149,12 @@ describe("§11.264g #3 — invariant 보존 (canonical truth)", () => {
     expect(page).not.toMatch(/data-testid="quote-kpi-scroll-dots"/);
   });
 
-  it("§11.264j 공급사별 회신 현황 보존", () => {
+  it.skip("§11.264j 공급사별 회신 현황 보존", () => {
     expect(page).toMatch(/공급사별 회신 현황/);
     expect(page).toMatch(/data-testid="quote-vendor-response-status"/);
   });
 
-  it("§11.264e autoScrollToVendorSection state 보존", () => {
+  it.skip("§11.264e autoScrollToVendorSection state 보존", () => {
     expect(page).toMatch(
       /const\s+\[autoScrollToVendorSection,\s+setAutoScrollToVendorSection\]\s*=\s*useState/,
     );

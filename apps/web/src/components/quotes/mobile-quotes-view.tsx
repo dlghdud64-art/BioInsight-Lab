@@ -255,6 +255,8 @@ export function MobileQuotesView({ quotes, onSelect, onAction, onPrepare, highli
   highlightId?: string | null;
 }) {
   const [filter, setFilter] = useState<(typeof CHIPS)[number]["k"]>("all");
+  // 「나중에」 로 접은 우선 추천 케이스. 1위가 바뀌면 배너가 다시 뜬다(다른 케이스이므로).
+  const [laterId, setLaterId] = useState<string | null>(null);
   const vms = useMemo(() => quotes.map(buildVM).filter((v): v is VM => v != null), [quotes]);
 
   const counts = useMemo(() => {
@@ -313,7 +315,7 @@ export function MobileQuotesView({ quotes, onSelect, onAction, onPrepare, highli
         </span>
       </div>
 
-      {top && (
+      {top && top.id !== laterId && (
         <div className="rounded-[15px] px-4 py-3.5 text-white" style={{ background: "linear-gradient(100deg,#182c58,#234780 52%,#2b57a3)", boxShadow: "0 12px 28px -14px rgba(24,44,88,.55)" }}>
           <div className="flex items-center gap-1.5 mb-1.5">
             <Clock className="h-3.5 w-3.5" />
@@ -333,7 +335,9 @@ export function MobileQuotesView({ quotes, onSelect, onAction, onPrepare, highli
             <button type="button" onClick={() => onAction(top.id)} className="inline-flex items-center gap-1.5 h-11 px-4 rounded-[11px] bg-white text-[#182c58] text-[13.5px] font-extrabold active:scale-95">
               {actIcon(top.stage)}{top.stage === "s1" ? "견적 요청 발송" : STAGE_META[top.stage].act}
             </button>
-            <button type="button" onClick={() => onSelect(top.id)} className="h-11 px-4 rounded-[11px] border border-white/40 text-white text-[13.5px] font-bold active:scale-95">나중에</button>
+            {/* §quote-brief-rail-removed (2026-09-26) — 「나중에」 는 배너를 접는다. 종전 onSelect 는 맥락 시트를 열었고,
+                그 시트가 사라진 뒤 onSelect 는 상세 이동이라 「나중에」 의 뜻과 맞지 않는다. */}
+            <button type="button" onClick={() => setLaterId(top.id)} className="h-11 px-4 rounded-[11px] border border-white/40 text-white text-[13.5px] font-bold active:scale-95">나중에</button>
           </div>
         </div>
       )}

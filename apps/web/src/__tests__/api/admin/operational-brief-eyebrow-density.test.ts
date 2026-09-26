@@ -49,7 +49,7 @@ describe("§11.179 shared BriefSurfaceHeader 컴포넌트", () => {
 describe("§11.179 5 surface eyebrow 일괄 swap", () => {
   const SURFACES: { name: string; path: string }[] = [
     // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases — 표면 삭제.
-    { name: "quotes", path: "src/app/dashboard/quotes/page.tsx" },
+    // 제거 §quote-brief-rail-removed (2026-09-26 · 호영님 판정): quotes — 견적 브리핑 레일 삭제. 나머지 surface 의 명제는 무손상.
     { name: "inventory-context-panel", path: "src/components/inventory/inventory-context-panel.tsx" },
     { name: "queue-detail-panel", path: "src/components/dashboard/console/queue-detail-panel.tsx" },
     { name: "operational-detail-shell", path: "src/app/dashboard/_components/operational-detail-shell.tsx" },
@@ -66,7 +66,10 @@ describe("§11.179 5 surface eyebrow 일괄 swap", () => {
 
 describe("§11.179 5 surface 너비 확장 (≥ 480)", () => {
   // 제거 §purchases-ui-removed (2026-09-24 · 호영님 판정): purchases 너비 — 표면 삭제.
-  it("quotes — w-[480px]", () => {
+  /* 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 원 명제 「quotes 레일 너비 w-[480px]」.
+     레일이 삭제됐는데 이 단언은 GREEN 이었다 — AI 비교 모달 표의 `min-w-[480px]` 가 **대신 매칭**하고 있었다(4원칙 ④).
+     통과가 명제를 보고 있지 않았으므로 skip 으로 은퇴한다. */
+  it.skip("quotes — w-[480px]", () => {
     const src = read("src/app/dashboard/quotes/page.tsx");
     expect(src).toMatch(/w-\[480px\]/);
   });

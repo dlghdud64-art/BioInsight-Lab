@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 12건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.264i #quote-bottom-sheet-dual-overlap — 견적 바텀시트 2중 겹침 fix (호영님 spec P0 긴급)
  *
@@ -39,11 +42,11 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.264i #1 — briefSheetOpen state 분리 (2중 겹침 fix)", () => {
-  it("§11.264i trace marker comment 존재", () => {
+  it.skip("§11.264i trace marker comment 존재", () => {
     expect(page).toMatch(/§11\.264i/);
   });
 
-  it("briefSheetOpen useState 도입 (default false)", () => {
+  it.skip("briefSheetOpen useState 도입 (default false)", () => {
     expect(page).toMatch(
       /const\s+\[briefSheetOpen,\s+setBriefSheetOpen\]\s*=\s*useState[<\(]/,
     );
@@ -53,7 +56,7 @@ describe("§11.264i #1 — briefSheetOpen state 분리 (2중 겹침 fix)", () =>
     );
   });
 
-  it("§11.155 MobileOperationalBriefSheet 조건에 briefSheetOpen 추가", () => {
+  it.skip("§11.155 MobileOperationalBriefSheet 조건에 briefSheetOpen 추가", () => {
     // 기존: {selectedQuote && selectedSignals && (
     // 신규: {briefSheetOpen && selectedQuote && selectedSignals && (
     expect(page).toMatch(
@@ -61,20 +64,20 @@ describe("§11.264i #1 — briefSheetOpen state 분리 (2중 겹침 fix)", () =>
     );
   });
 
-  it("MobileOperationalBriefSheet open prop = briefSheetOpen", () => {
+  it.skip("MobileOperationalBriefSheet open prop = briefSheetOpen", () => {
     // 기존: open={!!selectedQuote}
     // 신규: open={briefSheetOpen}
     expect(page).toMatch(/open=\{briefSheetOpen\}/);
   });
 
-  it("MobileOperationalBriefSheet onClose 에 setBriefSheetOpen(false) 호출", () => {
+  it.skip("MobileOperationalBriefSheet onClose 에 setBriefSheetOpen(false) 호출", () => {
     // 기존: onClose={() => closeQuoteContextRail("x_button")}
     // 신규: onClose={() => setBriefSheetOpen(false)}
     // (closeQuoteContextRail 은 견적 자체를 닫음 — 운영 브리핑만 닫을 때는 setBriefSheetOpen(false))
     expect(page).toMatch(/onClose=\{\(\)\s*=>\s*setBriefSheetOpen\(false\)\}/);
   });
 
-  it("§11.248e header 옆 ✦ 운영 브리핑 진입 버튼 추가", () => {
+  it.skip("§11.248e header 옆 ✦ 운영 브리핑 진입 버튼 추가", () => {
     // header 영역 (badge + #ID + X button) 안에 새 버튼:
     //   onClick={() => setBriefSheetOpen(true)}
     //   aria-label 로 진입 명시
@@ -83,7 +86,7 @@ describe("§11.264i #1 — briefSheetOpen state 분리 (2중 겹침 fix)", () =>
     expect(page).toMatch(/✦/);
   });
 
-  it("closeQuoteContextRail 에 setBriefSheetOpen(false) 동기 (orphan state 방지)", () => {
+  it.skip("closeQuoteContextRail 에 setBriefSheetOpen(false) 동기 (orphan state 방지)", () => {
     // 견적 자체 닫을 때 briefSheet 도 닫혀야 함
     // closeQuoteContextRail 함수 안 또는 호출 후 setBriefSheetOpen(false)
     expect(page).toMatch(
@@ -115,7 +118,7 @@ describe("§11.264i #2 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("openQuoteContextRail 함수 시그니처 보존", () => {
+  it.skip("openQuoteContextRail 함수 시그니처 보존", () => {
     expect(page).toMatch(
       /const\s+openQuoteContextRail\s*=\s*\(caseId:\s*string,\s*source:\s*string\s*=\s*"row"\)/,
     );
@@ -130,17 +133,17 @@ describe("§11.264i #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/selectedSignals\.summary/);
   });
 
-  it("§11.248e min-[1200px]:hidden 보존 (mobile/tablet only)", () => {
+  it.skip("§11.248e min-[1200px]:hidden 보존 (mobile/tablet only)", () => {
     expect(page).toMatch(/min-\[1200px\]:hidden fixed inset-0 z-40/);
   });
 
-  it("§11.155 MobileOperationalBriefSheet import 보존", () => {
+  it.skip("§11.155 MobileOperationalBriefSheet import 보존", () => {
     expect(page).toMatch(
       /import\s+\{\s*MobileOperationalBriefSheet\s*\}\s+from\s+"@\/components\/operational-brief\/mobile-bottom-sheet"/,
     );
   });
 
-  it("§11.264a chips override (4 entry) 보존: 상태 요약 / 회신 현황 / 리스크 / 발주 전환", () => {
+  it.skip("§11.264a chips override (4 entry) 보존: 상태 요약 / 회신 현황 / 리스크 / 발주 전환", () => {
     expect(page).toMatch(/\{ id: "summary",\s+label: "상태 요약" \}/);
     expect(page).toMatch(/\{ id: "facts",\s+label: "회신 현황" \}/);
     expect(page).toMatch(/\{ id: "risks",\s+label: "리스크" \}/);
@@ -148,7 +151,7 @@ describe("§11.264i #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/\{ id: "next",\s+label: "다음 단계" \}/);
   });
 
-  it("§11.264d objectLabel 동적 결합 보존", () => {
+  it.skip("§11.264d objectLabel 동적 결합 보존", () => {
     expect(page).toMatch(
       /objectLabel=\{`선택한 견적\s*·\s*\$\{selectedQuote\.title\}`\}/,
     );

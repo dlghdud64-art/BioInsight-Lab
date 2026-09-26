@@ -1,3 +1,6 @@
+// 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 견적 관리 브리핑 레일(우측 4탭)·모바일 맥락 시트·모바일 브리핑 시트 삭제.
+//   이 파일의 견적 레일 전용 단언 9건을 it.skip 으로 은퇴했다. 원 명제는 각 it 제목에 그대로 남아 있다.
+//   살아 있는 명제(표면 0 · 행 클릭 = 선택만 · 대체 진입점)는 regression/quote-brief-rail-removed.test.ts 로 이관했다.
 /**
  * §11.264j #quote-vendor-response-status — 견적 상세 시트 공급사별 회신 현황 (호영님 spec #2 P1)
  *
@@ -68,7 +71,7 @@ describe("§11.264j #2 — 공급사별 회신 현황 section 렌더", () => {
     expect(page).toMatch(/공급사별 회신 현황/);
   });
 
-  it("vendorRequests.map 매핑 패턴", () => {
+  it.skip("vendorRequests.map 매핑 패턴", () => {
     // selectedQuote.vendorRequests?.map 또는 .map((req) =>
     expect(page).toMatch(
       /selectedQuote\.vendorRequests[\s\S]{0,200}\.map\(/,
@@ -82,20 +85,20 @@ describe("§11.264j #2 — 공급사별 회신 현황 section 렌더", () => {
     expect(page).toMatch(/●/);
   });
 
-  it("미회신 상태 (SENT/EXPIRED) ○ + 경과일", () => {
+  it.skip("미회신 상태 (SENT/EXPIRED) ○ + 경과일", () => {
     // ○ symbol (slate 톤)
     expect(page).toMatch(/○/);
     // 경과일 표시 "{N}일 경과" 패턴
     expect(page).toMatch(/일 경과/);
   });
 
-  it("section data-testid 부여 (Chrome MCP / e2e 안정성)", () => {
+  it.skip("section data-testid 부여 (Chrome MCP / e2e 안정성)", () => {
     expect(page).toMatch(/data-testid="quote-vendor-response-status"/);
   });
 });
 
 describe("§11.264j #3 — invariant 보존 (canonical truth)", () => {
-  it("§11.248e mobile context sheet 구조 보존 (header)", () => {
+  it.skip("§11.248e mobile context sheet 구조 보존 (header)", () => {
     expect(page).toMatch(/selectedSignals\.badge/);
     // §quote-table-sian-realign P1 — sheet 헤더 ref 가 cuid 유출(id.slice(0,8)) → quoteDisplayRef(저장0·파생,
     //   internal-key 미노출)로 교체(CEO cuid 노출 지적 봉합). 헤더 구조(badge+ref+title) 보존 의도 불변, ref 토큰만 안전 헬퍼로.
@@ -105,22 +108,22 @@ describe("§11.264j #3 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("§11.248e min-[1200px]:hidden 보존 (mobile/tablet only)", () => {
+  it.skip("§11.248e min-[1200px]:hidden 보존 (mobile/tablet only)", () => {
     expect(page).toMatch(/min-\[1200px\]:hidden fixed inset-0 z-40/);
   });
 
-  it("§11.264i briefSheetOpen useState 보존", () => {
+  it.skip("§11.264i briefSheetOpen useState 보존", () => {
     expect(page).toMatch(
       /const\s+\[briefSheetOpen,\s+setBriefSheetOpen\]\s*=\s*useState/,
     );
   });
 
-  it("§11.264i ✦ 운영 브리핑 버튼 보존", () => {
+  it.skip("§11.264i ✦ 운영 브리핑 버튼 보존", () => {
     expect(page).toMatch(/aria-label="운영 브리핑 열기"/);
     expect(page).toMatch(/setBriefSheetOpen\(true\)/);
   });
 
-  it("§11.264a chips override (4 entry) 보존", () => {
+  it.skip("§11.264a chips override (4 entry) 보존", () => {
     expect(page).toMatch(/\{ id: "summary",\s+label: "상태 요약" \}/);
     expect(page).toMatch(/\{ id: "facts",\s+label: "회신 현황" \}/);
     expect(page).toMatch(/\{ id: "risks",\s+label: "리스크" \}/);
@@ -128,7 +131,7 @@ describe("§11.264j #3 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/\{ id: "next",\s+label: "다음 단계" \}/);
   });
 
-  it("§11.264d objectLabel 동적 결합 보존", () => {
+  it.skip("§11.264d objectLabel 동적 결합 보존", () => {
     expect(page).toMatch(
       /objectLabel=\{`선택한 견적\s*·\s*\$\{selectedQuote\.title\}`\}/,
     );

@@ -3,10 +3,12 @@
 export const dynamic = 'force-dynamic';
 
 import { csrfFetch } from "@/lib/api-client";
-import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
-// §quotes-brief-suppress (호영님 2026-07-02) — 운영 브리핑 FAB import 제거:
-//   견적 관리는 운영 브리핑 FAB 미제공("공급사 발송 검토" 모달이 정식 워크플로). dead import 차단.
-import { MetricCell } from "@/components/operational-brief/metric-cell";
+// §quotes-brief-suppress (호영님 2026-07-02) — 브리핑 FAB import 제거:
+//   견적 관리는 브리핑 FAB 미제공("공급사 발송 검토" 모달이 정식 워크플로). dead import 차단.
+// 🛑 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 우측 브리핑 레일 · 모바일 맥락 시트 · 모바일 브리핑 시트 삭제.
+//   행 클릭은 선택 하이라이트만 한다. 상세는 행 ⋮ 메뉴 「상세 열기」, 회신 확인은 견적 상세 「수신 견적」 탭,
+//   나머지 단계 CTA 는 레일을 거치지 않고 그 단계의 작업창을 바로 연다.
+//   역계약: __tests__/regression/quote-brief-rail-removed.test.ts
 // §11.374 — 모바일 상태요약 단일 컴포넌트(가로 5탭 빽빽 → 2x2). 표현만, count 주입.
 // §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 스캔 포함 액션 우측 통합.
 import { AppPageHeader } from "@/components/layout/page-header";
@@ -19,7 +21,7 @@ import { PriorityRecommendationCard } from "@/components/quotes/priority-recomme
 import { computePriority, type Stage } from "@/lib/quote-management/derive";
 import { toQuoteCase } from "@/lib/quote-management/from-quote";
 import { STATUS_PREDICATES, deriveQuote, periodMatch, mineMatch, chipCount as qfChipCount, sortQuotes as sortQuotesLib, parseStatusCsv, type StatusChipKey, type PeriodKey, type QuickFilterQuote, type QuickFilterState } from "@/lib/quote-management/quick-filter";
-import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
+import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
@@ -46,30 +48,7 @@ import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch
 import { useOverlayChromeStore } from "@/lib/store/overlay-chrome-store";
 import { labToast } from "@/lib/toast/lab-toast";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
-// #quote-rationale-inventory-context Phase 2 — 인과관계 helper + inventory match.
-// #operational-brief-emoji-sweep — 새 structured helper (case + tone + icon).
-import {
-  buildBriefRationale,
-  buildBriefRationaleSummary,
-  findMostUrgentInventoryForQuote,
-  type InventoryRow,
-  type BriefRationaleTone,
-} from "@/lib/operational-brief/build-rationale";
-
-/**
- * #operational-brief-emoji-sweep — tone → 컬러 도트 className 매핑.
- *   호영님 redesign Phase B-1: 이모지 prefix 제거 후 메시지 옆 컬러 도트로
- *   시각 위계. tone 별 bg-{color}-500 (slate/amber/blue/emerald/red).
- */
-function rationaleToneDotClass(tone: BriefRationaleTone): string {
-  switch (tone) {
-    case "slate": return "bg-slate-400";
-    case "amber": return "bg-yellow-500";
-    case "blue": return "bg-blue-500";
-    case "emerald": return "bg-emerald-500";
-    case "red": return "bg-red-500";
-  }
-}
+import { createPortal } from "react-dom";
 import { BatchActionBar } from "@/components/quotes/dispatch/batch-action-bar";
 import { BatchDispatchSheet } from "@/components/quotes/dispatch/batch-dispatch-sheet";
 // §11.228 #quote-management-v2-phase-c1 — 호영님 v2 #20 일괄 처리 강화.
@@ -339,28 +318,25 @@ const RAIL_STATE_MAP: Record<RailState, {
   },
 };
 
+/* §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 레일이 사라진 뒤 행·카드 CTA 의 목적지.
+ *   종전에는 아래 라벨들이 레일을 연 뒤 레일 안 버튼이 작업창을 열었다(두 번 눌러야 했다).
+ *   이제 CTA 가 그 작업창을 바로 연다. 목적지가 없는 라벨이 생기면 그 버튼은 죽은 버튼이 된다 —
+ *   역계약이 RAIL_STATE_MAP 의 모든 ctaLabel 이 목적지를 갖는지 본다.
+ *   · REPLY_CHECK_CTA 는 작업창이 아니라 견적 상세로 간다. 상세의 기본 탭이 「수신 견적」 이다.
+ *     (회신 확인 모달은 아직 없다 · 모달이 생기면 그쪽으로 옮긴다) */
+const REPLY_CHECK_CTA = "새 회신 보기";
+const CTA_WORK_WINDOW: Record<string, Exclude<WorkWindowKey, null>> = {
+  "재요청 보내기": "followup_send",
+  "추가 회신 확보": "followup_send",
+  "비교 결과 정리": "compare_review",
+  "조건 확인": "compare_review",
+  "승인 증빙 연결": "approval_prep",
+};
+
 // §11.226 #quote-management-v2-phase-a — 호영님 v2 P0 #2 spec.
 //   테이블 뷰 한정 CTA 텍스트 축약 — 좁은 cell 폭에서 잘림 차단.
 //   카드 뷰는 원본 ctaLabel 유지 (시각 면적 충분).
 //   "12자 이내" 축약 룰 정합 (호영님 v2 spec sheet 디자인 원칙 9).
-// §11.264j — 공급사별 회신 현황 (§11.248e mobile context sheet body) 에서 사용.
-//   ISO date 기준 "N일 경과" 텍스트 렌더링. SSR 시 placeholder 출력 →
-//   client mount 후 setText 으로 실제 일수 계산. §11.214 hydration 안전 패턴
-//   (RelativeTimeText 동일 mount-after-set 전략).
-function ElapsedDaysText({ iso }: { iso: string }): JSX.Element {
-  const [text, setText] = useState<string>("·일 경과");
-  useEffect(() => {
-    const sentAt = new Date(iso).getTime();
-    if (Number.isNaN(sentAt)) {
-      setText("·일 경과");
-      return;
-    }
-    const days = Math.max(0, Math.floor((Date.now() - sentAt) / 86400000));
-    setText(`${days}일 경과`);
-  }, [iso]);
-  return <span>{text}</span>;
-}
-
 //   매핑 외 label 은 원본 그대로 통과 (graceful fallback).
 function shortenActionLabel(ctaLabel: string): string {
   const TABLE_ACTION_LABEL_SHORTCUTS: Record<string, string> = {
@@ -508,15 +484,6 @@ type QuoteDispatchPreflight = {
   blockers: string[];
 };
 
-type QuoteDispatchEvidence = {
-  supplierStatus: string;
-  contactStatus: string;
-  previewStatus: string;
-  sendStatus: string;
-  blockReason: string;
-  canSend: boolean;
-};
-
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function formatDispatchTimestamp(iso?: string | null): string {
@@ -620,40 +587,53 @@ function getQuoteDispatchPreflight(
   };
 }
 
-function getQuoteDispatchEvidence(preflight: QuoteDispatchPreflight | null): QuoteDispatchEvidence {
-  if (!preflight) {
-    return {
-      supplierStatus: "공급사 선택 필요",
-      contactStatus: "연락처 필요",
-      previewStatus: "미리보기 대기",
-      sendStatus: "전송 차단",
-      blockReason: "견적 선택 필요",
-      canSend: false,
-    };
-  }
-
-  const supplierMissing = preflight.blockers.some((blocker) => blocker.includes("공급사 후보"));
-  const contactMissing = preflight.blockers.some((blocker) => blocker.includes("연락 채널 확인 필요"));
-  const quoteMissing = preflight.blockers.some((blocker) => blocker.includes("견적 선택 없음") || blocker.includes("견적 연결 없음"));
-  const canSend = !preflight.hardBlocked && !supplierMissing && !contactMissing && !quoteMissing;
-  const blockReason = quoteMissing
-    ? "견적 선택 필요"
-    : supplierMissing
-      ? "공급사 선택 필요"
-      : contactMissing
-        ? "연락처 필요"
-        : canSend
-          ? "전송 가능"
-          : preflight.summary;
-
-  return {
-    supplierStatus: supplierMissing || quoteMissing ? "공급사 선택 필요" : "공급사 1개 이상 선택됨",
-    contactStatus: contactMissing || quoteMissing ? "연락처 필요" : "유효 연락처 확인됨",
-    previewStatus: canSend ? "메시지 미리보기 준비" : "미리보기 대기",
-    sendStatus: canSend ? "전송 확인 대기" : "전송 차단",
-    blockReason,
-    canSend,
-  };
+/* §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 행 ⋮ 메뉴. 레일의 「전체 상세 열기」 를 이어받는다.
+ *   포털로 body 에 띄운다 — 테이블은 가로 스크롤 컨테이너라 absolute 메뉴가 잘리고,
+ *   카드는 hover 때 transform 이 걸려 fixed 기준이 카드로 바뀐다.
+ *   React 이벤트는 포털을 지나 행까지 올라오므로 메뉴 안의 클릭·키 입력은 여기서 멈춘다
+ *   (안 멈추면 행 onClick 이 선택을 토글하고, 행 Enter 처리가 링크 이동을 막는다). */
+function QuoteRowMenu({ quoteId, label }: { quoteId: string; label: string }) {
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  const stop = (e: { stopPropagation: () => void }) => e.stopPropagation();
+  return (
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-10 w-10 p-0 text-slate-500 hover:text-slate-900 shrink-0"
+        aria-label={`${label} 메뉴`}
+        aria-haspopup="menu"
+        aria-expanded={pos !== null}
+        data-testid="quote-row-menu-trigger"
+        onKeyDown={stop}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (pos) { setPos(null); return; }
+          const r = e.currentTarget.getBoundingClientRect();
+          setPos({ top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right) });
+        }}
+      >
+        <MoreHorizontal className="h-4 w-4 pointer-events-none" />
+      </Button>
+      {pos && typeof document !== "undefined" && createPortal(
+        <div onClick={stop} onKeyDown={stop}>
+          <div className="fixed inset-0 z-40" aria-hidden="true" onClick={() => setPos(null)} />
+          <div role="menu" className="fixed z-50 w-40 rounded-md border border-slate-200 bg-white py-1 shadow-lg" style={{ top: pos.top, right: pos.right }}>
+            <Link
+              href={`/quotes/${quoteId}`}
+              role="menuitem"
+              data-testid="quote-row-menu-detail"
+              className="flex min-h-[44px] items-center gap-2 px-3 text-sm text-slate-700 hover:bg-slate-100"
+            >
+              <ExternalLink className="h-4 w-4 text-slate-400" />상세 열기
+            </Link>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
+  );
 }
 
 const READINESS_LABELS = ["요청 생성", "회신 수집", "비교 검토", "전환 준비", "완료"];
@@ -908,6 +888,10 @@ function QuoteCard({
           </Button>
           {/* 다음 액션 힌트 — 모바일에서는 숨김 */}
           <span className="text-[9px] text-slate-500 text-center hidden sm:block">다음: {signals.nextAction}</span>
+          {/* §quote-brief-rail-removed — 상세 진입(레일 「전체 상세」 승계). 카드 클릭은 선택만 한다. */}
+          <div className="sm:self-end">
+            <QuoteRowMenu quoteId={quote.id} label={displayTitle} />
+          </div>
         </div>
       </div>
 
@@ -1136,24 +1120,9 @@ function QuotesPageContent() {
   const isBrowserPilotQuoteDispatch = pilotProfile === "quote-dispatch";
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  // §11.221 — 운영 브리핑 판단 근거 collapsible (호영님 5월 8일 결론).
-  // #operational-brief-3-section-compress (Phase B-2) — state 통합 + scope 확장.
-  //   호영님 redesign: 7 섹션 → 3 섹션 (한 줄 요약 + 다음 액션 + 상세 아코디언).
-  //   default 접힘 — visible: § 1 narrative + § 2 한 줄 + § 4 다음 조치 + bottom CTA.
-  //   collapsed: § 2 4 cell + § 2 cont 회신·비교 + 최근 활동 + § 3 리스크 + 운영 판단.
-  //   chip click → 자동 setBriefDetailExpanded(true) + scrollIntoView (collapsed 시
-  //   anchor 가 mount 되어야 scrollIntoView 작동 — expand 후 scroll).
   // §11.298d quotes header utility plain dropdown state.
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isBomDropdownOpen, setIsBomDropdownOpen] = useState(false);
-  const [briefDetailExpanded, setBriefDetailExpanded] = useState(false);
-  // backward compat alias — 기존 factsExpanded 사용처 (mobile §11.222 등) 보호.
-  const factsExpanded = briefDetailExpanded;
-  const setFactsExpanded = setBriefDetailExpanded;
-  // §11.217 Phase 5 — chip scroll-spy active highlight.
-  //   IntersectionObserver 로 detail panel scroll 시 visible section 의 chip
-  //   자동 highlight. chip click 시 scrollIntoView + setActiveChipId 즉시 update.
-  const [activeChipId, setActiveChipId] = useState<string | null>("summary");
   // §11.217 Phase 6 — quote list 보기 모드 (카드 ↔ 테이블 toggle).
   //   localStorage "labaxis-quote-view-mode" persist — 사용자 선호 기억.
   //   default "card" (호영님 기존 패턴 정합).
@@ -1237,22 +1206,10 @@ function QuotesPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quickMine, quickPeriod, quickStatus, sortState, debouncedSearchQuery]);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
-  // §11.264i — briefSheetOpen 분리 (호영님 spec P0 견적 모바일 2중 겹침 fix).
-  //   기존: §11.155 MobileOperationalBriefSheet 가 selectedQuote 와 단일 truth 공유
-  //         → §11.248e mobile context sheet 와 < 1200px viewport 에서 동시 렌더.
-  //   신규: briefSheetOpen state 분리. §11.248e header 의 ✦ 버튼으로만 진입.
-  //         closeQuoteContextRail 시 setBriefSheetOpen(false) 동기 (orphan 방지).
-  const [briefSheetOpen, setBriefSheetOpen] = useState<boolean>(false);
-  // §11.264e — "새 회신 보기" CTA → vendor response section auto-scroll
-  //   (호영님 spec #3-3 P1). status="SENT" 회신_대기 견적에서 CTA 누르면
-  //   sheet 열리고 동시에 공급사별 회신 현황 section 으로 scrollIntoView →
-  //   사용자가 회신 정보 즉시 확인. mount 후 useEffect 로 ref scroll + reset.
-  const [autoScrollToVendorSection, setAutoScrollToVendorSection] = useState<boolean>(false);
-  const vendorResponseSectionRef = useRef<HTMLDivElement | null>(null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
   // §ops-briefing-fab (호영님 2026-07-08) — 발송 진행 컨텍스트 제외.
   //   발송 검토 모달(request_send)이 곧 그 케이스의 단계·차단·액션 브리핑이므로,
-  //   그 위에 progress overlay("현재 단계" 운영 브리핑)가 같은 정보를 이중 표시하는 것을 제거.
+  //   그 위에 progress overlay("현재 단계" 브리핑)가 같은 정보를 이중 표시하는 것을 제거.
   //   store 에 dispatch 상태를 넣지 않고 closeOverlay 만 호출(canonical 경계 준수).
   const closeOverlay = useOverlayChromeStore((s) => s.closeOverlay);
   useEffect(() => {
@@ -1344,7 +1301,7 @@ function QuotesPageContent() {
 
   // §11.230a #quote-table-keyboard-tooltip — 호영님 v2 #23 (c+d) 키보드 navigation.
   //   tbody tr 의 keyboard focus index. ArrowUp/Down 으로 인접 row 이동.
-  //   Enter 로 openQuoteContextRail / Escape 로 closeQuoteContextRail.
+  //   Enter 로 행 선택 / Escape 로 선택 해제(§quote-brief-rail-removed).
   //   default -1 (no focus) — Tab 진입 시 첫 row 부터 활성화.
   //   canonical truth 변경 0 — UI focus only (selectedQuoteId 와 별개).
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
@@ -1535,7 +1492,7 @@ function QuotesPageContent() {
       invalidateBriefNarrative({ quoteId, module: "quote_detail", sourceUpdatedAt: new Date() });
       invalidateBriefNarrative({ quoteId, module: "purchase_conversion", sourceUpdatedAt: new Date() });
     }
-    // §action-toast P3 + §ops-briefing-scope 케이스3 — 발송 후 모달·견적 rail 정리(이어짐 방지) → 결과 토스트.
+    // §action-toast P3 + §ops-briefing-scope 케이스3 — 발송 후 모달·선택 정리 → 결과 토스트.
     setActiveWorkWindow(null);
     setSelectedQuoteId(null);
     if (typeof window !== "undefined") {
@@ -1548,45 +1505,30 @@ function QuotesPageContent() {
     const failed = result?.failed ?? 0;
     const recipients = result?.recipientCount ?? sent;
     if (failed > 0) {
-      // 부분 성공 — 실 API 집계(sent/failed) 분기. "다시 검토"로 발송 rail 재열기(dead 아님).
+      // 부분 성공 — 실 API 집계(sent/failed) 분기.
+      // §quote-brief-rail-removed — 종전에는 선택만 되돌려 레일을 다시 열었다. 레일이 없으니 발송 검토 작업창을 바로 연다.
       labToast.partial("견적 발송 부분 완료", `<b>${sent}건 발송</b> · 실패 ${failed}건`, {
-        actions: [{ label: "발송 검토 다시", primary: true, onClick: () => { if (quoteId) setSelectedQuoteId(quoteId); } }],
+        actions: [{ label: "발송 검토 다시", primary: true, onClick: () => { if (quoteId) { setSelectedQuoteId(quoteId); setActiveWorkWindow("request_send"); } } }],
       });
     } else {
+      // §quote-brief-rail-removed — 회신 추적은 견적 상세 「수신 견적」 탭(기본 탭)이 맡는다.
       labToast.success("견적 요청 발송 완료", `<b>${recipients}곳</b> 공급사에 요청을 전달했습니다.`, {
-        actions: [{ label: "회신 추적 보기", onClick: () => { if (quoteId) setSelectedQuoteId(quoteId); } }],
+        actions: [{ label: "회신 추적 보기", onClick: () => { if (quoteId) router.push(`/quotes/${quoteId}`); } }],
       });
     }
-  }, [queryClient, selectedQuoteId]);
+  }, [queryClient, selectedQuoteId, router]);
 
-  // §11.264e — "새 회신 보기" CTA → vendor response section auto-scroll.
-  //   selectedQuoteId 가 바뀐 직후 (sheet mount 완료) + autoScroll flag = true 면
-  //   vendor section ref 로 scrollIntoView. reset 으로 flag 0 → 다음 CTA 까지
-  //   trigger 안 함. requestAnimationFrame 으로 DOM mount 완전 보장.
-  useEffect(() => {
-    if (!autoScrollToVendorSection) return;
-    if (!selectedQuoteId) return;
-    const raf = requestAnimationFrame(() => {
-      const el = vendorResponseSectionRef.current;
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-      setAutoScrollToVendorSection(false);
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [autoScrollToVendorSection, selectedQuoteId]);
-
-  // §11.264e — QuoteCard onSelect handler. ctaLabel === "새 회신 보기" 면
-  //   openQuoteContextRail 호출 후 autoScroll flag 설정. 다른 CTA (조건/
-  //   승인/...) 또는 row 클릭 (ctaLabel undefined) 은 기존 동작.
+  // §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — QuoteCard·행 CTA handler.
+  //   ctaLabel 없음(행·카드 클릭) = 선택 하이라이트만. 라벨이 있으면 그 단계의 목적지로 바로 간다.
   // §11.279d — 카드 [발송] CTA (ctaLabel === "견적 요청 발송") →
   //   VendorRequestModal 직접 진입 (1 tap, 호영님 spec). rail panel skip
   //   전 setSelectedQuoteId + setActiveWorkWindow("request_send") 직접 호출.
   const handleQuoteCardSelect = useCallback((quoteId: string, ctaLabel?: string) => {
-    // §order-entry-rewire P3-2 (호영님 판정 2026-08-22) — 발주 진입 직결.
-    //   종전: 행 "발주 준비" → openQuoteContextRail → 운영 브리핑이 뜨고 그 안에서
-    //   한 번 더 눌러야 주문 접수. 브리핑이 발주 흐름에 끼어드는 자리였다.
-    //   이제: 행 → 주문 접수 창 직행 (rail 미경유). 다른 상태의 rail 경유는 불변.
+    if (ctaLabel === undefined) {
+      selectQuoteRow(quoteId);
+      return;
+    }
+    // §order-entry-rewire P3-2 (호영님 판정 2026-08-22) — 발주 진입 직결(브리핑 레일 미경유).
     /* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 작업창을 한 번 더 거치지 않는다. 그 창은 패널에 이미 있는 문장을 반복할 뿐이었다(호영님). */
     if (ctaLabel === "입고 관리 열기") {
       router.push("/dashboard/receiving");
@@ -1603,34 +1545,40 @@ function QuotesPageContent() {
       setSendIntentQuoteId(quoteId);
       return;
     }
-    openQuoteContextRail(quoteId, "row");
-    if (ctaLabel === "새 회신 보기") {
-      setAutoScrollToVendorSection(true);
+    if (ctaLabel === REPLY_CHECK_CTA) {
+      // §quote-brief-rail-removed — 회신 확인 = 견적 상세 「수신 견적」 탭(상세의 기본 탭).
+      router.push(`/quotes/${quoteId}`);
+      return;
     }
+    const workWindow = CTA_WORK_WINDOW[ctaLabel];
+    if (workWindow) {
+      // §quote-brief-rail-removed — 레일을 거치지 않고 그 단계의 작업창을 바로 연다.
+      setSelectedQuoteId(quoteId);
+      setActiveWorkWindow(workWindow);
+      return;
+    }
+    selectQuoteRow(quoteId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── 행 선택 — 하이라이트 전용. 패널·드로어·시트를 열지 않는다(§quote-brief-rail-removed). ──
+  //   ?selected= 는 선택 하이라이트만 복원한다(알림 딥링크 · /dashboard/quotes/[quoteId] 리다이렉트).
+  function selectQuoteRow(caseId: string) {
+    setSelectedQuoteId((prev) => {
+      const next = prev === caseId ? null : caseId;
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        if (next) url.searchParams.set("selected", next);
+        else url.searchParams.delete("selected");
+        window.history.replaceState({}, "", url.toString());
+      }
+      return next;
+    });
+  }
 
-  // ── Rail open/close — single source of truth ──
-  const openQuoteContextRail = (caseId: string, source: string = "row") => {
-    const next = selectedQuoteId === caseId ? null : caseId;
-    if (next) {
-      setSelectedQuoteId(next);
-      // URL query에 selected 반영
-      const url = new URL(window.location.href);
-      url.searchParams.set("selected", next);
-      window.history.replaceState({}, "", url.toString());
-    } else {
-      closeQuoteContextRail("toggle");
-    }
-  };
-
-  const closeQuoteContextRail = (source: string = "x_button") => {
+  const clearQuoteSelection = () => {
     setSelectedQuoteId(null);
     setActiveWorkWindow(null);
-    // §11.264i — briefSheetOpen 동기 (orphan state 방지). 견적 자체 닫힐 때
-    // 운영 브리핑도 함께 닫힘 — 두 sheet 가 mutually exclusive.
-    setBriefSheetOpen(false);
     // URL query 정리 — path 유지, selected/task 제거
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
@@ -1640,11 +1588,12 @@ function QuotesPageContent() {
     }
   };
 
-  // ESC로 rail 닫기
+  // ESC 로 선택 해제
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") closeQuoteContextRail("esc"); };
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") clearQuoteSelection(); };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedQuoteId]);
 
   useEffect(() => {
@@ -1786,57 +1735,13 @@ function QuotesPageContent() {
   //   분기 trigger. open() 호출 → render → useEffect → close() 즉시.
   const { isOpen: briefIsOpen, close: closeOperationalBrief } = useOperationalBriefPopup();
   // §quotes-brief-suppress (호영님 2026-07-02) — 견적 관리는 "공급사 발송 검토" 모달이 정식 워크플로.
-  //   그 위에 뜨는 운영 브리핑을 견적 surface 에선 사용하지 않음 → 열려 있으면 항상 닫음(viewMode 무관,
+  //   그 위에 뜨는 브리핑 popup 을 견적 surface 에선 사용하지 않음 → 열려 있으면 항상 닫음(viewMode 무관,
   //   타 surface 에서 open 된 채 진입한 경우 포함). §11.226b table-view close 를 포함·확장.
   useEffect(() => {
     if (briefIsOpen) {
       closeOperationalBrief();
     }
   }, [briefIsOpen, closeOperationalBrief]);
-
-  // §11.217 Phase 5 — chip scroll-spy. detail panel 의 4 brief section
-  //   (brief-summary / brief-facts / brief-facts2 / brief-next) 을 IntersectionObserver
-  //   로 감시 → 가장 위에 visible 한 section 의 chip 을 active 로 highlight.
-  //   selectedQuoteId 가 set 된 후 mount 됨 (panel 안 element 가 DOM 에 있어야 attach).
-  useEffect(() => {
-    if (!selectedQuoteId) return;
-    // detail panel 이 DOM 에 mount 될 때까지 microtask defer.
-    let observer: IntersectionObserver | null = null;
-    const attach = () => {
-      // §11.231 — type predicate fix: id type 정확히 narrow.
-      const sectionIds = ["summary", "facts", "facts2", "next"] as const;
-      type SectionId = typeof sectionIds[number];
-      const elements = sectionIds
-        .map((id) => ({ id, el: document.getElementById(`brief-${id}`) }))
-        .filter((x): x is { id: SectionId; el: HTMLElement } => x.el !== null);
-      if (elements.length === 0) return;
-
-      observer = new IntersectionObserver(
-        (entries) => {
-          const visible = entries
-            .filter((e) => e.isIntersecting)
-            .sort(
-              (a, b) => a.boundingClientRect.top - b.boundingClientRect.top,
-            );
-          // §quote-brief-rail-tabs-sian — 시안 1:1 탭 전환 도입. scroll-spy 가
-          //   탭 클릭(setActiveChipId)을 덮어쓰지 않도록 override 제거. observer
-          //   구조/관측은 보존(향후 재사용 여지). targetId 는 derive 만 유지하여
-          //   no-unused / no-unreachable 회피.
-          if (visible.length > 0) {
-            void visible[0].target.id.replace("brief-", "");
-          }
-        },
-        { rootMargin: "-20% 0px -50% 0px", threshold: 0 },
-      );
-      elements.forEach(({ el }) => observer?.observe(el));
-    };
-    // 다음 frame 에서 attach (panel 의 brief sections 가 mount 된 후).
-    const raf = requestAnimationFrame(attach);
-    return () => {
-      cancelAnimationFrame(raf);
-      observer?.disconnect();
-    };
-  }, [selectedQuoteId]);
 
   /* §approval-gate-single-source (2026-09-25 · 호영님 판정) — 결재 표면을 그릴지 **서버에 묻는다**.
      화면이 요금제 이름을 직접 읽는 곳은 0이어야 한다. 이 값은 request-approval 라우트의 400 두 개와
@@ -1921,24 +1826,6 @@ function QuotesPageContent() {
         }),
       ),
     [organizationVendorProductsData],
-  );
-
-  // #quote-rationale-inventory-context Phase 2 — 재고 데이터 fetch.
-  //   인과관계 한 줄에 "재고 X일 남음 / 예상 수령일 +Y일" tail append.
-  //   호영님 5/8 결론의 "킬러 피처" — inventory 0건 시 graceful fallback (tail X).
-  const { data: inventoryData } = useQuery({
-    queryKey: ["inventory"],
-    queryFn: async () => {
-      const response = await fetch("/api/inventory", { credentials: "include" });
-      if (!response.ok) return { inventories: [] as InventoryRow[] };
-      return response.json() as Promise<{ inventories: InventoryRow[] }>;
-    },
-    enabled: status === "authenticated",
-    staleTime: 60_000,
-  });
-  const inventories: InventoryRow[] = useMemo(
-    () => inventoryData?.inventories ?? [],
-    [inventoryData],
   );
 
   // 필터 변경 중 indicator (기존 list 유지하면서 상단에만 표시)
@@ -2051,19 +1938,6 @@ function QuotesPageContent() {
   //   예산 잔액 미리보기는 주문 접수 폼 전용이었다.
 
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
-  const selectedDispatchPreflight = useMemo(
-    () => selectedQuote && selectedSignals?.actionKey === "request_send"
-      ? getQuoteDispatchPreflight(selectedQuote, organizationVendors, organizationVendorProducts)
-      : null,
-    [selectedQuote, selectedSignals?.actionKey, organizationVendors, organizationVendorProducts],
-  );
-  const selectedDispatchEvidence = useMemo(
-    () => selectedSignals?.actionKey === "request_send"
-      ? getQuoteDispatchEvidence(selectedDispatchPreflight)
-      : null,
-    [selectedDispatchPreflight, selectedSignals?.actionKey],
-  );
-  const selectedDispatchBlocked = selectedDispatchEvidence ? !selectedDispatchEvidence.canSend : false;
 
   const openQuoteDraftWorkbench = useCallback(() => {
     const targetQuote = selectedQuote
@@ -2092,20 +1966,6 @@ function QuotesPageContent() {
 
   // §11.181 — handleFloatingEntryClick 제거: FAB default 가 popup 호출.
 
-  // §11.161 — 운영 브리핑 narrative hook (selectedQuote 선언 후 호출)
-  const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
-    sourceTrace: {
-      quoteId: selectedQuote?.id ?? "",
-      module: "quote_detail",
-      sourceUpdatedAt: selectedQuote?.createdAt ?? new Date(0),
-    },
-    facts: {
-      status: selectedSignals?.status ?? null,
-      blocker: selectedSignals?.blocker ?? null,
-      nextAction: selectedSignals?.nextAction ?? null,
-    },
-    enabled: !!selectedQuote?.id,
-  });
   const selectedOpStatus = selectedQuote ? getOpStatus(selectedQuote) : null;
 
   // 운영 요약 — canonical state 기반 집계 (row/rail과 같은 selector 사용)
@@ -2598,7 +2458,7 @@ function QuotesPageContent() {
         onOpen={(id) => {
           const q = filteredQuotes.find((x) => x.id === id);
           if (q) handleQuoteCardSelect(id, getOpSignals(q).ctaLabel);
-          else openQuoteContextRail(id, "row");
+          else selectQuoteRow(id);
         }}
       />
         </>
@@ -3143,9 +3003,9 @@ function QuotesPageContent() {
             <tbody className="divide-y divide-bd/40">
               {/* §11.230a #quote-table-keyboard-tooltip — 호영님 v2 #23 (c+d).
                   키보드 navigation: ArrowUp/Down row 이동 + Enter row 진입 +
-                  Escape rail close. focusedRowIndex (UI focus only) + DOM
+                  Escape 선택 해제. focusedRowIndex (UI focus only) + DOM
                   focus() 로 native focus ring 시각화. canonical mutation
-                  (openQuoteContextRail / closeQuoteContextRail) 재사용. */}
+                  (selectQuoteRow / clearQuoteSelection) 재사용 · 행은 선택 하이라이트만(§quote-brief-rail-removed). */}
               {/*
                 §11.242 #quote-table-readability — 호영님 P0 가독성 10항목.
                   zebra (rowIndex % 2) + hover (bg-gray-100 transition) + 5색 뱃지 (OP_STATUS swap) +
@@ -3240,7 +3100,7 @@ function QuotesPageContent() {
                         return;
                       }
                       setLastSelectedIndex(rowIndex);
-                      openQuoteContextRail(quote.id, "row");
+                      selectQuoteRow(quote.id);
                     }}
                     onFocus={() => setFocusedRowIndex(rowIndex)}
                     onKeyDown={(e) => {
@@ -3297,7 +3157,7 @@ function QuotesPageContent() {
                         jump?.focus();
                       } else if (e.key === "Enter") {
                         e.preventDefault();
-                        openQuoteContextRail(quote.id, "row");
+                        selectQuoteRow(quote.id);
                       } else if (e.key === " ") {
                         // §11.241 #6a — Space = 선택/해제 (페이지 scroll 차단)
                         e.preventDefault();
@@ -3306,11 +3166,11 @@ function QuotesPageContent() {
                       } else if (e.key === "Escape") {
                         e.preventDefault();
                         // §11.241 #6d — selectedQuoteIds.size > 0 시 clearSelection 우선,
-                        //   else 기존 §11.230a rail close.
+                        //   else 선택 해제.
                         if (selectedQuoteIds.size > 0) {
                           clearSelection();
                         } else {
-                          closeQuoteContextRail("esc_key");
+                          clearQuoteSelection();
                         }
                       }
                     }}
@@ -3513,8 +3373,8 @@ function QuotesPageContent() {
                                 // §11.279d-2 — 카드 분기 (handleQuoteCardSelect)
                                 // 재사용. "견적 요청 발송" 시 패널 토글 (openRail)
                                 // 대신 VendorRequestModal 직접 진입 (setActiveWorkWindow
-                                // "request_send"). 그 외 CTA (새 회신 보기 등) 은
-                                // 기존 openQuoteContextRail 분기 그대로.
+                                // "request_send"). 그 외 CTA (새 회신 보기 등) 는
+                                // handleQuoteCardSelect 가 목적지를 정한다(§quote-brief-rail-removed).
                                 // 호영님 P0 (2026-05-24): 테이블 row button 이
                                 // 모든 ctaLabel 에 openRail 호출 → "발송" 시 패널
                                 // 토글만 = 발송 워크플로우 진입 안 됨 회귀 fix.
@@ -3524,6 +3384,10 @@ function QuotesPageContent() {
                             >
                               {shortenActionLabel(signals.ctaLabel)}
                             </Button>
+                            {/* §quote-brief-rail-removed — 행 ⋮ 「상세 열기」. 행 클릭은 선택만 한다. */}
+                            <span className="inline-flex align-middle ml-1">
+                              <QuoteRowMenu quoteId={quote.id} label={tableDisplayTitle} />
+                            </span>
                           </td>
                         );
                       }
@@ -3577,7 +3441,9 @@ function QuotesPageContent() {
             setPrepareQuoteId(id);
           }}
           highlightId={prepareHighlightId}
-          onSelect={(id) => handleQuoteCardSelect(id)}
+          /* §quote-brief-rail-removed — 모바일 카드 제목 탭 = 견적 상세. 종전 모바일 맥락 시트를 대신한다
+             (모바일 카드에는 선택 하이라이트도 ⋮ 메뉴도 없어 선택만 하면 아무 일도 안 일어난다). */
+          onSelect={(id) => router.push(`/quotes/${id}`)}
           onAction={(id) => {
             // §quote-mobile-v2 — 단계 액션(발송/비교/승인/입고)은 데스크탑과 동일 라우팅.
             //   발송 → getOpSignals.ctaLabel "견적 요청 발송" → request_send → VendorRequestModal 재사용.
@@ -3709,901 +3575,7 @@ function QuotesPageContent() {
 
       </div>{/* end list column */}
 
-      {/* ═══ Mobile Quote Context Sheet — §11.248e #quote-briefing-panel-responsive.
-            호영님 P0 견적 관리 #5: breakpoint 1024px → 1200px 상향 (1024-1199px 구간
-            bottom-sheet 적용, 테이블 가용 너비 회복). word-break 어절 단위 wrap +
-            "전체 상세 열기" / "닫기" Button 44px 터치 영역 확보. ═══ */}
-      {/* §ops-briefing-scope 케이스3 — 발송 검토 모달(request_send) 중엔 견적 케이스 rail 미노출(중복). */}
-      {/* §order-entry-rewire P3-2 — po_conversion(주문 접수) 중에도 브리핑 미노출:
-          발주 흐름에 브리핑이 끼어들지 않는다 (request_send 와 동형 처리). */}
-      {activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion" && selectedQuote && selectedSignals && selectedOpStatus && (
-        <div className="min-[1200px]:hidden fixed inset-0 z-40" onClick={() => closeQuoteContextRail("overlay_click")}>
-          <div className="absolute inset-0 bg-black/30" />
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-pn rounded-t-2xl border-t border-bd max-h-[75vh] flex flex-col animate-slide-up safe-area-pb"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Drag handle */}
-            <div className="flex justify-center py-2"><div className="w-10 h-1 rounded-full bg-slate-300" /></div>
-            {/* Header */}
-            <div className="px-4 pb-2 border-b border-bd/50">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border font-medium ${selectedOpStatus.bg} ${selectedOpStatus.text} ${selectedOpStatus.border}`}>
-                    {selectedSignals.badge}
-                  </span>
-                  <span className="text-[11px] text-slate-500 font-mono">{quoteDisplayRef(selectedQuote)}</span>
-                </div>
-                {/* §11.264i — "✦ 운영 브리핑" 진입 버튼 (호영님 spec P0 견적 모바일 2중 겹침 fix).
-                    기존: selectedQuote set 시 §11.248e + §11.155 둘 다 자동 렌더 → 겹침.
-                    신규: §11.155 는 briefSheetOpen=true 일 때만. ✦ 클릭 = 명시적 진입. */}
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-[11px] text-violet-700 hover:bg-violet-50"
-                    aria-label="운영 브리핑 열기"
-                    onClick={() => setBriefSheetOpen(true)}
-                  >
-                    <span className="mr-0.5">✦</span>
-                    <span className="hidden sm:inline">운영 브리핑</span>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => closeQuoteContextRail("x_button")}><X className="h-4 w-4" /></Button>
-                </div>
-              </div>
-              <h3 className="text-sm font-semibold text-slate-900 truncate">{selectedQuote.title}</h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">{selectedSignals.summary}</p>
-            </div>
-            {/* Scrollable body — 운영 요약 compact */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-              {selectedDispatchEvidence && (
-                <div
-                  data-testid="quote-dispatch-priority-gate"
-                  className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5 space-y-2"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-semibold text-blue-900">현재 단계</span>
-                    <span className="text-[11px] font-medium text-blue-700">
-                      {selectedDispatchEvidence.canSend ? "발송 확인" : selectedDispatchEvidence.blockReason}
-                    </span>
-                  </div>
-                  <div
-                    data-testid="quote-dispatch-priority-order"
-                    className="grid grid-cols-2 gap-1.5 text-[10px] text-slate-700"
-                  >
-                    <span>1. 공급사: {selectedDispatchEvidence.supplierStatus}</span>
-                    <span>2. 연락처: {selectedDispatchEvidence.contactStatus}</span>
-                    <span>3. 메시지 미리보기: {selectedDispatchEvidence.previewStatus}</span>
-                    <span>4. 발송 확인: {selectedDispatchEvidence.sendStatus}</span>
-                  </div>
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div><span className="text-slate-400 block text-[10px]">상태</span><span className="text-slate-700 font-medium">{selectedSignals.status}</span></div>
-                <div><span className="text-slate-400 block text-[10px]">차단</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-yellow-600"}>{selectedSignals.blocker}</span></div>
-                <div><span className="text-slate-400 block text-[10px]">비교</span><span className="text-slate-700">{selectedSignals.compareReady}</span></div>
-                <div><span className="text-slate-400 block text-[10px]">전환</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.poReady}</span></div>
-              </div>
-              {selectedSignals.aiRecommendation && (
-                <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-violet-50 border border-violet-100">
-                  <Sparkles className="h-3 w-3 text-violet-500 shrink-0" />
-                  <span className="text-[11px] text-violet-700 line-clamp-2">{selectedSignals.aiRecommendation}</span>
-                </div>
-              )}
-              {/* §11.264j — 공급사별 회신 현황 (호영님 spec #2 P1).
-                  기존: 카드 표면 정보 (badge/title/summary) 만 반복 = dead content.
-                  신규: vendorRequests.map 으로 ● 회신 완료 / ○ 미회신 + 가격/경과일 표시.
-                  데이터 source: API /api/quotes 의 vendorRequests (이미 fetch 중,
-                  composer/schema 변경 0). 가격은 responses[].vendor.name 매칭.
-                  경과일: <RelativeTimeText iso={createdAt} /> (§11.214 hydration 안전).
-                  per-vendor 납기 ("5영업일") 는 §11.264j-2 별도 cluster
-                  (QuoteResponse.deliveryDays 컬럼 신규 필요). */}
-              {selectedQuote.vendorRequests && selectedQuote.vendorRequests.length > 0 && (
-                <div
-                  data-testid="quote-vendor-response-status"
-                  ref={vendorResponseSectionRef}
-                  className="rounded-lg border border-bd/60 bg-slate-50/60 px-3 py-2.5 space-y-1.5"
-                >
-                  <div className="text-[11px] font-semibold text-slate-700">공급사별 회신 현황</div>
-                  <ul className="space-y-1">
-                    {selectedQuote.vendorRequests.map((req) => {
-                      const isResponded = req.status === "RESPONDED";
-                      const matchedResponse = isResponded
-                        ? (selectedQuote.responses ?? []).find(
-                            (r) => r.vendor.name === req.vendorName,
-                          )
-                        : undefined;
-                      return (
-                        <li key={req.id} className="flex items-center gap-2 text-[11px]">
-                          <span
-                            className={isResponded ? "text-emerald-500" : "text-slate-400"}
-                            aria-hidden="true"
-                          >
-                            {isResponded ? "●" : "○"}
-                          </span>
-                          <span className="font-medium text-slate-700 truncate">{req.vendorName}</span>
-                          <span className="text-slate-300">—</span>
-                          {isResponded ? (
-                            <span className="text-slate-600">
-                              회신 완료
-                              {typeof matchedResponse?.totalPrice === "number" && matchedResponse.totalPrice > 0 && (
-                                <span className="ml-1 font-medium text-slate-900">
-                                  (₩{matchedResponse.totalPrice.toLocaleString("ko-KR")})
-                                </span>
-                              )}
-                            </span>
-                          ) : (
-                            <span className="text-slate-500">
-                              {/* §11.264j — "N일 경과" 표시. ElapsedDaysText 가 mount 후 day diff
-                                  계산 → "11일 경과" 같은 호영님 spec verbatim 출력. §11.214
-                                  hydration 안전 (useState + useEffect mount-after-set). */}
-                              미회신 (<ElapsedDaysText iso={req.createdAt} />)
-                            </span>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-            </div>
-            {/* Bottom actions */}
-            <div className="px-4 py-3 border-t border-bd/50 space-y-2">
-              {selectedDispatchEvidence && (
-                <div
-                  data-testid="quote-dispatch-readiness-strip"
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 space-y-1.5"
-                >
-                  <div
-                    data-testid="quote-dispatch-readiness-row"
-                    className="grid grid-cols-2 gap-1 text-[10px] text-slate-600"
-                  >
-                    <span>공급사: {selectedDispatchEvidence.supplierStatus}</span>
-                    <span>연락처: {selectedDispatchEvidence.contactStatus}</span>
-                    <span>미리보기: {selectedDispatchEvidence.previewStatus}</span>
-                    <span>전송 확인: {selectedDispatchEvidence.sendStatus}</span>
-                  </div>
-                  <p data-testid="quote-dispatch-block-reason" className="text-[11px] font-medium text-yellow-700">
-                    차단 사유: {selectedDispatchEvidence.blockReason}
-                  </p>
-                </div>
-              )}
-              {selectedDispatchBlocked && selectedDispatchPreflight && (
-                <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 space-y-2">
-                  <div>
-                    <p className="text-[11px] font-semibold text-yellow-900">전달 전 보강 필요</p>
-                    <p className="text-[11px] text-yellow-700 leading-snug">{selectedDispatchPreflight.summary}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-[11px] border-yellow-300 text-yellow-800"
-                      onClick={() => setActiveWorkWindow("request_send")}
-                    >
-                      보완 화면 열기
-                    </Button>
-                    <Link href="/app/search">
-                      <Button size="sm" variant="outline" className="w-full h-8 text-[11px] border-yellow-300 text-yellow-800">
-                        요청 보완
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
-              <Button size="sm" className="w-full h-10 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white active:scale-[0.98]"
-                onClick={() => {
-                  if (selectedDispatchBlocked) return;
-                  if (selectedSignals.ctaLabel === PO_DETAIL_CTA) { router.push(`/quotes/${selectedQuote.id}`); return; }
-                  // §quote-completed-honesty (2026-09-25 · 호영님 판정) — 완료 견적은 작업창 없이 입고 관리로 직행.
-                  if (selectedSignals.actionKey === "po_conversion") { router.push("/dashboard/receiving"); return; }
-                  if (selectedSignals.actionKey) setActiveWorkWindow(selectedSignals.actionKey);
-                }}
-                disabled={!selectedSignals.actionKey || selectedDispatchBlocked}>
-                {selectedSignals.actionKey === "request_send"
-                  ? selectedDispatchBlocked ? "공급사에 전송 잠김" : "공급사에 전송"
-                  : selectedSignals.railCtaLabel}<ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-              </Button>
-              <div className="flex gap-2">
-                <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
-                  <Button size="sm" variant="outline" className="w-full h-9 text-xs text-slate-400 border-bd">전체 상세</Button>
-                </Link>
-                <Button size="sm" variant="ghost" className="flex-1 h-9 text-xs text-slate-500" onClick={() => closeQuoteContextRail("close_btn")}>닫기</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ Quote Context Rail (lg+) ═══ */}
-      {/* §quote-briefing-rail-overlay — 우측 세로 "BRIEFING" edge tab 제거(접기 폐기).
-          레일 진입 = 행 선택, 닫기 = X(헤더) · Esc(기존). 진입점은 우하단 운영 브리핑 FAB(별개 popup)과 분리. */}
-      {/* §order-entry-rewire P3-2 — po_conversion(주문 접수) 중에도 브리핑 미노출:
-          발주 흐름에 브리핑이 끼어들지 않는다 (request_send 와 동형 처리). */}
-      {activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion" && selectedQuote && selectedSignals && selectedOpStatus && (() => {
-        const sqReadiness = quoteReadiness(selectedQuote); // §quote-readiness-single-source 3b · 카운트 단일 출처
-        const sqResponseCount = sqReadiness.respondedCount;
-        // §quote-reply-denominator (2026-09-25 · 호영님 판정) — 회신 축의 분모. 품목 수와 섞지 않는다.
-        const sqReplyTotal = sqReadiness.invitedCount;
-        // §11.212 — sqDaysSince 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
-        // <RelativeTimeText iso={selectedQuote.createdAt} /> 가 useEffect mount 후 set.
-        const sqDelayed = isDelayed(selectedQuote);
-        const sqDeadline = selectedQuote.deliveryDate ? new Date(selectedQuote.deliveryDate) : null;
-        const sqDaysToDeadline = sqDeadline ? Math.ceil((sqDeadline.getTime() - Date.now()) / 86400000) : null;
-
-        return (
-        /* §11.248e #quote-briefing-panel-responsive — 호영님 P0 견적 관리 #5.
-            breakpoint lg (1024px) → min-[1200px] 상향. 1024-1199px 구간 = bottom-sheet 자동 적용
-            (테이블 가용 너비 회복). 1200px+ 에서만 우측 480px 패널. */
-        /* §quote-briefing-rail-overlay (호영님 2026-06-29) — 레일 ≥1200 항상 overlay.
-            · ≥1200px: overlay drawer(min-[1200px]:fixed right-4 top-20 z-30 shadow-2xl) — 테이블 위에 떠서 덮음, 테이블 폭 불침범(항상 풀폭, 가로 스크롤 0).
-            · <1200px: hidden(모바일 bottom-sheet 분기 — 불변).
-            §quotes-workbench-rail B(1440+ push) supersede — push 폐기, 전 구간 overlay 통일.
-            canonical: rail ≥1200 노출 + w-[480px] 보존. */
-        <div className="hidden min-[1200px]:flex w-[480px] shrink-0 border-l border-bd flex-col bg-pn rounded-xl overflow-hidden min-[1200px]:fixed min-[1200px]:right-4 min-[1200px]:top-20 min-[1200px]:z-30 min-[1200px]:shadow-2xl" style={{ maxHeight: "calc(100vh - 120px)" }}>
-          {/* §11.144 Brief header — 운영 브리핑 + 선택한 견적 (lock §11.142, §11.179 eyebrow 통일).
-              §quote-briefing-rail-overlay — 접기 button 제거. 닫기는 하단 X(closeQuoteContextRail) · Esc. */}
-          <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-blue-700">운영 브리핑</span>
-            <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 견적</span>
-          </div>
-
-          {/* §quote-brief-rail-tabs-sian — 시안 BriefPanel 1:1 탭 전환 (호영님 결정:
-              "시안 1:1 엄격(단순화)"). 기존 preset chips(scroll anchor) → 탭 selector.
-              4 탭: 상태 요약 / 회신 현황 / 비교 진행 / 발주 전환. 활성 탭 콘텐츠만 표시.
-              onClick = setActiveChipId 만 (scroll·setBriefDetailExpanded 제거 → 탭 단순 전환).
-              활성 = blue 밑줄/강조. 회귀: activeChipId/setActiveChipId wiring 보존. */}
-          <div className="px-4 border-b border-bd/50 flex gap-1" role="tablist" aria-label="운영 브리핑 탭">
-            {[
-              { id: "summary", label: "상태 요약" },
-              { id: "reply",   label: "회신 현황" },
-              { id: "compare", label: "비교 진행" },
-              // §order-entry-removed (2026-09-25 · 호영님 판정) — 발주가 제품에 없다. FREE 에서는 결재도 없으므로
-              //   탭 이름이 결재를 약속해서도 안 된다(호영님). 중립적으로 적는다.
-              { id: "order",   label: "다음 단계" },
-            ].map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                role="tab"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveChipId(c.id);
-                }}
-                aria-selected={activeChipId === c.id}
-                aria-pressed={activeChipId === c.id}
-                className={
-                  activeChipId === c.id
-                    ? "px-2 py-2 text-[11px] font-semibold text-blue-700 border-b-2 border-blue-600 -mb-px transition-colors"
-                    : "px-2 py-2 text-[11px] font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-900 transition-colors"
-                }
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-
-          {/* A. Rail header */}
-          <div className="px-4 py-3 border-b border-bd bg-el/50">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border font-medium ${selectedOpStatus.bg} ${selectedOpStatus.text} ${selectedOpStatus.border}`}>
-                  {selectedSignals.badge}
-                </span>
-                <span className="text-[11px] text-slate-500 font-mono">{quoteDisplayRef(selectedQuote)}</span>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <Link href={`/quotes/${selectedQuote.id}`}>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-900" title="전체 상세 열기"><ExternalLink className="h-3 w-3" /></Button>
-                </Link>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-900" onClick={(e) => { e.stopPropagation(); closeQuoteContextRail("x_button"); }}><X className="h-3.5 w-3.5" /></Button>
-              </div>
-            </div>
-            <h3 className="text-sm font-semibold text-slate-900 truncate mb-1">{selectedQuote.title}</h3>
-            {/* §quote-reply-denominator (2026-09-25 · 호영님 판정) — 앞의 「N건」 은 품목 수(그대로), 뒤의 분모는 요청한 공급사 수다. 두 축이 한 줄에 있다. */}
-            <p className="text-[11px] text-slate-500">{selectedQuote.items.length}건 · 회신 {sqResponseCount}/{sqReplyTotal} · <RelativeTimeText iso={selectedQuote.createdAt} /></p>
-            <p className="text-[11px] text-slate-400 mt-0.5">{selectedSignals.urgency}</p>
-            {/* §quote-brief-rail-tabs-sian — 시안 lead 줄. canonical truth(status/회신 수)
-                기반 1줄 상태 안내. 새 추정 없음. */}
-            {/* §quote-completed-honesty (2026-09-25 · 호영님 판정) — 구 조건은 `status !== "SENT"` 라 **COMPLETED 에도 「첫 액션이 필요합니다」**가 떴다.
-                선정이 끝났다고 말하면서 첫 액션을 요구하는 자기모순이었다(호영님 라이브 실측).
-
-                §intro-flow-honesty (2026-09-25 · 호영님 판정) — 그 자리를 완료용 문구로 채웠더니 **바로 윗줄(urgency)과 같은 말이 두 줄로 쌓였다**:
-                  「공급사를 고른 뒤 구매하고, 입고 관리에서 입고를 등록하세요」
-                  「공급사를 고른 뒤 구매하세요」
-                리드 줄은 urgency 가 못 말하는 것을 말할 때만 뜻이 있다. 완료 상태는 urgency 가 이미
-                끝까지 말하므로 **줄 자체를 내지 않는다**(호영님: 더 완전한 첫 줄을 남긴다). */}
-            {selectedQuote.status !== "COMPLETED" && (
-              <p className="text-[11px] font-medium text-slate-600 mt-1">
-                {selectedQuote.status === "PENDING"
-                  ? "첫 액션이 필요합니다"
-                  : sqResponseCount < sqReplyTotal
-                    ? "회신을 기다리는 중입니다"
-                    : "비교할 견적이 모였습니다"}
-              </p>
-            )}
-          </div>
-
-          {/* Rail scrollable body */}
-          <div className="flex-1 overflow-y-auto">
-
-          {/* §quote-brief-rail-tabs-sian — "상태 요약" 탭: brief-summary(상황 요약)
-              + brief-facts(판단 근거) 그대로. activeChipId === "summary" 게이트. */}
-          {activeChipId === "summary" && (<>
-          {/* § 1. 상황 요약 — resolver-derived 1-line + §11.161 LLM narrative hook.
-              §11.248e — selectedQuote.title / summary 영역 break-keep (어절 단위 wrap)
-              으로 좁은 너비에서도 어색한 줄바꿈 방지 (호영님 spec). */}
-          <section id="brief-summary" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
-            <p className="text-xs text-slate-700 leading-relaxed break-keep">
-              {briefNarrative ?? selectedSignals.summary}
-              {briefCached && <span className="ml-1 text-[10px] text-slate-400">· 캐시</span>}
-            </p>
-          </section>
-
-          {/* §11.221 § 2. 판단 근거 — 인과관계 한 줄 요약 + collapsible 4 cell.
-              호영님 5월 8일 결론: "상태 반복" → "인과관계 + 실행 이유". 1차 노출은
-              한 줄 ("→" + emoji + 굵게), 4 cell grid 는 "상세 보기" 클릭 시 펼침.
-              §11.188 의 4 cell grid (현재 상태 / 회신 / 비교 가능 / 발주 전환) 는
-              collapsed 안에 보존 — canonical truth 영향 0. */}
-          <div id="brief-facts" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">판단 근거</div>
-              <button
-                type="button"
-                onClick={() => setFactsExpanded(prev => !prev)}
-                className="text-[10px] text-slate-500 hover:text-slate-700 inline-flex items-center gap-0.5 transition-colors"
-                aria-label={factsExpanded ? "판단 근거 상세 접기" : "판단 근거 상세 보기"}
-              >
-                {factsExpanded ? "접기" : "상세 보기"}
-                {factsExpanded ? (
-                  <ChevronUp className="h-3 w-3" />
-                ) : (
-                  <ChevronDown className="h-3 w-3" />
-                )}
-              </button>
-            </div>
-
-            {/* 1차 노출 — 한 줄 인과관계 요약 (always visible).
-                #quote-rationale-inventory-context Phase 2 — helper call.
-                #operational-brief-emoji-sweep — 이모지 제거 후 컬러 도트
-                + Clock icon (inventory tail) 시각 위계. B2B 톤 정합. */}
-            {(() => {
-              // §quote-reply-denominator (2026-09-25 · 호영님 판정) — buildBriefRationale 이 replyCount 와 비교하는 값이라 **회신 분모**다.
-              const totalItems = sqReplyTotal;
-              const mostUrgent = findMostUrgentInventoryForQuote(
-                selectedQuote.items as never,
-                inventories,
-              );
-              const result = buildBriefRationale({
-                status: selectedSignals.status,
-                blocker: selectedSignals.blocker,
-                nextAction: selectedSignals.nextAction,
-                compareReady: selectedSignals.compareReady,
-                poReady: selectedSignals.poReady,
-                replyCount: sqResponseCount,
-                totalItems,
-                // §quote-reply-denominator (2026-09-25 · 호영님 판정) — 모바일과 같은 판정. status 목록은 쓰지 않는다.
-                isSent: hasBeenSent(selectedQuote),
-                inventoryContext: { mostUrgent },
-              });
-              return (
-                <div className="space-y-1.5">
-                  <div className="flex items-start gap-2">
-                    <span
-                      className={`mt-1 h-2 w-2 shrink-0 rounded-full ${rationaleToneDotClass(result.tone)}`}
-                      aria-hidden="true"
-                    />
-                    <p className="text-xs leading-relaxed text-slate-800 font-medium">
-                      {result.message}
-                    </p>
-                  </div>
-                  {result.inventoryTail && (
-                    <div className="flex items-start gap-2">
-                      <Clock className="mt-0.5 h-3 w-3 shrink-0 text-yellow-600" aria-hidden="true" />
-                      <p className="text-[11px] leading-relaxed text-slate-600">
-                        {result.inventoryTail.message}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* 2차 — collapsible: 4 cell grid + 보조 (차단/위험 + 다음 액션). */}
-            {factsExpanded && (
-              <>
-                {(() => {
-                  // §quote-reply-denominator (2026-09-25 · 호영님 판정) — 회신 셀의 분모.
-                  const totalItems = sqReplyTotal;
-                  const replyTone: "ok" | "warn" | "danger" =
-                    sqResponseCount === 0
-                      ? "danger"
-                      : sqResponseCount >= totalItems
-                        ? "ok"
-                        : "warn";
-                  const compareTone: "ok" | "neutral" =
-                    selectedSignals.compareReady === "가능" || selectedSignals.compareReady === "완료"
-                      ? "ok"
-                      : "neutral";
-                  const poTone: "ok" | "neutral" =
-                    selectedSignals.poReady === "가능" ? "ok" : "neutral";
-                  const replyValue = totalItems === 0 ? "—" : `${sqResponseCount}/${totalItems}`;
-                  return (
-                    <div className="grid grid-cols-2 gap-2.5 mt-3">
-                      <MetricCell label="현재 상태" value={selectedSignals.status} tone="neutral" />
-                      <MetricCell label="회신" value={replyValue} tone={replyTone} />
-                      <MetricCell label="비교 가능" value={selectedSignals.compareReady} tone={compareTone} />
-                      <MetricCell label="선정" value={selectedSignals.poReady} tone={poTone} />
-                    </div>
-                  );
-                })()}
-                {/* 보조 — 차단/위험 + 다음 액션 (정보 보존) */}
-                <div className="mt-3 pt-3 border-t border-bd/30 space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">차단/위험</span>
-                    <span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-600" : "text-yellow-600"}>
-                      {selectedSignals.blocker}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">다음 액션</span>
-                    <span className="text-slate-700">{selectedSignals.nextAction}</span>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          </>)}{/* end §quote-brief-rail-tabs-sian "상태 요약" 탭 게이트 */}
-
-          {/* §quote-brief-rail-tabs-sian — "회신 현황" 탭 (신규, 단순). kv 4칸.
-              canonical truth: items.length / sqResponseCount / status / sqDaysToDeadline 만. */}
-          {activeChipId === "reply" && (
-            <div className="px-4 py-3 border-b border-bd/50">
-              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">회신 현황</div>
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  {/* §quote-reply-denominator (2026-09-25 · 호영님 판정) — 「발송 공급사」 칸이 **품목 수**를 보여주고 있었다. 셀 이름과 값이 다른 것을 세고 있었다. */}
-                  <div className="text-[10px] text-slate-400">발송 공급사</div>
-                  <div className="text-sm font-semibold text-slate-900 mt-0.5">{sqReplyTotal}곳</div>
-                </div>
-                <div className={`rounded-lg border px-3 py-2 ${sqResponseCount === 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
-                  <div className={`text-[10px] ${sqResponseCount === 0 ? "text-red-600" : "text-slate-400"}`}>회신 수신</div>
-                  <div className={`text-sm font-semibold mt-0.5 ${sqResponseCount === 0 ? "text-red-700" : "text-slate-900"}`}>{sqResponseCount}/{sqReplyTotal}</div>
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  <div className="text-[10px] text-slate-400">상태</div>
-                  <div className="text-sm font-semibold text-slate-900 mt-0.5">
-                    {/* §quote-reply-denominator (2026-09-25 · 호영님 판정) — `status !== "SENT"` 는 COMPLETED 도 「미발송」 으로 만든다(같은 형태 3번째). */}
-                    {!hasBeenSent(selectedQuote)
-                      ? "미발송"
-                      : sqResponseCount < sqReplyTotal
-                        ? "수집 중"
-                        : "완료"}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  <div className="text-[10px] text-slate-400">마감</div>
-                  <div className="text-sm font-semibold text-slate-900 mt-0.5">
-                    {sqDaysToDeadline === null
-                      ? "—"
-                      : sqDaysToDeadline < 0
-                        ? `${Math.abs(sqDaysToDeadline)}일 초과`
-                        : `D-${sqDaysToDeadline}`}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* §quote-brief-rail-tabs-sian — "비교 진행" 탭 (신규). 회신 2곳 미만 안내,
-              2곳 이상 시 실제 동작하는 "견적 비교 열기" 버튼(setActiveWorkWindow("compare_review")).
-              dead button 금지 — compare_review work window 가 실제 비교 진입점. */}
-          {activeChipId === "compare" && (
-            <div className="px-4 py-3 border-b border-bd/50">
-              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 진행</div>
-              {sqResponseCount < COMPARE_MIN_RESPONSES ? (
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  비교하려면 회신이 2곳 이상 필요합니다. 현재 {sqResponseCount}곳 수신.
-                </p>
-              ) : (
-                <div className="space-y-2.5">
-                  <p className="text-xs text-slate-700 leading-relaxed">견적 비교를 시작할 수 있습니다.</p>
-                  <Button
-                    data-testid="quote-brief-compare-open-cta"
-                    size="sm"
-                    className="w-full h-8 text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white"
-                    onClick={(e) => { e.stopPropagation(); setActiveWorkWindow("compare_review"); }}
-                  >
-                    견적 비교 열기<ArrowRight className="h-3 w-3 ml-1.5" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* #operational-brief-3-section-compress Phase B-2 — 5 섹션 collapse.
-              호영님 redesign: 7 섹션 → 3 섹션 (한 줄 요약 + 다음 액션 + 상세).
-              brief-facts2 / 최근 활동 / brief-risks / 운영 판단 4 영역 모두
-              briefDetailExpanded conditional 안 wrap. visible 보존: brief-summary
-              (§ 1) + brief-facts (§ 2 한 줄) + brief-next (§ 4) + bottom CTA. */}
-          {briefDetailExpanded && (<>
-
-          {/* § 2 cont. 핵심 근거 (회신/비교) — response delta */}
-          <div id="brief-facts2" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">회신 · 비교 현황</div>
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-400">수신 견적</span>
-                <span className={`font-medium ${sqResponseCount > 0 ? "text-blue-600" : "text-slate-700"}`}>{sqResponseCount}건{sqResponseCount > 0 && selectedQuote.status === "SENT" ? " (새 회신)" : ""}</span>
-              </div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">회신 대기</span><span className={selectedQuote.status === "SENT" && sqResponseCount === 0 ? "text-yellow-600" : "text-slate-500"}>{hasBeenSent(selectedQuote) ? `${Math.max(0, sqReplyTotal - sqResponseCount)}건` : "—"}</span></div>
-              {/* 가격 범위 — 회신이 있을 때만 */}
-              {(() => {
-                const prices = (selectedQuote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
-                if (prices.length === 0) return null;
-                const min = Math.min(...prices);
-                const max = Math.max(...prices);
-                const spread = prices.length >= 2 ? Math.round(((max - min) / min) * 100) : 0;
-                return (
-                  <>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">가격 범위</span>
-                      <span className="text-slate-700 font-medium">₩{min.toLocaleString("ko-KR")}{prices.length >= 2 ? ` ~ ₩${max.toLocaleString("ko-KR")}` : ""}</span>
-                    </div>
-                    {prices.length >= 2 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-400">가격 차이</span>
-                        <span className={`font-medium ${spread > 20 ? "text-yellow-600" : "text-slate-700"}`}>{spread}%</span>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-              {/* 최저가 공급사 */}
-              {(() => {
-                const validResponses = (selectedQuote.responses ?? []).filter(r => typeof r.totalPrice === "number" && r.totalPrice > 0);
-                if (validResponses.length === 0) return null;
-                const best = validResponses.reduce((a, b) => (a.totalPrice! < b.totalPrice! ? a : b));
-                return (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">최저가 공급사</span>
-                    <span className="text-emerald-400 font-medium">{best.vendor.name}</span>
-                  </div>
-                );
-              })()}
-              <div className="flex justify-between text-xs"><span className="text-slate-400">선택안</span><span className="text-slate-500">{selectedQuote.status === "COMPLETED" ? "확정됨" : "미확정"}</span></div>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-2 leading-snug">{selectedSignals.snapshotNote}</p>
-            {/* 요청 품목 요약 */}
-            <div className="mt-2 space-y-1">
-              {selectedQuote.items.slice(0, 3).map(item => (
-                <div key={item.id} className="flex justify-between text-[11px]">
-                  <span className="text-slate-700 truncate max-w-[200px]">{item.product.name}</span>
-                  <span className="text-slate-500 shrink-0">×{item.quantity}</span>
-                </div>
-              ))}
-              {selectedQuote.items.length > 3 && <p className="text-[11px] text-slate-500">+{selectedQuote.items.length - 3}건 더</p>}
-            </div>
-            {/* 회신이 있을 때: 공급사별 회신 요약 */}
-            {sqResponseCount > 0 && (
-              <div className="mt-2.5 pt-2 border-t border-bd/30 space-y-1">
-                <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1">공급사별 회신</div>
-                {(selectedQuote.responses ?? []).slice(0, 4).map(resp => (
-                  <div key={resp.id} className="flex justify-between text-[11px]">
-                    <span className="text-slate-700 truncate max-w-[140px]">{resp.vendor.name}</span>
-                    <span className="text-slate-400">{typeof resp.totalPrice === "number" && resp.totalPrice > 0 ? `₩${resp.totalPrice.toLocaleString("ko-KR")}` : "가격 미제출"}</span>
-                  </div>
-                ))}
-                {(selectedQuote.responses ?? []).length > 4 && <p className="text-[10px] text-slate-500">+{(selectedQuote.responses ?? []).length - 4}건 더</p>}
-              </div>
-            )}
-          </div>
-
-          {/* D. Activity snapshot */}
-          <div className="px-4 py-3 border-b border-bd/50">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">최근 활동</div>
-            <div className="space-y-1.5">
-              <div className="flex items-start gap-2 text-[11px]">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                <div><span className="text-slate-700">요청 생성</span><RelativeTimeText iso={selectedQuote.createdAt} className="text-slate-500 ml-1.5" /></div>
-              </div>
-              {selectedQuote.status !== "PENDING" && (
-                <div className="flex items-start gap-2 text-[11px]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                  <div><span className="text-slate-700">견적 요청 발송</span></div>
-                </div>
-              )}
-              {sqResponseCount > 0 && (
-                <div className="flex items-start gap-2 text-[11px]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                  <div><span className="text-slate-700">회신 {sqResponseCount}건 도착</span></div>
-                </div>
-              )}
-              {selectedQuote.status === "RESPONDED" && (
-                <div className="flex items-start gap-2 text-[11px]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0" />
-                  <div><span className="text-slate-700">비교 검토 필요</span></div>
-                </div>
-              )}
-              {selectedQuote.status === "PENDING" && (
-                <div className="flex items-start gap-2 text-[11px]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-600 mt-1.5 shrink-0" />
-                  <div><span className="text-slate-500">첫 액션: 견적 요청 발송</span></div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* § 3. 리스크 — 차단/위험 + 만료 임박 */}
-          <section id="brief-risks" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">리스크</div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-400">차단/위험</span>
-                <span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-600" : "text-yellow-600 font-medium"}>{selectedSignals.blocker}</span>
-              </div>
-              {sqDaysToDeadline !== null && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">납기 잔여</span>
-                  <span className={sqDaysToDeadline < 0 ? "text-rose-600 font-medium" : sqDaysToDeadline <= 3 ? "text-yellow-600" : "text-slate-700"}>
-                    {sqDaysToDeadline < 0 ? `${Math.abs(sqDaysToDeadline)}일 초과` : `${sqDaysToDeadline}일`}
-                  </span>
-                </div>
-              )}
-              {sqDelayed && (
-                <p className="text-[11px] text-yellow-600 mt-1 inline-flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" aria-hidden="true" />
-                  회신 지연 — 재요청 권장
-                </p>
-              )}
-            </div>
-          </section>
-
-          {/* (was E. Decision summary + AI) — § 1 상황 요약 의 운영 판단 보조 */}
-          <div className="px-4 py-3 border-b border-bd/50">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">운영 판단</div>
-            <p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>
-            {selectedSignals.aiRecommendation && (
-              <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-1.5">
-                {selectedSignals.aiRecommendation}
-              </p>
-            )}
-          </div>
-
-          </>)}{/* end #operational-brief-3-section-compress collapse */}
-
-          {/* §quote-brief-rail-tabs-sian — "발주 전환" 탭: brief-next(다음 조치) 그대로.
-              activeChipId === "order" 게이트. */}
-          {/* §11.222 #quote-brief-next-prune — handoffTarget/handoffStatus 실제 액션만 노출. */}
-          {activeChipId === "order" && (
-          <section id="brief-next" className="px-4 py-3 scroll-mt-4">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-700">{selectedSignals.handoffTarget}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">진행 상태</span><span className={selectedSignals.poReady === "완료" ? "text-emerald-400" : "text-yellow-600"}>{selectedSignals.handoffStatus}</span></div>
-            </div>
-          </section>
-          )}
-
-          {/* §11.55 — G-pre "공급사 회신 견적서 등록" 블록 제거.
-              backend (`/api/quotes/[id]/attach-document`) 미구현으로
-              dead-end UI였음. LabAxis 견적 응답 표준 워크플로우는
-              자동 처리(Path 1: vendor token 응답 링크 + Path 2: SendGrid
-              inbound webhook)이며 운영자가 PDF를 직접 등록하는
-              시나리오는 LabAxis 운영 ontology에 없음. 미래 demand
-              발생 시 backend + UI 함께 재구현. */}
-
-          </div>{/* end scrollable body */}
-
-          {/* G. Bottom sticky action — 3 canonical CTA (rail-first, no default page nav) */}
-          <div className="px-4 py-3 border-t border-bd bg-el/30 space-y-1.5">
-            {selectedDispatchEvidence && (
-              <div
-                data-testid="quote-dispatch-readiness-strip"
-                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 space-y-1.5"
-              >
-                <div
-                  data-testid="quote-dispatch-readiness-row"
-                  className="grid grid-cols-4 gap-2 text-[10px] text-slate-600"
-                >
-                  <span>공급사: {selectedDispatchEvidence.supplierStatus}</span>
-                  <span>연락처: {selectedDispatchEvidence.contactStatus}</span>
-                  <span>미리보기: {selectedDispatchEvidence.previewStatus}</span>
-                  <span>전송 확인: {selectedDispatchEvidence.sendStatus}</span>
-                </div>
-                <p data-testid="quote-dispatch-block-reason" className="text-[11px] font-medium text-yellow-700">
-                  차단 사유: {selectedDispatchEvidence.blockReason}
-                </p>
-              </div>
-            )}
-            {selectedDispatchBlocked && selectedDispatchPreflight && (
-              <div
-                data-testid="quote-dispatch-blocker-summary"
-                className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 space-y-2"
-              >
-                <div>
-                  <p className="text-[11px] font-semibold text-yellow-900">전달 전 보강 필요</p>
-                  <p className="text-[11px] text-yellow-700 leading-snug">{selectedDispatchPreflight.summary}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <Button
-                    data-testid="quote-dispatch-supplier-remediation-cta"
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-[11px] border-yellow-300 text-yellow-800"
-                    onClick={() => setActiveWorkWindow("request_send")}
-                  >
-                    보완 화면 열기
-                  </Button>
-                  <Link href="/app/search">
-                    <Button
-                      data-testid="quote-dispatch-request-remediation-cta"
-                      size="sm"
-                      variant="outline"
-                      className="w-full h-7 text-[11px] border-yellow-300 text-yellow-800"
-                    >
-                      요청 보완
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-            {/* #quotes-rail-cta-outline-contrast — 호영님 spec: outline variant
-                ("회신 검토 시작" 등) 가 Button default 의 bg-primary (blue) 위에
-                text-slate-700 만 override 되어 contrast 부족 (파란 배경 + 어두운
-                텍스트). bg-white + text-slate-900 + border 명시로 outline 본 의도
-                (흰 배경 + 어두운 글자 + 테두리) 정합. */}
-            <Button
-              data-testid={selectedSignals.actionKey === "request_send" ? "quote-dispatch-review-cta" : undefined}
-              size="sm"
-              variant={selectedSignals.ctaVariant === "outline" ? "outline" : "default"}
-              className={`w-full h-8 text-xs font-medium ${selectedDispatchBlocked ? "bg-slate-200 text-slate-500 cursor-not-allowed" : selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-white text-slate-900 border border-slate-300 hover:bg-slate-50"}`}
-              onClick={() => {
-                if (selectedDispatchBlocked) return;
-                if (selectedSignals.ctaLabel === PO_DETAIL_CTA) { router.push(`/quotes/${selectedQuote.id}`); return; }
-                // §quote-completed-honesty (2026-09-25 · 호영님 판정) — 완료 견적은 작업창 없이 입고 관리로 직행.
-                if (selectedSignals.actionKey === "po_conversion") { router.push("/dashboard/receiving"); return; }
-                if (selectedSignals.actionKey) {
-                  setActiveWorkWindow(selectedSignals.actionKey);
-                }
-              }}
-              disabled={!selectedSignals.actionKey || selectedDispatchBlocked}
-              title={selectedDispatchBlocked ? selectedDispatchPreflight?.summary : undefined}>
-              {selectedSignals.actionKey === "request_send"
-                ? selectedDispatchBlocked ? "공급사에 전송 잠김" : "공급사에 전송"
-                : selectedSignals.railCtaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
-            </Button>
-            {/* §11.248e — '전체 상세 열기' / '닫기' Button 44px 터치 영역 확보 (호영님 spec).
-                h-7 (28px) → min-h-[44px] + h-11 (Tailwind 44px) 적용. */}
-            <div className="flex gap-1.5">
-              <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
-                <Button size="sm" variant="outline" className="w-full min-h-[44px] h-11 text-[11px] text-slate-400 border-bd">전체 상세 열기</Button>
-              </Link>
-              <Button size="sm" variant="ghost" className="flex-1 min-h-[44px] h-11 text-[11px] text-slate-500" onClick={(e) => { e.stopPropagation(); closeQuoteContextRail("x_button"); }}>{selectedSignals.tertiaryCta}</Button>
-            </div>
-          </div>
-        </div>
-        );
-      })()}
-
       </div>{/* end flex container */}
-
-      {/* §11.155 모바일 변종 — desktop rail (hidden lg:flex) 와 mutually exclusive.
-          §11.264i — briefSheetOpen 분리 (호영님 spec P0 견적 모바일 2중 겹침 fix).
-          기존: selectedQuote set 시 자동 렌더 → §11.248e mobile context sheet 와
-          < 1200px viewport 에서 동시 렌더 (2층 겹침). 신규: ✦ 운영 브리핑 버튼으로
-          명시적 진입 시에만 활성. closeQuoteContextRail 시 setBriefSheetOpen(false)
-          동기 → 견적 닫힐 때 운영 브리핑도 자동 닫힘 (orphan 방지). */}
-      {briefSheetOpen && selectedQuote && selectedSignals && (
-        <MobileOperationalBriefSheet
-          open={briefSheetOpen}
-          onClose={() => setBriefSheetOpen(false)}
-          /* §11.264d — 견적명 동적 결합 (호영님 spec #3-2 P1).
-             기존 정적 "선택한 견적" → "선택한 견적 · {견적명}" 으로 변경.
-             root cause: caller 정적 string. 컴포넌트 변경 0 (5 surface 영향 0).
-             selectedQuote.title 은 이미 page 다른 위치 (line 2775, 2985, 3482,
-             3529) 에서 사용 중. canonical truth lock: chips override
-             (§11.264a 정합) / props 시그니처 보존. */
-          objectLabel={`선택한 견적 · ${selectedQuote.title}`}
-          chips={[
-            { id: "summary", label: "상태 요약" },
-            { id: "facts",   label: "회신 현황" },
-            { id: "risks",   label: "리스크" },
-            { id: "next",    label: "다음 단계" },
-          ]}
-          summary={<p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>}
-          facts={
-            // §11.222 + #quote-rationale-inventory-context Phase 2 — helper call.
-            //   1차 노출 한 줄 (desktop §11.221 동일 메시지 + inventory tail).
-            //   같은 factsExpanded state 공유 (desktop + mobile 동일 toggle).
-            <div className="space-y-2 text-xs">
-              {/* #operational-brief-emoji-sweep — mobile mirror desktop §11.221.
-                  컬러 도트 + Clock icon (B2B 톤). */}
-              {(() => {
-                /* §quote-reply-denominator (2026-09-25 · 호영님 판정) — 모바일 블록은 패널 IIFE 밖이라 지역변수가 없다.
-                   같은 함수를 여기서 한 번 더 부른다 — 값이 갈리지 않는 이유는 **출처가 하나**이기 때문이다. */
-                const mReadiness = quoteReadiness(selectedQuote);
-                const totalItems = mReadiness.invitedCount;
-                const mostUrgent = findMostUrgentInventoryForQuote(
-                  selectedQuote.items as never,
-                  inventories,
-                );
-                const result = buildBriefRationale({
-                  status: selectedSignals.status,
-                  blocker: selectedSignals.blocker,
-                  nextAction: selectedSignals.nextAction,
-                  compareReady: selectedSignals.compareReady,
-                  poReady: selectedSignals.poReady,
-                  // §quote-reply-denominator (2026-09-25 · 호영님 판정) — 모바일만 아직 QuoteResponse(prod 전 견적 0행)를 세고 있었다. 데스크탑과 같은 값으로.
-                  replyCount: mReadiness.respondedCount,
-                  totalItems,
-                  isSent: hasBeenSent(selectedQuote),
-                  inventoryContext: { mostUrgent },
-                });
-                return (
-                  <div className="space-y-1.5">
-                    <div className="flex items-start gap-2">
-                      <span
-                        className={`mt-1 h-2 w-2 shrink-0 rounded-full ${rationaleToneDotClass(result.tone)}`}
-                        aria-hidden="true"
-                      />
-                      <p className="text-xs leading-relaxed text-slate-800 font-medium">
-                        {result.message}
-                      </p>
-                    </div>
-                    {result.inventoryTail && (
-                      <div className="flex items-start gap-2">
-                        <Clock className="mt-0.5 h-3 w-3 shrink-0 text-yellow-600" aria-hidden="true" />
-                        <p className="text-[11px] leading-relaxed text-slate-600">
-                          {result.inventoryTail.message}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-              <button
-                type="button"
-                onClick={() => setFactsExpanded(prev => !prev)}
-                className="text-[10px] text-slate-500 hover:text-slate-700 inline-flex items-center gap-0.5 transition-colors"
-                aria-label={factsExpanded ? "판단 근거 상세 접기" : "판단 근거 상세 보기"}
-              >
-                {factsExpanded ? "접기" : "상세 보기"}
-                {factsExpanded ? (
-                  <ChevronUp className="h-3 w-3" />
-                ) : (
-                  <ChevronDown className="h-3 w-3" />
-                )}
-              </button>
-              {factsExpanded && (
-                <div className="space-y-1 pt-2 border-t border-slate-200">
-                  <div className="flex justify-between"><span className="text-slate-400">현재 상태</span><span className="font-medium">{selectedSignals.status}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-400">다음 액션</span><span>{selectedSignals.nextAction}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-400">수신 견적</span><span>{(selectedQuote.responses?.length ?? 0)}건</span></div>
-                </div>
-              )}
-            </div>
-          }
-          risks={
-            <p className={`text-xs ${selectedSignals.blocker === "차단 없음" ? "text-emerald-700" : "text-yellow-700"}`}>
-              {selectedSignals.blocker}
-            </p>
-          }
-          next={<p className="text-xs text-slate-700">{selectedSignals.handoffTarget}</p>}
-          primaryCta={selectedDispatchBlocked ? {
-            label: "보완 화면 열기",
-            onClick: () => { setActiveWorkWindow("request_send"); },
-          } : selectedSignals.actionKey ? {
-            label: selectedSignals.railCtaLabel,
-            onClick: () => {
-              // §quote-completed-honesty (2026-09-25 · 호영님 판정) — 완료 견적은 작업창 없이 입고 관리로 직행.
-              if (selectedSignals.actionKey === "po_conversion") { router.push("/dashboard/receiving"); return; }
-              setActiveWorkWindow(selectedSignals.actionKey);
-            },
-          } : undefined}
-        />
-      )}
 
       {/* ═══ §reorder-quote-handoff 1c — 발송 준비 패널 (?prepare= same-route 딥링크) ═══
           초안(Quote DB)은 이미 생성됨 — 패널은 표시·게이트. 발송 CTA는 기존 발송
@@ -4712,9 +3684,8 @@ function QuotesPageContent() {
         <VendorRequestModal
           open={true}
           // §ops-briefing-scope 케이스3(호영님 2026-07-08) — 발송 검토 모달이 곧 그 케이스 브리핑.
-          //   닫을 때 setActiveWorkWindow(null) 만 하면 selectedQuoteId 잔존 → 견적 케이스 rail 브리핑이
-          //   이어서 뜸(중복). closeQuoteContextRail 로 selectedQuoteId·brief·URL 까지 완전 정리 → rail 미노출.
-          onOpenChange={(open) => { if (!open) closeQuoteContextRail("dispatch_close"); }}
+          //   닫을 때 clearQuoteSelection 으로 selectedQuoteId·URL 까지 정리한다.
+          onOpenChange={(open) => { if (!open) clearQuoteSelection(); }}
           quoteId={selectedQuote.id}
           quoteRef={quoteDisplayRef(selectedQuote)}
           quoteSummary={selectedQuote.title}
@@ -5192,7 +4163,7 @@ function QuotesPageContent() {
         }}
       />
 
-      {/* §quotes-brief-suppress (호영님 2026-07-02) — 견적 관리 운영 브리핑 FAB 제거(진입 차단).
+      {/* §quotes-brief-suppress (호영님 2026-07-02) — 견적 관리 브리핑 FAB 제거(진입 차단).
           "공급사 발송 검토" 모달이 정식 워크플로라 견적에선 브리핑을 사용하지 않음. 위 useEffect 가
           open 상태로 진입한 경우 자동 close. 타 surface(대시보드/재고/입고/구매/발주/inbox)의 FAB 는 유지. */}
       </div>
