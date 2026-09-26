@@ -35,16 +35,24 @@ describe("§11.302d-5 — 요약 칩 신호등 색상 정합 + 전체 재고 제
   });
 
   describe("요약 칩 색상 의미 역전 정정", () => {
-    it('"만료 임박" 칩 — text-yellow-700 + bg-yellow-100 + border-yellow-200 (검토)', () => {
+    /* 🛑 재앵커 §inventory-state-tone 후속 (2026-09-26 · 호영님 라이브 실측) — **결정 불변, 앵커 이동 + 0건 중립 추가.**
+     *   색 리터럴을 칩 배열에 박아 두면 표면이 또 갈라진다 — 정본 호출로 옮겼다.
+     *   yellow=검토 라는 의미는 정본의 expiring_soon → yellow 가 들고, 팔레트 값은
+     *   regression/inventory-state-tone-single-source.test.ts 가 든다.
+     *   ⚠️ 여기에 **0건 중립**이 더해졌다: 「만료 임박 0」 이 yellow 로 떠서 볼 게 있다고 거짓말했다. */
+    it('"만료 임박" 칩 · 정본 expiring_soon 톤 + 0건 중립', () => {
       expect(SRC).toMatch(
-        /label:\s*"만료 임박",[\s\S]{0,200}color:\s*"text-yellow-700",[\s\S]{0,80}bg:\s*"bg-yellow-100 border-yellow-200"/,
+        /label: "만료 임박", value: expiringSoonCount, state: "expiring_soon" as const/,
       );
+      expect(SRC).toMatch(/inventoryToneClassForCount\(chip\.state, chip\.value\)\.badge/);
+      expect(SRC).not.toMatch(/color:\s*"text-yellow-700"/);
     });
 
-    it('"재주문 필요" 칩 (이전 "부족/품절") — text-red-700 + bg-red-100 + border-red-200 (긴급, §11.302c KPI 라벨 정합)', () => {
+    it('"재주문 필요" 칩 · 정본 reorder_needed 톤(red) + 0건 중립', () => {
       expect(SRC).toMatch(
-        /label:\s*"재주문 필요",[\s\S]{0,200}color:\s*"text-red-700",[\s\S]{0,80}bg:\s*"bg-red-100 border-red-200"/,
+        /label: "재주문 필요", value: lowOrOutOfStockCount, state: "reorder_needed" as const/,
       );
+      expect(SRC).not.toMatch(/color:\s*"text-red-700",[\s\S]{0,20}bg:/);
     });
 
     it('"부족/품절" 라벨 제거 (재주문 필요로 swap)', () => {
@@ -77,11 +85,16 @@ describe("§11.302d-5 — 요약 칩 신호등 색상 정합 + 전체 재고 제
       expect(SRC).toMatch(/const expiringSoonCount\s*=/);
     });
 
-    it("요약 칩 map 구조 보존 (inline-flex + chip.bg + chip.color)", () => {
-      expect(SRC).toMatch(/chip\.bg/);
-      expect(SRC).toMatch(/chip\.color/);
+    /* 🛑 재앵커 §inventory-state-tone 후속 (2026-09-26) — 칩 배열이 색 리터럴(chip.bg · chip.color)
+     *   대신 상태(chip.state)를 들고, 클래스는 정본이 만든다. **map 구조 보존** 이라는 명제는 불변이다. */
+    it("요약 칩 map 구조 보존 (inline-flex + 정본 톤 + label/value)", () => {
+      expect(SRC).toMatch(/chip\.state/);
+      expect(SRC).toMatch(/inventoryToneClassForCount\(chip\.state, chip\.value\)/);
       expect(SRC).toMatch(/\{chip\.label\}/);
       expect(SRC).toMatch(/\{chip\.value\}/);
+      /* 색 리터럴 슬롯 부활 차단. */
+      expect(SRC).not.toMatch(/chip\.bg/);
+      expect(SRC).not.toMatch(/chip\.color/);
     });
   });
 });

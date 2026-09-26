@@ -23,9 +23,14 @@ describe("§inventory-row-hover-solid — 재발주/입고 솔리드 채움 hove
     expect(TABLE).not.toMatch(/text-blue-600 border-blue-300/);
   });
 
-  it("입고(emerald) → 솔리드 채움 + 흰 글자 3곳(부족·정상·컴팩트)", () => {
-    const m = TABLE.match(/hover:bg-emerald-600 hover:text-white/g) ?? [];
-    expect(m.length).toBe(3);
+  /* 🛑 재앵커 §inventory-state-tone 후속 (2026-09-26 · 호영님 라이브 실측) — **결정 불변, 앵커 이동 + 0건 중립 추가.**
+   *   호영님: 「입고」 도 조치 버튼이라 상태색(emerald)을 쓰지 않는다 — 「재발주」 와 같은 중립으로 맞춘다.
+   *   보존되는 명제는 **솔리드 채움 hover + 흰 글자 3곳**(대비)이고 중립 톤으로 유지된다. */
+  it("입고 → 중립 솔리드 채움 hover + 흰 글자 3곳 (상태색 0)", () => {
+    const m = TABLE.match(/hover:bg-slate-600 hover:text-white/g) ?? [];
+    /* 재발주 2 + 교체 주문 1 + 입고 3 = 6 (모두 중립 솔리드) */
+    expect(m.length).toBe(6);
+    expect(TABLE).not.toMatch(/hover:bg-emerald-600 hover:text-white/);
   });
 
   it("정상 재발주(slate, hover:text 부재 갭) → 솔리드 채움 + 흰 글자", () => {

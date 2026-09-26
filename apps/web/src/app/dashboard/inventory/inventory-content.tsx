@@ -2,7 +2,7 @@
 
 // §11.283c #inventory-content-traffic-light — amber/orange 토큰 → yellow/red 신호등 sweep (호영님 P0 spec, §11.283 cluster C, 30+ spot byte-level swap).
 import { isSuspectReceivedQuantity, countSuspectInventories } from "@/lib/inventory/suspect-received-quantity";
-import { inventoryToneClass, INVENTORY_TONE_CLASS } from "@/lib/inventory/state-tone";
+import { inventoryToneClass, inventoryToneClassForCount, INVENTORY_TONE_CLASS } from "@/lib/inventory/state-tone";
 import { ToastAction } from "@/components/ui/toast";
 import { buildInventoryPatchBody } from "@/lib/inventory/inventory-form-payload";
 // §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 인라인 h1 교체, 모달 액션 클러스터는 보존.
@@ -2383,21 +2383,15 @@ function InventoryPageContent() {
                         부족/품절 → 긴급 red-100 (이전 yellow-50 잘못 정정)
                         전체 재고  → 제거 (§11.302c KPI "전체 재고" 제거 정합) */}
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* §inventory-state-tone 후속(2026-09-26 · 호영님 라이브 실측) — 칩 색을 정본으로 옮기고
+                        **0건이면 중립**으로 둔다. 실측: 「만료 임박 0」 이 yellow 였다 — 0건인데 주의색이면
+                        「볼 게 있다」 고 거짓말한다. 0건 중립은 §11.283a 가 흰 KPI 카드에서 이미 잠근 규칙이고,
+                        표면마다 다시 쓰이고 있었다(정본 `inventoryToneClassForCount`). */}
                     {[
-                      {
-                        label: "만료 임박",
-                        value: expiringSoonCount,
-                        color: "text-yellow-700",
-                        bg: "bg-yellow-100 border-yellow-200",
-                      },
-                      {
-                        label: "재주문 필요",
-                        value: lowOrOutOfStockCount,
-                        color: "text-red-700",
-                        bg: "bg-red-100 border-red-200",
-                      },
+                      { label: "만료 임박", value: expiringSoonCount, state: "expiring_soon" as const },
+                      { label: "재주문 필요", value: lowOrOutOfStockCount, state: "reorder_needed" as const },
                     ].map((chip) => (
-                      <span key={chip.label} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold ${chip.bg} ${chip.color}`}>
+                      <span key={chip.label} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold ${inventoryToneClassForCount(chip.state, chip.value).badge}`}>
                         {chip.label}
                         <span className="font-extrabold">{chip.value}</span>
                       </span>
@@ -2465,24 +2459,25 @@ function InventoryPageContent() {
                               key: "active" as LotStatusFilter,
                               label: "활성",
                               count: summary.activeLots,
-                              valueClass: "text-emerald-600",
-                              borderClass: "border-emerald-200",
+                              // §inventory-state-tone 후속 — 색은 정본에서, 0건이면 중립.
+                              valueClass: inventoryToneClassForCount("normal", summary.activeLots).text,
+                              borderClass: inventoryToneClassForCount("normal", summary.activeLots).border,
                             },
                             {
                               key: "expiring_soon" as LotStatusFilter,
                               label: "만료 임박",
                               count: summary.expiringSoonLots,
-                              // §11.302d-3 검토 spec 강화 (text-yellow-500 → text-yellow-700)
-                              valueClass: "text-yellow-700",
-                              borderClass: "border-yellow-200",
+                              // §11.302d-3 검토 spec(yellow) 승계 · §inventory-state-tone 정본 경유 + 0건 중립
+                              valueClass: inventoryToneClassForCount("expiring_soon", summary.expiringSoonLots).text,
+                              borderClass: inventoryToneClassForCount("expiring_soon", summary.expiringSoonLots).border,
                             },
                             {
                               key: "expired" as LotStatusFilter,
                               label: "만료/소진",
                               count: summary.expiredLots + summary.depletedLots,
-                              // §11.302d-3 위험/긴급 spec 정합 (text-rose-500 → text-red-700, rose → red 통일)
-                              valueClass: "text-red-700",
-                              borderClass: "border-red-200",
+                              // §11.302d-3 위험/긴급 spec(red) 승계 · 정본 경유 + 0건 중립
+                              valueClass: inventoryToneClassForCount("expired", summary.expiredLots + summary.depletedLots).text,
+                              borderClass: inventoryToneClassForCount("expired", summary.expiredLots + summary.depletedLots).border,
                             },
                           ].map((card) => (
                             <button key={card.key} onClick={() => setLotStatusFilter(card.key)} className={`rounded-xl p-3 text-left transition-all active:scale-95 bg-white border ${lotStatusFilter === card.key ? "ring-2 ring-blue-500/50 border-blue-500" : card.borderClass}`}>

@@ -13,8 +13,12 @@
  *   안전재고는 정의상 재주문을 시작하는 선이므로 그 아래로 내려갔다는 것은 곧 조치가 필요하다는 뜻이다.
  *
  *     red      조치 필요   품절 · 안전재고 미만 · 재주문 필요 · 만료 · 폐기 대상
- *     yellow   주시        만료 임박
+ *     yellow   주시        만료 임박 · 보관 위치 미지정 · 입고 대기
  *     emerald  정상        정상
+ *     중립     상태 아님   라벨 재출력(해야 할 작업) · 판별 불가
+ *
+ *   🛑 **건수가 0이면 중립이다** (호영님 라이브 실측 2026-09-26 · 「만료 임박 0」 칩이 yellow 였다).
+ *      0건인데 주의색을 띠면 「볼 게 있다」 고 거짓말한다 → `inventoryToneClassForCount`.
  *
  *   · 상태 배지에서 blue 는 뺀다. 「재발주 필요」 는 red 다(§11.302d-3 이 품절을 blue→red 로 고친 것과 같은 방향).
  *   · 품절과 미달은 **색이 아니라 라벨 문구**로 구분한다.
@@ -43,13 +47,15 @@ export type InventoryToneState =
   | "unknown"; // 상태 축이 아님 · 판별 불가
 
 /**
- * ⚠️ `needs_review` 는 호영님 판정표에 **없는 줄**이다 — 판정 대기 항목이다.
- *   판정표는 재고 수량·유효기한 축을 정했고, 패널에는 그 축이 아닌 경고 3종이 있다:
- *     보관 조건 불일치(냉동 품목 위치 확인) · 공급사 미지정(재발주 관문) · 위치 미지정.
- *   셋 다 **정본화 이전에도 yellow** 였다(severity high/medium → yellow-100).
- *   red 로 올리면 「조치 필요」 를 내가 넓히는 것이고, neutral 로 내리면 지금 보이는 경고를
- *   내가 약화시키는 것이다. 어느 쪽도 판정 없이 하지 않는다 → **보이는 것을 그대로 유지**하는
- *   yellow 에 둔다. 판정이 오면 이 줄만 옮긴다.
+ * `needs_review` = 주시(yellow). **호영님 판정으로 확정됐다 (2026-09-27).**
+ *   판정표는 재고 수량·유효기한 축을 정했고, 그 축이 아닌 세 줄이 별도로 판정됐다:
+ *     보관 위치 미지정  yellow  「당장 조치할 일은 아니지만 **비어 있는 정보**라서 주시」
+ *     입고 대기        yellow  emerald 로 두면 큐 안에서 「정상」 으로 읽혀 **뜻이 반대**가 된다
+ *     라벨 재출력      중립    상태가 아니라 **해야 할 작업**이다 → `unknown`
+ *   판정 전에는 「보이던 대로 유지」 를 기준으로 배치해 두었고, 판정이 그 배치를 확정했다.
+ *   ⚠️ 이 줄에 「임시」 라고 적었더니 §render-literal-data-ratchet 이 잡았다 — 그 래칫은 모듈 const
+ *      바로 위 3줄의 주석 표지(더미·mock·임시…)를 축으로 쓴다. 이 표는 지어낸 데이터가 아니라
+ *      **정책표**이므로 목록에 추가하지 않고 문구를 고쳤다(래칫 조항: 목록에 추가하면 래칫이 꺼진다).
  */
 
 const STATE_TONE: Record<InventoryToneState, InventoryTone> = {
@@ -140,6 +146,22 @@ export const INVENTORY_TONE_CLASS: Record<InventoryTone, InventoryToneClass> = {
 /** 상태 → 클래스 묶음. 표면은 이것만 부른다. */
 export function inventoryToneClass(state: InventoryToneState): InventoryToneClass {
   return INVENTORY_TONE_CLASS[inventoryStateTone(state)];
+}
+
+/**
+ * 건수가 붙은 표면(KPI 칩 · 요약 칩 · Lot 상태 칩)의 톤.
+ *
+ * 🛑 **0건이면 중립이다.** 0건인데 주의색을 띠면 「볼 게 있다」 고 거짓말한다
+ *   (호영님 라이브 실측 2026-09-26: 「만료 임박 0」 칩이 yellow 였다).
+ *   §11.283a 가 흰 KPI 카드에서 이미 잠근 규칙이고(`k.alert && k.value > 0`), 그 규칙이
+ *   표면마다 다시 쓰이고 있었다 — 여기로 모은다.
+ */
+export function inventoryToneClassForCount(
+  state: InventoryToneState,
+  count: number,
+): InventoryToneClass {
+  if (count <= 0) return INVENTORY_TONE_CLASS.neutral;
+  return inventoryToneClass(state);
 }
 
 /**

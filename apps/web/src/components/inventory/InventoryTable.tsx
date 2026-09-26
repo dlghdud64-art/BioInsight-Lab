@@ -426,7 +426,7 @@ export function InventoryTable({
                         }
                         // 정상: 입고 또는 조정
                         return onRestock ? (
-                          <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white" onClick={() => onRestock(group.lots[0])}>
+                          <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-slate-500 border-slate-200 hover:bg-slate-600 hover:text-white" onClick={() => onRestock(group.lots[0])}>
                             <PackagePlus className="h-3 w-3 shrink-0" />입고
                           </Button>
                         ) : (
@@ -816,7 +816,7 @@ export function InventoryTable({
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white"
+                                        className="h-7 px-2 text-[11px] gap-1 text-slate-500 border-slate-200 hover:bg-slate-600 hover:text-white"
                                         onClick={() => onRestock(group.lots[0])}
                                       >
                                         <PackagePlus className="h-3 w-3 shrink-0" />
@@ -838,7 +838,7 @@ export function InventoryTable({
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white"
+                                        className="h-7 px-2 text-[11px] gap-1 text-slate-500 border-slate-200 hover:bg-slate-600 hover:text-white"
                                         onClick={() => onRestock(group.lots[0])}
                                       >
                                         <PackagePlus className="h-3 w-3 shrink-0" />

@@ -38,6 +38,7 @@ import {
   inventoryStatusLabelToState,
   inventoryQuantityState,
   INVENTORY_TONE_CLASS,
+  inventoryToneClassForCount,
   type InventoryToneState,
 } from "@/lib/inventory/state-tone";
 
@@ -82,11 +83,36 @@ describe("§inventory-state-tone · 판정표 그대로 (함수 입출력)", () 
     for (const s of red) expect(inventoryStateTone(s)).toBe("red");
   });
 
-  it("yellow = 주시 · emerald = 정상 · neutral = 판별 불가", () => {
+  it("yellow = 주시 · emerald = 정상 · neutral = 상태 아님", () => {
     expect(inventoryStateTone("expiring_soon")).toBe("yellow");
     expect(inventoryStateTone("needs_review")).toBe("yellow");
     expect(inventoryStateTone("normal")).toBe("emerald");
     expect(inventoryStateTone("unknown")).toBe("neutral");
+  });
+
+  it("판정표 3줄 추가 확정 (호영님 2026-09-27) · 큐 분류가 그 배정을 따른다", () => {
+    /* 보관 위치 미지정 = 주시(비어 있는 정보) · 입고 대기 = 주시(emerald 면 「정상」 으로 읽혀 뜻이 반대) ·
+     * 라벨 재출력 = 중립(상태가 아니라 해야 할 작업). 정본 배정과 큐의 분류 배정을 둘 다 단언한다 —
+     * 정본만 보면 큐가 딴 상태를 넘겨도 통과한다. */
+    expect(QUEUE).toMatch(/no_location: "needs_review"/);
+    expect(QUEUE).toMatch(/receiving_pending: "needs_review"/);
+    expect(QUEUE).toMatch(/label_reprint: "unknown"/);
+    expect(inventoryStateTone("needs_review")).toBe("yellow");
+    expect(inventoryStateTone("unknown")).toBe("neutral");
+    /* 구 배정 부활 차단 — blue · emerald · violet 이었다. */
+    expect(QUEUE).not.toMatch(/text-blue-500/);
+    expect(QUEUE).not.toMatch(/text-violet-500/);
+    expect(QUEUE).not.toMatch(/receiving_pending:\s*\{[^}]*emerald/);
+  });
+
+  it("🛑 건수가 0이면 중립이다 (0건인데 주의색 = 거짓말)", () => {
+    for (const st of ["expiring_soon", "reorder_needed", "expired", "below_safety", "normal"] as const) {
+      expect(inventoryToneClassForCount(st, 0)).toBe(INVENTORY_TONE_CLASS.neutral);
+    }
+    expect(inventoryToneClassForCount("expiring_soon", 1).text).toBe("text-yellow-700");
+    expect(inventoryToneClassForCount("reorder_needed", 3).text).toBe("text-red-700");
+    /* 음수·NaN 도 중립으로 떨어진다 — 판별 불가를 색으로 말하지 않는다. */
+    expect(inventoryToneClassForCount("expired", -1)).toBe(INVENTORY_TONE_CLASS.neutral);
   });
 
   it("🛑 상태 축 전량이 판정표에 배정돼 있다 (「일단 neutral」 로 새는 것 0)", () => {
@@ -251,6 +277,18 @@ describe("§inventory-state-tone · 후속 4건 (호영님 라이브 실측 2026
     expect(QUEUE).toMatch(/reorder_priority: "reorder_needed"/);
     expect(QUEUE).toMatch(/expiring_soon: "expiring_soon"/);
     expect(QUEUE).toMatch(/disposal_review: "disposal_target"/);
+  });
+
+  it("⑤ 건수 붙은 칩 3계열이 0건 규칙을 거친다 (요약 칩 · Lot 상태 칩)", () => {
+    /* 🛑 프로브 실측: 이 단언을 302d3 에만 두었더니 프로브가 그 파일을 안 돌려 GREEN 이 떴다.
+     *   정본 축의 명제는 정본 센티넬이 함께 든다 — 한 파일에만 두면 측정 범위에서 새어 나간다. */
+    expect(CONTENT).toMatch(/inventoryToneClassForCount\(chip\.state, chip\.value\)\.badge/);
+    expect(CONTENT).toMatch(/inventoryToneClassForCount\("normal", summary\.activeLots\)/);
+    expect(CONTENT).toMatch(/inventoryToneClassForCount\("expiring_soon", summary\.expiringSoonLots\)/);
+    expect(CONTENT).toMatch(/inventoryToneClassForCount\("expired", summary\.expiredLots \+ summary\.depletedLots\)/);
+    /* 건수를 안 넘기는 우회(0건에도 색이 붙는 형태) 차단 — 칩 자리에서 인자 없는 호출 0. */
+    expect(CONTENT).not.toMatch(/valueClass: inventoryToneClass\(/);
+    expect(CONTENT).not.toMatch(/inventoryToneClass\(chip\.state\)/);
   });
 
   it("④ 탭 이름이 하나다 (내용과 이름이 어긋나지 않는다)", () => {

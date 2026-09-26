@@ -46,9 +46,13 @@ describe("§11.283a 신호등 색상 intent 보존 (navy 헤더 / 요약 칩 재
     expect(CONTENT).toMatch(/만료 임박[\s\S]{0,200}bg-yellow-100/);
   });
 
-  it("재주문 필요 = 긴급 red 톤 보존", () => {
-    expect(CONTENT).toMatch(/재주문 필요[\s\S]{0,200}text-red-700/);
-    expect(CONTENT).toMatch(/재주문 필요[\s\S]{0,200}bg-red-100/);
+  /* 🛑 재앵커 §inventory-state-tone 후속 (2026-09-26 · 호영님 라이브 실측) — **결정 불변, 앵커 이동 + 0건 중립 추가.**
+   *   요약 칩의 색 리터럴이 정본 호출로 바뀌어 근접 매칭(문구 뒤 200자 안의 red 토큰)이 깨졌다.
+   *   명제(재주문 필요 = 긴급 red)는 불변이고, 이제 **정본이 그것을 판정한다.** */
+  it("재주문 필요 = 긴급 red 톤 보존 (정본 판정)", () => {
+    expect(CONTENT).toMatch(/label: "재주문 필요", value: lowOrOutOfStockCount, state: "reorder_needed" as const/);
+    expect(inventoryStateTone("reorder_needed")).toBe("red");
+    expect(INVENTORY_TONE_CLASS.red.badge).toContain("bg-red-100");
   });
 
   // §11.328 #inventory-mobile-header (2026-07-XX) — navy strip → 흰 KPI 카드(숫자만 색·상태 도트).

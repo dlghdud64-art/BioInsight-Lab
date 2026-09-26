@@ -96,15 +96,19 @@ describe("§11.302d-3 — inventory-content 잔여 yellow 일괄 신호등 정�
   });
 
   describe("d-3d Summary cards — 만료 임박/만료 소진 spec 강화", () => {
-    it('"만료 임박" cards — text-yellow-700 (이전 text-yellow-500 정합)', () => {
+    /* 🛑 재앵커 §inventory-state-tone 후속 (2026-09-26 · 호영님 라이브 실측) — **결정 불변, 앵커 이동 + 0건 중립 추가.** */
+    it('"만료 임박" cards · 정본 expiring_soon 톤 + 0건 중립', () => {
       expect(SRC).toMatch(
-        /label:\s*"만료 임박",[\s\S]{0,200}valueClass:\s*"text-yellow-700"/,
+        /valueClass: inventoryToneClassForCount\("expiring_soon", summary\.expiringSoonLots\)\.text/,
       );
     });
 
-    it('"만료/소진" cards — text-red-700 + border-red-200 (이전 rose-500/rose-200 정합)', () => {
+    it('"만료/소진" cards · 정본 expired 톤(red) + 0건 중립', () => {
       expect(SRC).toMatch(
-        /label:\s*"만료\/소진",[\s\S]{0,300}valueClass:\s*"text-red-700",[\s\S]{0,80}borderClass:\s*"border-red-200"/,
+        /valueClass: inventoryToneClassForCount\("expired", summary\.expiredLots \+ summary\.depletedLots\)\.text/,
+      );
+      expect(SRC).toMatch(
+        /borderClass: inventoryToneClassForCount\("expired", summary\.expiredLots \+ summary\.depletedLots\)\.border/,
       );
     });
   });

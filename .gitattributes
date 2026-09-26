@@ -19,6 +19,12 @@
 *.mjs text eol=lf
 *.cjs text eol=lf
 *.json text eol=lf
+# §prepush-build-scope 후속(2026-09-27 · 호영님 판정) — lockfile 은 명시적으로 잠근다.
+#   실측: HEAD 블롭이 CRLF(CR 10,998)라 `*.json text eol=lf` 와 영구히 어긋났고,
+#   `git restore` 로도 안 가라앉아 워킹트리가 상시 더러웠다 → rebase 가 매번 거부됐다.
+#   `git add --renormalize` 로 블롭을 LF 로 바꿔 끝냈다. 내용 차이는 0이었다
+#   (`git diff --ignore-cr-at-eol` 출력 없음).
+package-lock.json text eol=lf
 *.md text eol=lf
 *.mdx text eol=lf
 *.css text eol=lf
