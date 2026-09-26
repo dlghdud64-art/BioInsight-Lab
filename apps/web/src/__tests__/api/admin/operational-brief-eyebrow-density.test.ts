@@ -69,7 +69,7 @@ describe("§11.179 5 surface 너비 확장 (≥ 480)", () => {
   /* 🛑 은퇴 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 원 명제 「quotes 레일 너비 w-[480px]」.
      레일이 삭제됐는데 이 단언은 GREEN 이었다 — AI 비교 모달 표의 `min-w-[480px]` 가 **대신 매칭**하고 있었다(4원칙 ④).
      통과가 명제를 보고 있지 않았으므로 skip 으로 은퇴한다. */
-  it.skip("quotes — w-[480px]", () => {
+  it.skip("quotes · w-[480px]", () => {
     const src = read("src/app/dashboard/quotes/page.tsx");
     expect(src).toMatch(/w-\[480px\]/);
   });

@@ -71,11 +71,11 @@ describe("§11.230a #2 — 키보드 navigation (tbody tr)", () => {
   });
 
   // 승계 §quote-brief-rail-removed (2026-09-26 · 호영님 판정) — 레일 삭제로 open/closeQuoteContextRail 이 selectQuoteRow/clearQuoteSelection 으로 바뀌었다. 명제(Enter=행 선택 · Escape=해제 · 행 클릭=선택)는 불변.
-  it("onKeyDown body — Enter 분기 (selectQuoteRow 호출)", () => {
+  it("onKeyDown body · Enter 분기 (selectQuoteRow 호출)", () => {
     expect(page).toMatch(/(Enter|"Enter"|'Enter')[\s\S]{0,600}selectQuoteRow/);
   });
 
-  it("onKeyDown body — Escape 분기 (clearQuoteSelection 호출)", () => {
+  it("onKeyDown body · Escape 분기 (clearQuoteSelection 호출)", () => {
     expect(page).toMatch(/(Escape|"Escape"|'Escape')[\s\S]{0,600}clearQuoteSelection\(/);
   });
 

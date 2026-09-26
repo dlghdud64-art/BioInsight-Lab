@@ -70,7 +70,7 @@ describe("operational brief rail (RFQ-Quote detail) — §11.144 regression guar
     expect(source).toMatch(/setActiveWorkWindow/);
   });
 
-  it.skip("rail desktop only (hidden lg:flex) — same-canvas 보존", () => {
+  it.skip("rail desktop only (hidden lg:flex) · same-canvas 보존", () => {
     expect(source).toMatch(/hidden lg:flex/);
   });
 });

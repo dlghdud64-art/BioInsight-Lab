@@ -115,7 +115,7 @@ describe("§11.279c — 한글 \"운영 브리핑\" 정합 (7 spot 한글 라벨
     expect(FILES.operationalDetailShell).toMatch(/운영 브리핑/);
   });
 
-  it.skip("quotes/page.tsx — 한글 \"운영 브리핑\" 존재", () => {
+  it.skip("quotes/page.tsx · 한글 \"운영 브리핑\" 존재", () => {
     expect(FILES.quotesPage).toMatch(/운영 브리핑/);
   });
 });

@@ -63,7 +63,8 @@
     "20260831230000_user_active_organization",
     "20260904040000_product_category_source",
     "20260904170000_ocrjob_organization_fk",
-    "20260907090000_mutationauditevent_orgid_nullable"
+    "20260907090000_mutationauditevent_orgid_nullable",
+    "20260910120000_drop_governance_audit_log"
   ],
-  "generatedAt": "2026-09-07T13:14:28.916Z"
+  "generatedAt": "2026-09-26T11:31:11.411Z"
 }

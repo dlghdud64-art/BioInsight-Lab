@@ -74,7 +74,7 @@ describe("§11.248e #3 — '전체 상세 열기 / 닫기' 44px 터치 영역", 
 });
 
 describe("§11.248e #4 — §11.248a 잔재 한글화 (Briefing 패널 안)", () => {
-  it.skip("Briefing 패널 Send to supplier 한글화 — 공급사에 전송", () => {
+  it.skip("Briefing 패널 Send to supplier 한글화 · 공급사에 전송", () => {
     // line 3098 잔재 — 'Send to supplier 잠김' → '공급사에 전송 잠김' 양방향 매칭
     expect(page).toMatch(/공급사에 전송/);
     // Send to supplier 영문이 page.tsx 에 0 (한글화 sweep 완료)

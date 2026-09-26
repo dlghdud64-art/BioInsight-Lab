@@ -32,7 +32,7 @@ describe("§11.221 — 운영 브리핑 판단 근거 인과관계 요약", () =
     expect(src).toMatch(/→[\s\S]{0,80}(차단|첫 단계|단계입니다|발송|회신|비교|승인)/);
   });
 
-  it.skip("collapsible state — useState 'factsExpanded' 또는 'rationaleExpanded' 또는 'detailsExpanded'", () => {
+  it.skip("collapsible state · useState 'factsExpanded' 또는 'rationaleExpanded' 또는 'detailsExpanded'", () => {
     expect(src).toMatch(/useState[\s<]*(?:boolean)?[\s>]*\(\s*false\s*\)[\s\S]{0,200}(factsExpanded|rationaleExpanded|detailsExpanded)|const\s+\[(factsExpanded|rationaleExpanded|detailsExpanded)/);
   });
 
