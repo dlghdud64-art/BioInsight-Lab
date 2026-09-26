@@ -31,12 +31,12 @@ describe("§11.217 Phase 5 — chip scroll-spy active highlight", () => {
     expect(src).toMatch(/new\s+IntersectionObserver/);
   });
 
-  it.skip("4 chip ID 감시 — summary / facts / facts2 / next", () => {
+  it.skip("4 chip ID 감시 · summary / facts / facts2 / next", () => {
     // observer 안에 brief-summary 등 element 또는 array 매칭
     expect(src).toMatch(/brief-summary|"summary"[\s\S]{0,200}"facts"[\s\S]{0,200}"next"/);
   });
 
-  it.skip("chip active class — bg-blue-100 또는 동등 active tone (activeChipId 매칭 시)", () => {
+  it.skip("chip active class · bg-blue-100 또는 동등 active tone (activeChipId 매칭 시)", () => {
     // activeChipId === c.id 분기 + bg-blue-100 or text-blue-700
     expect(src).toMatch(/activeChipId\s*===\s*c\.id[\s\S]{0,200}(bg-blue-100|text-blue-700|font-semibold)/);
   });

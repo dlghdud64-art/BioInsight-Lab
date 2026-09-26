@@ -59,7 +59,7 @@ describe("#quote-dispatch-preflight-org-vendor-products-arg — 시그니처 확
 });
 
 describe("#quote-dispatch-preflight-org-vendor-products-arg — 3 caller forward", () => {
-  it.skip("selectedQuote caller (single quote preflight) — 3 인자", () => {
+  it.skip("selectedQuote caller (single quote preflight) · 3 인자", () => {
     // line 941 근처 — getQuoteDispatchPreflight(selectedQuote, organizationVendors, organizationVendorProducts)
     expect(page).toMatch(
       /getQuoteDispatchPreflight\(\s*selectedQuote,\s*organizationVendors,\s*organizationVendorProducts/,

@@ -62,7 +62,7 @@ describe("§11.264d #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/selectedQuote && selectedSignals && \(/);
   });
 
-  it.skip("open + onClose prop 형식 보존 (§11.264i supersede — briefSheetOpen 분리)", () => {
+  it.skip("open + onClose prop 형식 보존 (§11.264i supersede · briefSheetOpen 분리)", () => {
     // §11.264i 이후: open={briefSheetOpen} + onClose={() => setBriefSheetOpen(false)}
     //   (기존 §11.264d: open={!!selectedQuote} + onClose=closeQuoteContextRail
     //   — §11.264i 가 supersede. 사유: §11.248e mobile context sheet 와 2중 겹침 fix.)

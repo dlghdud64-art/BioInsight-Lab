@@ -58,7 +58,7 @@ describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", ()
     expect(src).toMatch(/activeChipId === "order" &&/);
   });
 
-  it.skip("회신 현황 탭 — kv 4칸 라벨 + 0건 강조 + 마감 D-N 형식", () => {
+  it.skip("회신 현황 탭 · kv 4칸 라벨 + 0건 강조 + 마감 D-N 형식", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/발송 공급사/);
     expect(src).toMatch(/회신 수신/);
@@ -68,14 +68,14 @@ describe("§quote-brief-rail-tabs-sian — 운영 브리핑 rail 탭 구조", ()
     expect(src).toMatch(/sqResponseCount === 0 \? "border-red-200/);
   });
 
-  it.skip("비교 진행 탭 — 2곳 미만 안내 + 2곳 이상 견적 비교 버튼", () => {
+  it.skip("비교 진행 탭 · 2곳 미만 안내 + 2곳 이상 견적 비교 버튼", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/비교하려면 회신이 2곳 이상 필요합니다/);
     expect(src).toMatch(/견적 비교를 시작할 수 있습니다/);
     expect(src).toMatch(/견적 비교 열기/);
   });
 
-  it.skip("dead button 0 — 견적 비교 버튼 onClick 이 실제 핸들러(setActiveWorkWindow compare_review) 연결", () => {
+  it.skip("dead button 0 · 견적 비교 버튼 onClick 이 실제 핸들러(setActiveWorkWindow compare_review) 연결", () => {
     const src = readWeb(QUOTES_PAGE);
     expect(src).toMatch(/data-testid="quote-brief-compare-open-cta"/);
     expect(src).toMatch(/setActiveWorkWindow\("compare_review"\)/);

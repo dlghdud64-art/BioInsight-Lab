@@ -108,7 +108,7 @@ describe("§quote-brief-rail-removed ④ 행·카드 클릭 = 선택만", () => 
     expect(enter).not.toMatch(/setActiveWorkWindow|router\.|Open\(true\)/);
   });
 
-  it("카드 클릭(라벨 없음)도 선택만 — handleQuoteCardSelect 첫 분기", () => {
+  it("카드 클릭(라벨 없음)도 선택만 · handleQuoteCardSelect 첫 분기", () => {
     const i = pageCode.indexOf("const handleQuoteCardSelect = useCallback(");
     expect(i).toBeGreaterThan(0);
     const body = blockFrom(pageCode, pageCode.indexOf("{", pageCode.indexOf("=>", i)));
@@ -129,7 +129,7 @@ describe("§quote-brief-rail-removed ⑤ 대체 진입점 (dead button 0)", () =
     expect(branch).toMatch(/router\.push\(`\/quotes\/\$\{quoteId\}`\)/);
   });
 
-  it("단계 CTA 의 작업창 목적지 — 집합을 리터럴로 고정한다", () => {
+  it("단계 CTA 의 작업창 목적지 · 집합을 리터럴로 고정한다", () => {
     const m = pageCode.match(/const CTA_WORK_WINDOW[^=]*=\s*(\{[\s\S]*?\});/);
     expect(m).not.toBeNull();
     const pairs = [...m![1].matchAll(/"([^"]+)":\s*"([a-z_]+)"/g)].map((x) => `${x[1]} -> ${x[2]}`).sort();
@@ -192,7 +192,7 @@ describe("§quote-brief-rail-removed ⑥ 레일 전용 상태·훅 소비자 0 �
     expect(pageCode).not.toMatch(new RegExp(`\\b${sym}\\b`));
   });
 
-  it("숨김으로 남기지 않았다 — 죽은 구역 0", () => {
+  it("숨김으로 남기지 않았다 · 죽은 구역 0", () => {
     expect(pageCode).not.toMatch(/\{\s*false\s*&&/);
   });
 });
