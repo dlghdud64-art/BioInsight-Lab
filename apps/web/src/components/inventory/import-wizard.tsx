@@ -38,17 +38,104 @@ interface ImportResult {
 
 type Step = "upload" | "preview" | "commit";
 
-const STANDARD_FIELDS = [
-  { key: "productName", label: "제품명", required: true },
-  { key: "catalogNumber", label: "카탈로그 번호", required: false },
-  { key: "currentQuantity", label: "재고 수량", required: true },
-  { key: "unit", label: "단위", required: false },
-  { key: "safetyStock", label: "안전 재고", required: false },
-  { key: "minOrderQty", label: "최소 주문 수량", required: false },
-  { key: "location", label: "보관 위치", required: false },
-  { key: "expiryDate", label: "유통기한", required: false },
-  { key: "notes", label: "비고", required: false },
+/* §import-header-mapping (2026-09-26 · 호영님 실측) — 호영님이 실제 파일(7컬럼·2행)을 넣어 두 결함을 찾았다:
+ *   ① 로트·유효기한·카탈로그번호·제조사가 **말없이 버려졌다**
+ *        「카탈로그번호」(붙여 씀)를 「카탈로그 번호」(띄어 씀)만 인식 · 「유효기한」 을 「유통기한」 만 인식
+ *        「로트번호」·「제조사」 는 스키마에 컬럼 자체가 없었다
+ *        그런데 화면은 「총 2개 중 2개를 등록할 수 있습니다」 로 경고 0이었다
+ *   ② **재고 수량이 최소 주문 수량에 복사됐다**
+ *        구 매칭이 부분 문자열을 허용해서 「수량」 한 컬럼이 「재고수량」·「최소주문수량」 **둘 다**에 걸렸다
+ *        확정하면 틀린 재주문 기준이 DB 에 기록된다
+ *   연구실 재고에서 로트·유효기한은 핵심 정보다 — 조용한 유실은 가짜 성공과 같은 등급이다(호영님).
+ *
+ * 처방 · 세 가지가 함께 가야 한다:
+ *   (1) 매칭은 **완전 일치**만 한다(정규화 후). 부분 문자열 금지 → ② 의 뿌리를 끊는다.
+ *   (2) 동의어를 사전으로 흡수한다 — 띄어쓰기·흔한 이름은 사용자 잘못이 아니다.
+ *   (3) 한 컬럼이 두 필드에 걸리면 **어느 쪽에도 넣지 않고** 모호로 올린다(호영님: 「고르게 하십시오」).
+ *   그리고 인식하지 못한 열은 미리보기에 **명시**한다 — 말없이 버리지 않는다. */
+export const STANDARD_FIELDS = [
+  { key: "productName", label: "제품명", required: true,
+    synonyms: ["품목명", "시약명", "제품", "품명", "name", "productname", "item", "itemname"] },
+  { key: "catalogNumber", label: "카탈로그 번호", required: false,
+    synonyms: ["카탈로그번호", "카탈로그", "카달로그번호", "제품번호", "품번",
+               "catno", "cat.no", "catalog", "catalogno", "catalognumber", "sku"] },
+  { key: "currentQuantity", label: "재고 수량", required: true,
+    synonyms: ["재고", "재고량", "현재수량", "보유수량", "qty", "quantity", "stock", "currentqty"] },
+  { key: "unit", label: "단위", required: false,
+    synonyms: ["규격단위", "uom", "unit"] },
+  { key: "safetyStock", label: "안전 재고", required: false,
+    synonyms: ["안전재고", "안전재고량", "safetystock", "minstock"] },
+  { key: "minOrderQty", label: "최소 주문 수량", required: false,
+    synonyms: ["최소주문수량", "최소발주수량", "moq", "minorderqty"] },
+  { key: "location", label: "보관 위치", required: false,
+    synonyms: ["보관위치", "위치", "보관장소", "장소", "location", "storage"] },
+  { key: "expiryDate", label: "유통기한", required: false,
+    synonyms: ["유효기한", "사용기한", "만료일", "유효기간", "expiry", "expirydate", "expirationdate"] },
+  /* §import-header-mapping (2026-09-26 · 호영님 실측) — 호영님 지시 3: 로트 번호를 스키마에 추가한다.
+   *   ProductInventory.lotNumber 가 이미 있다 — 새 컬럼을 만들지 않고 그 필드로 매핑한다. */
+  { key: "lotNumber", label: "로트 번호", required: false,
+    synonyms: ["로트번호", "로트", "랏번호", "배치번호", "lot", "lotno", "lotnumber", "batch", "batchno"] },
+  /* 제조사도 같은 판단 — Product.manufacturer 가 이미 있다(주석에 「제조사」). */
+  { key: "manufacturer", label: "제조사", required: false,
+    synonyms: ["제조회사", "메이커", "브랜드", "manufacturer", "maker", "brand", "vendor"] },
+  { key: "notes", label: "비고", required: false,
+    synonyms: ["메모", "특이사항", "note", "notes", "remark", "remarks", "memo"] },
 ] as const;
+
+/** 헤더 정규화 — 띄어쓰기·구분자·대소문자만 지운다. 글자를 빼지는 않는다. */
+function normalizeHeader(raw: string): string {
+  return raw.toLowerCase().replace(/[_\s\-.()\[\]]/g, "");
+}
+
+export interface HeaderMatchResult {
+  /** field.key → 소스 컬럼 */
+  mapping: Record<string, string>;
+  /** 여러 필드에 걸려 **매칭하지 않은** 컬럼 → 후보 필드 라벨 */
+  ambiguous: { column: string; candidates: string[] }[];
+  /** 어느 필드에도 걸리지 않은 컬럼 */
+  unrecognized: string[];
+}
+
+/**
+ * §import-header-mapping (2026-09-26 · 호영님 실측) — 헤더 자동 매칭.
+ * 🛑 **필드당 컬럼 하나, 컬럼당 필드 하나.** 부분 문자열로 맞추지 않는다.
+ *    한 컬럼이 둘 이상의 필드에 걸리면 어느 쪽에도 넣지 않고 ambiguous 로 올린다 —
+ *    「수량」 을 재고 수량과 최소 주문 수량에 동시에 넣던 것이 결함 ② 였다.
+ */
+export function matchHeaders(columns: string[]): HeaderMatchResult {
+  // 컬럼 → 걸린 필드 목록
+  const hits = new Map<string, string[]>();
+  for (const col of columns) {
+    const n = normalizeHeader(col);
+    const matched = STANDARD_FIELDS.filter((f) => {
+      if (n === normalizeHeader(f.key) || n === normalizeHeader(f.label)) return true;
+      return f.synonyms.some((s) => n === normalizeHeader(s));
+    }).map((f) => f.key as string);
+    hits.set(col, matched);
+  }
+
+  const mapping: Record<string, string> = {};
+  const ambiguous: { column: string; candidates: string[] }[] = [];
+  const unrecognized: string[] = [];
+  const labelOf = (key: string) =>
+    STANDARD_FIELDS.find((f) => f.key === key)?.label ?? key;
+
+  for (const [col, keys] of hits) {
+    if (keys.length === 0) { unrecognized.push(col); continue; }
+    if (keys.length > 1) {
+      ambiguous.push({ column: col, candidates: keys.map(labelOf) });
+      continue;
+    }
+    const key = keys[0];
+    if (mapping[key]) {
+      // 같은 필드에 두 컬럼이 걸렸다 — 뒤에 온 것은 고르게 한다(먼저 온 것을 덮지 않는다).
+      ambiguous.push({ column: col, candidates: [labelOf(key)] });
+      continue;
+    }
+    mapping[key] = col;
+  }
+  return { mapping, ambiguous, unrecognized };
+}
 
 interface ImportWizardProps {
   onSuccess?: () => void;
@@ -74,6 +161,8 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
   // Step 1: Upload
   const [isDragging, setIsDragging] = useState(false);
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  // §import-header-mapping (2026-09-26 · 호영님 실측) — 매칭 결과(모호·미인식)를 화면이 그려야 한다. 안 그리면 말없이 버리는 것과 같다.
+  const [headerMatch, setHeaderMatch] = useState<HeaderMatchResult | null>(null);
 
   // Step 2: Preview
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
@@ -174,27 +263,10 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
       const data: PreviewData = await response.json();
       setPreviewData(data);
 
-      // Auto-map columns based on common names
-      const autoMapping: Record<string, string> = {};
-      for (const field of STANDARD_FIELDS) {
-        const matchedColumn = data.columns.find((col) => {
-          const normalized = col.toLowerCase().replace(/[_\s-]/g, "");
-          const fieldNormalized = field.key.toLowerCase();
-          const labelNormalized = field.label.toLowerCase();
-          return (
-            normalized === fieldNormalized ||
-            normalized === labelNormalized ||
-            normalized.includes(fieldNormalized) ||
-            fieldNormalized.includes(normalized) ||
-            normalized.includes(labelNormalized) ||
-            labelNormalized.includes(normalized)
-          );
-        });
-        if (matchedColumn) {
-          autoMapping[field.key] = matchedColumn;
-        }
-      }
-
+      // §import-header-mapping (2026-09-26 · 호영님 실측) — 완전 일치 + 동의어 + 중복 차단. 판정은 matchHeaders 한 곳에서만 한다.
+      const matched = matchHeaders(data.columns);
+      const autoMapping = matched.mapping;
+      setHeaderMatch(matched);
       setColumnMapping(autoMapping);
 
       // Validate preview data
@@ -564,6 +636,39 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                 </p>
               )}
             </div>
+
+            {/* §import-header-mapping (2026-09-26 · 호영님 실측) — 인식하지 못한 열·모호한 열을 **명시**한다(호영님 지시 4).
+                구 화면은 「총 2개 중 2개를 등록할 수 있습니다」 만 말하고 버린 열을 알리지 않았다. */}
+            {headerMatch && (headerMatch.unrecognized.length > 0 || headerMatch.ambiguous.length > 0) && (
+              <div role="alert" className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 space-y-2">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-yellow-800">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  파일의 열 일부를 그대로 가져오지 않습니다
+                </p>
+                {headerMatch.ambiguous.length > 0 && (
+                  <div className="text-sm text-slate-700">
+                    <p className="font-medium">어느 항목인지 고르셔야 하는 열</p>
+                    <ul className="mt-0.5 list-disc pl-5">
+                      {headerMatch.ambiguous.map((a) => (
+                        <li key={a.column} data-testid="import-ambiguous-column">
+                          {a.column} · 후보: {a.candidates.join(" / ")} · 아래에서 직접 지정하세요
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {headerMatch.unrecognized.length > 0 && (
+                  <div className="text-sm text-slate-700">
+                    <p className="font-medium">인식하지 못한 열</p>
+                    <ul className="mt-0.5 list-disc pl-5">
+                      {headerMatch.unrecognized.map((c) => (
+                        <li key={c} data-testid="import-unrecognized-column">{c} · 가져오지 않습니다</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* 미리보기 테이블 */}
             <div className="border rounded-lg overflow-auto max-h-[600px]">

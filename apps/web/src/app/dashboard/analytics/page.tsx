@@ -391,7 +391,8 @@ export default function AnalyticsPage() {
   // ══════════════════════════════════════════════════════════════
   // §11.244-sian Phase 1 — 빈상태 온보딩 (호영님 시안 honesty 무위험 부분)
   // ══════════════════════════════════════════════════════════════
-  // canonical 빈상태 판정: 월별 지출 0건 AND topSpending 0건 = 발주 데이터 미수집.
+  // canonical 빈상태 판정: 월별 지출 0건 AND topSpending 0건 = 구매 기록 미수집.
+  //   §spend-source-honesty (2026-09-26 · 호영님 실측) — 출처는 PurchaseRecord(api/analytics/dashboard)이고 그 생산자는 견적의 「구매 진행 처리」 다.
   //   데이터 1건+ 시 자동 false → 기존 실제 차트 경로 그대로 (변경 0).
   const spendDataEmpty = !hasMonthlyData && topSpending.length === 0;
   // 예산 등록 여부 = canonical budget.total > 0.
@@ -399,11 +400,12 @@ export default function AnalyticsPage() {
   // 활성화 3단계 (canonical derive — 하드코딩 금지):
   //   ① 워크스페이스 생성 (페이지 도달 = 항상 done)
   //   ② 예산 등록 (done = budget.total > 0)
-  //   ③ 첫 발주 완료 (done = 지출 데이터 존재 = !spendDataEmpty)
+  //   ③ 첫 구매 처리 완료 (done = 지출 데이터 존재 = !spendDataEmpty · §spend-source-honesty (2026-09-26 · 호영님 실측))
   const onboardingSteps = [
     { id: "workspace", label: "워크스페이스 생성", done: true, href: null as string | null, cta: null as string | null },
     { id: "budget", label: "예산 등록", done: budgetRegistered, href: "/dashboard/budget", cta: "예산 등록" },
-    { id: "first-order", label: "첫 발주 완료", done: !spendDataEmpty, href: "/app/search", cta: "소싱에서 시작" },
+    // §spend-source-honesty (2026-09-26 · 호영님 실측) — 이 단계의 done 은 지출 데이터 유무(PurchaseRecord)다. 그 생산자 이름으로 부른다.
+    { id: "first-order", label: "첫 구매 처리 완료", done: !spendDataEmpty, href: "/app/search", cta: "소싱에서 시작" },
   ];
   const onboardingDoneCount = onboardingSteps.filter((s) => s.done).length;
   const onboardingRemaining = onboardingSteps.length - onboardingDoneCount;
@@ -570,7 +572,7 @@ export default function AnalyticsPage() {
                     AI 지출 리포트 · 예시 미리보기
                   </h3>
                   <p className="text-[11px] text-slate-400 hidden sm:block">
-                    발주 데이터가 쌓이면 이 형식으로 자동 생성됩니다
+                    구매 기록이 쌓이면 이 형식으로 자동 생성됩니다
                   </p>
                 </div>
               </div>
@@ -592,7 +594,7 @@ export default function AnalyticsPage() {
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-blue-800 break-keep">예시 리포트입니다.</p>
                   <p className="text-xs text-blue-700 mt-0.5 leading-relaxed break-keep">
-                    실제 발주 데이터가 쌓이면 이 형식으로 AI가 자동 생성합니다. (아래 수치는 샘플)
+                    실제 구매 기록이 쌓이면 이 형식으로 AI가 자동 생성합니다. (아래 수치는 샘플)
                   </p>
                 </div>
               </div>
@@ -768,7 +770,7 @@ export default function AnalyticsPage() {
       {activeTab === "overview" && (<>
 
         {/* ══════════════════════════════════════════════════════════ */}
-        {/* §11.244-sian Phase 1 — 빈상태 온보딩 (발주 데이터 0건일 때만) */}
+        {/* §11.244-sian Phase 1 — 빈상태 온보딩 (구매 기록 0건일 때만 · §spend-source-honesty (2026-09-26 · 호영님 실측)) */}
         {/* 데이터 1건+ 시 spendDataEmpty=false → 아래 기존 차트 경로 그대로 노출 */}
         {/* ══════════════════════════════════════════════════════════ */}
         {!isLoading && spendDataEmpty && (
@@ -786,7 +788,8 @@ export default function AnalyticsPage() {
                   ))}
                 </div>
               </div>
-              <h3 className="text-[15px] font-extrabold mt-1.5 break-keep">첫 발주가 완료되면 지출 분석이 자동으로 켜집니다</h3>
+              {/* §spend-source-honesty (2026-09-26 · 호영님 실측) */}
+              <h3 className="text-[15px] font-extrabold mt-1.5 break-keep">첫 구매를 처리하면 지출 분석이 켜집니다</h3>
               <ul className="mt-3 space-y-1.5">
                 {onboardingSteps.map((step, idx) => {
                   const isCurrent = !step.done && onboardingSteps.slice(0, idx).every((x) => x.done);
@@ -820,11 +823,11 @@ export default function AnalyticsPage() {
                 분석 활성화까지 {onboardingRemaining}단계
               </p>
               <h2 className="text-lg md:text-2xl font-extrabold tracking-tight mt-1.5 break-keep">
-                첫 발주가 완료되면 지출 분석이 자동으로 켜집니다
+                첫 구매를 처리하면 지출 분석이 켜집니다
               </h2>
               <p className="text-sm text-slate-300 mt-2 leading-relaxed max-w-2xl break-keep">
-                예산 소진율, 공급사 의존도, 이상 지출 신호는 모두 실제 발주 데이터에서 계산됩니다.
-                지금은 0건 수집됨 · 첫 발주가 완료되면 아래 미리보기가 실제 차트로 전환됩니다.
+                예산 소진율, 공급사 의존도, 이상 지출 신호는 모두 실제 구매 기록에서 계산됩니다.
+                지금은 0건 수집됨 · 견적에서 구매 진행 처리를 하면 아래 미리보기가 실제 차트로 전환됩니다.
               </p>
               <div className="flex flex-col sm:flex-row gap-2.5 mt-4">
                 <Link
@@ -953,7 +956,7 @@ export default function AnalyticsPage() {
               <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
                 <p className="text-xs font-semibold text-slate-500">AI 식별 절감 기회</p>
                 <p className="text-lg md:text-xl font-extrabold text-slate-900 mt-1.5 tracking-tight">--</p>
-                <p className="text-[11px] text-slate-400 mt-1.5 break-keep">발주 데이터로 AI 자동 산출</p>
+                <p className="text-[11px] text-slate-400 mt-1.5 break-keep">구매 기록으로 AI 자동 산출</p>
               </div>
               {/* KPI 4: 특정 공급사 의존도 */}
               <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
@@ -987,7 +990,7 @@ export default function AnalyticsPage() {
                   />
                 </svg>
                 <p className="text-xs text-slate-400 mt-2 break-keep">
-                  발주 데이터가 쌓이면 이렇게 표시됩니다 (예시 · 실제 수치 아님)
+                  구매 기록이 쌓이면 이렇게 표시됩니다 (예시 · 실제 수치 아님)
                 </p>
               </div>
 
@@ -1128,10 +1131,10 @@ export default function AnalyticsPage() {
                     <div className="text-center px-6 max-w-md">
                       <TrendingUp className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                       <p className="text-sm font-semibold text-slate-700 mb-1">
-                        발주 데이터가 쌓이면 월별 지출 트렌드와 카테고리별 비중을 확인할 수 있습니다
+                        구매 기록이 쌓이면 월별 지출 트렌드와 카테고리별 비중을 확인할 수 있습니다
                       </p>
                       <p className="text-xs text-slate-500 break-keep">
-                        첫 발주 완료 후 자동 활성화 · 현재 {recent90dCount}건 수집됨
+                        첫 구매 처리 후 활성화 · 현재 {recent90dCount}건 수집됨
                       </p>
                     </div>
                   </div>

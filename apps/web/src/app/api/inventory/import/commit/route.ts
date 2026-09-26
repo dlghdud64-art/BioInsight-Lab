@@ -21,6 +21,13 @@ const ColumnMappingSchema = z.object({
   minOrderQty: z.string().optional(),
   location: z.string().optional(),
   expiryDate: z.string().optional(),
+  /* §import-header-mapping (2026-09-26 · 호영님 실측) — 호영님 실측: 로트·제조사가 가져오기 스키마에 **컬럼 자체가 없어** 말없이 버려졌다.
+   *   새 저장소를 만들지 않는다 — 있는 필드로 매핑한다:
+   *     로트   → ProductInventory.lotNumber (「로트(Lot) 번호」)
+   *     제조사 → Product.manufacturer (「제조사」)
+   *   연구실 재고에서 로트·유효기한은 핵심 정보다. */
+  lotNumber: z.string().optional(),
+  manufacturer: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -34,6 +41,9 @@ const InventoryRowSchema = z.object({
   minOrderQty: z.number().nonnegative().optional(),
   location: z.string().optional(),
   expiryDate: z.string().optional(),
+  // §import-header-mapping (2026-09-26 · 호영님 실측) — 위와 같은 축.
+  lotNumber: z.string().optional(),
+  manufacturer: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -95,7 +105,8 @@ function parseDate(dateStr: string): Date | null {
  */
 async function findOrCreateProduct(
   productName: string,
-  catalogNumber?: string
+  catalogNumber?: string,
+  manufacturer?: string
 ): Promise<string> {
   // Try to find existing product
   if (catalogNumber) {
@@ -134,6 +145,8 @@ async function findOrCreateProduct(
     data: {
       name: productName,
       catalogNumber: catalogNumber || null,
+      // §import-header-mapping (2026-09-26 · 호영님 실측) — 제조사를 받으면 제품에 남긴다. 없으면 null(추측하지 않는다).
+      manufacturer: manufacturer || null,
       category: "REAGENT", // Default category
     },
     select: { id: true },
@@ -268,7 +281,8 @@ export async function POST(request: NextRequest) {
         // Find or create product
         const productId = await findOrCreateProduct(
           validated.productName,
-          validated.catalogNumber
+          validated.catalogNumber,
+          validated.manufacturer
         );
 
         // §inventory-org-required — 같은 조직의 같은 제품 재고가 있으면 갱신한다(사용자 축이 아니라 조직 축 ·
@@ -295,6 +309,8 @@ export async function POST(request: NextRequest) {
                 ? new Date(validated.expiryDate)
                 : existingInventory.expiryDate,
               notes: validated.notes ?? existingInventory.notes,
+              // §import-header-mapping (2026-09-26 · 호영님 실측) — 로트는 재고 행에 남는다. 파일에 없으면 기존 값을 지우지 않는다.
+              lotNumber: validated.lotNumber ?? existingInventory.lotNumber,
             },
           });
         } else {
@@ -311,6 +327,8 @@ export async function POST(request: NextRequest) {
               location: validated.location || null,
               expiryDate: validated.expiryDate ? new Date(validated.expiryDate) : null,
               notes: validated.notes || null,
+              // §import-header-mapping (2026-09-26 · 호영님 실측) — 로트는 재고 행에 남는다.
+              lotNumber: validated.lotNumber || null,
             },
           });
         }

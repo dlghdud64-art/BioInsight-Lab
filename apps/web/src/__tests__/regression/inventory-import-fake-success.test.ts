@@ -31,16 +31,23 @@
  *   ⑤ 회귀 0 — 저장 경로가 실제로 쓴다
  *
  * ── 자기 한계 ──
- *   1. `BulkImportModal` 은 실배선이지만 진입점이 0 이다(이 커밋이 만든 게 아니다).
+ *   1. `BulkImportModal` 은 실배선이지만 **열리는 경로가 0** 이다(이 커밋이 만든 게 아니다).
+ *      ⚠️ 정정 — 처음에 「진입점 0」 이라고만 적었는데 소비자가 **둘**이었다:
+ *        (a) inventory-content 가 렌더하지만 `isImportDialogOpen` 을 true 로 만드는 곳이 0
+ *        (b) `global-modal.tsx` 레지스트리의 `bulk_import` 키 — 그 키를 여는 곳도 0
+ *            (`modal-store.ts` 의 유니온에만 선언돼 있다)
+ *      래퍼·레지스트리를 안 세고 「호출자 0」 을 말하면 틀린다(§비교식 하나로 갈림 판정 금지의 ③ 형태).
  *      가져오기 경로가 둘이면 혼선이 되므로 **별도 판정**이 필요하다 — 이 파일은 그 축을 안 본다.
- *   2. 가짜 파일(`import-staging-workbench.tsx`)과 그 mock 엔진
- *      (`lib/ai/inventory-import-staging-engine.ts`)은 **지우지 않았다**(git rm 사전 승인 필요).
- *      ② 가 「import 되지 않는다」 로 부활을 막는다.
+ *   ~~2. 가짜 파일을 지우지 않았다~~ → **지웠다**(호영님 git rm 승인 · 같은 커밋).
+ *      `import-staging-workbench.tsx` · `lib/ai/inventory-import-staging-engine.ts` 둘 다.
+ *      ⑥ 이 워킹트리·인덱스 두 축으로 부재를 단언한다. ② 의 import 부재는 **그대로 남긴다** —
+ *      경로가 되살아나는 것과 파일이 되살아나는 것은 다른 사건이다.
  *   3. 소스 문자열만 본다. 런타임 응답은 보지 않는다.
  */
 
 import { describe, it, expect } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { join } from "node:path";
 import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
@@ -90,9 +97,9 @@ describe("§inventory-import-fake-success · 라이브 진입점이 실배선을
   });
 
   it("② 가짜 컴포넌트가 어디서도 import 되지 않는다", () => {
-    /* 파일은 남겨 뒀다(git rm 사전 승인 필요 · 자기 한계 2).
-       부활을 막는 것은 **import 부재**다 — 이름 문자열이 아니라 사용 지점의 형태로 묻는다
-       (§"X를 쓰는가" 에 grep 으로 답하지 않는다). */
+    /* 파일은 ⑥ 이 부재를 단언한다. 여기서 보는 것은 **경로**다 —
+       파일이 없어도 누가 같은 이름으로 다시 만들면 이 단언이 먼저 선다.
+       이름 문자열이 아니라 사용 지점의 형태로 묻는다(§"X를 쓰는가" 에 grep 으로 답하지 않는다). */
     expect(code(PAGE)).not.toMatch(/import-staging-workbench/);
     expect(code(PAGE)).not.toMatch(/<ImportStagingWorkbench/);
     expect(code(PAGE)).not.toMatch(/isImportStagingOpen/);
@@ -142,9 +149,23 @@ describe("회귀 0 · 저장 경로가 실제로 쓴다", () => {
     expect(commitRoute).toMatch(/db\.importJob\.create\(/);
   });
 
-  it("⑥ 가짜 파일은 남아 있다 (지운 것이 아니라 끊은 것이다)", () => {
-    /* 자기 한계 2 의 짝 — 「없는 척」 을 막는다. 파일이 사라지면 ② 가 무의미해지고,
-       무엇을 되살리면 안 되는지도 잃는다. 삭제는 git rm 승인 뒤에 한다. */
-    expect(existsSync(join(SRC, FAKE))).toBe(true);
+  it("⑥ 가짜 파일이 삭제됐다 (워킹트리·인덱스 두 축)", () => {
+    /* 승계 §inventory-import-fake-success (2026-09-26 · 호영님 지시) — 처음엔 배선만 끊고 파일을 남겼다(git rm 사전 승인 필요).
+       호영님 승인으로 지웠다. 무엇을 되살리면 안 되는지는 **이 파일 머리말**이 들고 있다 —
+       파일이 사라졌으므로 기록은 여기에만 남는다.
+       🛑 삭제 명제는 두 축을 **둘 다** 본다(CLAUDE.md §파일 삭제는 HEAD 축과 워킹트리 축):
+          existsSync 는 워킹트리를, git ls-files 는 인덱스를 읽는다. 둘 다 봐야 「지웠다」 가 참이다. */
+    for (const rel of [FAKE, "lib/ai/inventory-import-staging-engine.ts"]) {
+      expect(existsSync(join(SRC, rel)), rel + " 워킹트리").toBe(false);
+      /* 🔑 축은 **인덱스**(git ls-files)다. HEAD 를 보면 git rm 을 스테이징한 시점에는 아직 파일이
+         있어서 **커밋 전 게이트가 반드시 RED** 가 된다 — 구조적으로 한 커밋 늦다.
+         인덱스는 git rm 직후 비므로 커밋 전에 잡히고, 커밋 뒤에도 그대로 빈다.
+         (CLAUDE.md §파일 삭제는 HEAD 축과 워킹트리 축을 둘 다 봐야 게이트에 잡힌다 의 실행형) */
+      const tracked = execSync("git ls-files -- " + JSON.stringify("apps/web/src/" + rel), {
+        cwd: join(SRC, "..", "..", ".."),
+        encoding: "utf8",
+      }).trim();
+      expect(tracked, rel + " 인덱스").toBe("");
+    }
   });
 });

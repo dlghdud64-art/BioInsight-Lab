@@ -119,7 +119,7 @@ export function BudgetSpendCard({ state, summary, onRetry, categorySpending = []
             <dt className="text-[11px] font-semibold text-slate-400">이번 달 지출</dt>
             <dd className="text-[14px] font-bold text-slate-600">
               집계 전
-              <span className="ml-1.5 text-[11px] font-medium text-slate-400">첫 발주 완료 후 표시</span>
+              <span className="ml-1.5 text-[11px] font-medium text-slate-400">첫 구매 처리 후 표시</span>
             </dd>
           </div>
           <div>

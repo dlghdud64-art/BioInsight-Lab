@@ -6,7 +6,12 @@
  * 검증(격리 readFileSync+regex → operator 실 vitest):
  *   (A) 빈상태 판정 canonical 신호 (spendDataEmpty = !hasMonthlyData && topSpending.length === 0)
  *   (B) 온보딩 히어로 문구 + CTA 2개 (실제 라우트 /app/search · /dashboard/budget)
- *   (C) 활성화 3단계 체크리스트 (워크스페이스 / 예산 등록 / 첫 발주) + derive (하드코딩 금지)
+ *   (C) 활성화 3단계 체크리스트 (워크스페이스 / 예산 등록 / 첫 구매 처리) + derive (하드코딩 금지)
+ *
+ * 승계 §spend-source-honesty (2026-09-26 · 호영님 실측) — 「첫 발주」·「발주 데이터」 는 제품에 없는 행위를 가리켰다(발주 UI 경로 0 ·
+ *   §po-ui-removed → §admin-order-create-removed). 이 화면의 수는 **PurchaseRecord** 에서 오고,
+ *   그것을 만드는 라이브 경로는 견적의 「구매 진행 처리」 다(api/analytics/dashboard 실측).
+ *   명제(빈상태 온보딩이 3단계를 derive 로 그린다)는 불변 · 이름만 참인 것으로 옮겼다.
  *   (D) KPI 4 "언제 채워지는지" 힌트 + ghost bar
  *   (E) 미리보기 차트 2개 — "미리보기"/"대기" 칩 + honesty 캡션 ("예시")
  *   (F) honesty: AiReportModal 미도입 + 샘플 savings/dependency 수치 부재
@@ -45,8 +50,8 @@ describe("§11.244-sian (B) — 온보딩 히어로 문구 + CTA", () => {
     expect(PAGE).toMatch(/분석 활성화까지 \{onboardingRemaining\}단계/);
   });
   it("h2 본문 문구", () => {
-    expect(PAGE).toMatch(/첫 발주가 완료되면 지출 분석이 자동으로 켜집니다/);
-    expect(PAGE).toMatch(/모두 실제 발주 데이터에서 계산됩니다/);
+    expect(PAGE).toMatch(/첫 구매를 처리하면 지출 분석이 켜집니다/);
+    expect(PAGE).toMatch(/모두 실제 구매 기록에서 계산됩니다/);
     expect(PAGE).toMatch(/지금은 0건 수집됨/);
   });
   it("CTA 2개 실제 라우트 연결 (/app/search · /dashboard/budget)", () => {
@@ -59,16 +64,16 @@ describe("§11.244-sian (B) — 온보딩 히어로 문구 + CTA", () => {
 
 // ── (C) 활성화 3단계 체크리스트 + derive ────────────────────────
 describe("§11.244-sian (C) — 활성화 3단계 체크리스트 derive", () => {
-  it("3단계 라벨 (워크스페이스 / 예산 등록 / 첫 발주)", () => {
+  it("3단계 라벨 (워크스페이스 / 예산 등록 / 첫 구매 처리)", () => {
     expect(PAGE).toMatch(/워크스페이스 생성/);
     expect(PAGE).toMatch(/label: "예산 등록"/);
-    expect(PAGE).toMatch(/label: "첫 발주 완료"/);
+    expect(PAGE).toMatch(/label: "첫 구매 처리 완료"/);
   });
   it("예산 단계 done 은 budget.total 기반 (budgetRegistered = budget.total > 0)", () => {
     expect(PAGE).toMatch(/const budgetRegistered\s*=\s*budget\.total\s*>\s*0/);
     expect(PAGE).toMatch(/done:\s*budgetRegistered/);
   });
-  it("첫 발주 단계 done 은 !spendDataEmpty derive", () => {
+  it("첫 구매 처리 단계 done 은 !spendDataEmpty derive", () => {
     expect(PAGE).toMatch(/done:\s*!spendDataEmpty/);
   });
   it("완료 칩은 derive (onboardingDoneCount / onboardingSteps.length) — 하드코딩 부재", () => {
@@ -84,7 +89,7 @@ describe("§11.244-sian (D) — KPI 4 힌트 + ghost bar", () => {
   it("각 KPI 에 '언제 채워지는지' 힌트", () => {
     expect(PAGE).toMatch(/예산 등록 시 채워집니다/);
     expect(PAGE).toMatch(/발주 완료 시 채워집니다/);
-    expect(PAGE).toMatch(/발주 데이터로 AI 자동 산출/);
+    expect(PAGE).toMatch(/구매 기록으로 AI 자동 산출/);
     expect(PAGE).toMatch(/발주 3건\+ 누적 시 산출/);
   });
   it("소진율 KPI 값은 canonical (budgetRegistered ? usageRate : 미등록)", () => {
@@ -99,7 +104,7 @@ describe("§11.244-sian (E) — 미리보기 차트 honesty 라벨/캡션", () =
     expect(PAGE).toMatch(/대기/);
   });
   it("honesty 캡션 — '예시' 명시 (실제 수치 아님)", () => {
-    expect(PAGE).toMatch(/발주 데이터가 쌓이면 이렇게 표시됩니다 \(예시/);
+    expect(PAGE).toMatch(/구매 기록이 쌓이면 이렇게 표시됩니다 \(예시/);
     expect(PAGE).toMatch(/데이터가 축적되면 자동 생성됩니다 \(예시/);
   });
   it("sparkline 은 장식 인라인 SVG (점선 strokeDasharray)", () => {

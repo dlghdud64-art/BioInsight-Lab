@@ -130,8 +130,10 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
           <p className="text-sm font-semibold text-slate-600 mb-1">
             데이터가 쌓이면 지출 추이가 표시됩니다
           </p>
+          {/* §spend-source-honesty (2026-09-26 · 호영님 실측) — 「첫 발주」 는 제품에 없는 행위다(발주 UI 경로 0).
+              지출은 PurchaseRecord 에서 오고, 그것을 만드는 것은 견적의 「구매 진행 처리」 다. */}
           <p className="text-[11px] text-slate-400 break-keep">
-            첫 발주가 완료되면 월별 지출 트렌드가 자동으로 그려집니다.
+            견적에서 구매 진행 처리를 하면 월별 지출 트렌드가 그려집니다.
           </p>
         </div>
       ) : (
